@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>通知中心 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --success:#16a34a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-links { display:flex; gap:1.5rem; align-items:center; }
+    .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.88rem; }
+    .nav-links a:hover { color:#fff; }
+    .notif-bell { position:relative; font-size:1.3rem; cursor:pointer; }
+    .notif-dot { position:absolute; top:-2px; right:-4px; width:8px; height:8px; background:var(--red); border-radius:50%; animation:blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    main { flex:1; max-width:780px; margin:0 auto; padding:2rem 1rem; width:100%; }
+    .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
+    .page-title { font-size:1.3rem; font-weight:800; color:var(--text); }
+    .header-actions { display:flex; gap:10px; }
+    .act-btn { padding:7px 14px; border:1px solid var(--border); background:#fff; border-radius:8px; font-size:.82rem; cursor:pointer; color:var(--text); transition:background .15s; }
+    .act-btn:hover { background:var(--bg); }
+    /* TABS */
+    .tab-bar { display:flex; gap:4px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:16px; }
+    .tab { flex:1; text-align:center; padding:8px 12px; border-radius:7px; font-size:.85rem; font-weight:500; color:var(--muted); cursor:pointer; transition:all .15s; }
+    .tab.active { background:var(--blue); color:#fff; font-weight:700; }
+    /* NOTIF ITEM */
+    .notif-list { display:flex; flex-direction:column; gap:1px; }
+    .notif-item { background:#fff; border:1px solid var(--border); border-radius:0; padding:16px 20px; display:flex; gap:14px; cursor:pointer; transition:background .15s; position:relative; }
+    .notif-item:first-child { border-radius:12px 12px 0 0; }
+    .notif-item:last-child { border-radius:0 0 12px 12px; }
+    .notif-item:only-child { border-radius:12px; }
+    .notif-item:hover { background:#f9fafb; }
+    .notif-item.unread { background:#eff6ff; border-color:#bfdbfe; }
+    .notif-item.unread:hover { background:#dbeafe; }
+    .unread-dot { width:8px; height:8px; border-radius:50%; background:var(--blue); flex-shrink:0; margin-top:7px; }
+    .read-dot { width:8px; height:8px; flex-shrink:0; margin-top:7px; }
+    .notif-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+    .ni-green { background:#dcfce7; }
+    .ni-red { background:#fee2e2; }
+    .ni-blue { background:#dbeafe; }
+    .ni-orange { background:#ffedd5; }
+    .ni-purple { background:#f3e8ff; }
+    .ni-gray { background:#f3f4f6; }
+    .notif-content { flex:1; }
+    .notif-title { font-size:.9rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .notif-item.unread .notif-title { color:var(--blue); }
+    .notif-desc { font-size:.82rem; color:var(--muted); line-height:1.5; }
+    .notif-time { font-size:.72rem; color:#9ca3af; margin-top:6px; }
+    .notif-actions { margin-top:8px; display:flex; gap:8px; }
+    .notif-btn { padding:5px 12px; border-radius:7px; font-size:.75rem; font-weight:600; cursor:pointer; border:none; }
+    .nb-primary { background:var(--blue); color:#fff; }
+    .nb-ghost { background:#f3f4f6; color:var(--text); }
+    /* EMPTY */
+    .empty { text-align:center; padding:4rem; color:var(--muted); }
+    .empty .e-icon { font-size:3rem; margin-bottom:1rem; }
+    .empty .e-text { font-size:.9rem; }
+    footer { text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-em">🏟️</div>
+    <div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html">场地预约</a>
+    <a href="auto-booking.html">⚡ 自动抢票</a>
+    <a href="records.html">预约记录</a>
+    <a href="membership.html">👑 会员中心</a>
+    <a href="rewards.html">积分</a>
+    <a href="about.html">关于</a>
+    <a href="profile.html">我的</a>
+    <div class="notif-bell">🔔<span class="notif-dot"></span></div>
+  </div>
+</nav>
+
+<main>
+  <div class="page-header">
+    <div class="page-title">🔔 通知中心 <span style="font-size:.85rem;font-weight:400;color:var(--muted);">（3条未读）</span></div>
+    <div class="header-actions">
+      <button class="act-btn" onclick="markAllRead()">全部已读</button>
+      <button class="act-btn" onclick="clearRead()" style="color:var(--red);">清除已读</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="filterTab('all',this)" id="tab-all">全部</div>
+    <div class="tab" onclick="filterTab('booking',this)" id="tab-booking">预约通知</div>
+    <div class="tab" onclick="filterTab('auto',this)" id="tab-auto">抢票结果</div>
+    <div class="tab" onclick="filterTab('member',this)" id="tab-member">会员消息</div>
+    <div class="tab" onclick="filterTab('system',this)" id="tab-system">系统公告</div>
+  </div>
+
+  <div class="notif-list" id="notifList">
+
+    <!-- UNREAD: auto success -->
+    <div class="notif-item unread" data-type="auto">
+      <div class="unread-dot"></div>
+      <div class="notif-icon ni-green">⚡</div>
+      <div class="notif-content">
+        <div class="notif-title">自动抢票成功！🎉</div>
+        <div class="notif-desc">您设置的自动规则已成功预约：<strong>篮球场3号</strong> — 本周五（4月25日）20:00 - 22:00。请准时参加！</div>
+        <div class="notif-time">2分钟前</div>
+        <div class="notif-actions">
+          <button class="notif-btn nb-primary" onclick="window.location.href='records.html'">查看预约详情</button>
+          <button class="notif-btn nb-ghost" onclick="dismiss(this)">知道了</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNREAD: member expiry -->
+    <div class="notif-item unread" data-type="member">
+      <div class="unread-dot"></div>
+      <div class="notif-icon ni-purple">👑</div>
+      <div class="notif-content">
+        <div class="notif-title">会员即将到期提醒</div>
+        <div class="notif-desc">您的 <strong>年度超级会员</strong> 将于 <strong>7天后（2026-04-27）</strong>到期。续费可继续享受无限自动抢票、优先预约等特权。</div>
+        <div class="notif-time">1小时前</div>
+        <div class="notif-actions">
+          <button class="notif-btn nb-primary" onclick="window.location.href='membership.html'">立即续费</button>
+          <button class="notif-btn nb-ghost" onclick="dismiss(this)">稍后再说</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNREAD: system notice -->
+    <div class="notif-item unread" data-type="system">
+      <div class="unread-dot"></div>
+      <div class="notif-icon ni-orange">📢</div>
+      <div class="notif-content">
+        <div class="notif-title">系统维护公告</div>
+        <div class="notif-desc">游泳馆快速泳道将于 <strong>4月22日（周二）全天</strong> 停止预约，进行年度设备检修。其他场地正常开放，给您带来不便敬请谅解。</div>
+        <div class="notif-time">3小时前</div>
+      </div>
+    </div>
+
+    <!-- READ: booking success -->
+    <div class="notif-item" data-type="booking">
+      <div class="read-dot"></div>
+      <div class="notif-icon ni-green">✅</div>
+      <div class="notif-content">
+        <div class="notif-title">预约成功</div>
+        <div class="notif-desc">您已成功预约 <strong>羽毛球馆 A区 2号场</strong> — 明日（4月21日）18:00 - 20:00。预约号：SZU2504200088</div>
+        <div class="notif-time">昨天 18:30</div>
+      </div>
+    </div>
+
+    <!-- READ: auto fail -->
+    <div class="notif-item" data-type="auto">
+      <div class="read-dot"></div>
+      <div class="notif-icon ni-red">❌</div>
+      <div class="notif-content">
+        <div class="notif-title">自动抢票失败</div>
+        <div class="notif-desc">本次自动抢票未能预约到 <strong>游泳馆快速泳道</strong>（周六 09:00），原因：该时段已满。系统已自动尝试备选时段，均不可用。</div>
+        <div class="notif-time">昨天 08:00</div>
+        <div class="notif-actions">
+          <button class="notif-btn nb-ghost" onclick="window.location.href='auto-booking.html'">调整规则</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- READ: booking reminder -->
+    <div class="notif-item" data-type="booking">
+      <div class="read-dot"></div>
+      <div class="notif-icon ni-blue">⏰</div>
+      <div class="notif-content">
+        <div class="notif-title">预约即将开始</div>
+        <div class="notif-desc"><strong>篮球场3号</strong> 今日 20:00 的预约将在 30 分钟后开始，请及时前往。粤海校区体育馆一楼。</div>
+        <div class="notif-time">4月18日 19:30</div>
+      </div>
+    </div>
+
+    <!-- READ: payment -->
+    <div class="notif-item" data-type="member">
+      <div class="read-dot"></div>
+      <div class="notif-icon ni-purple">💳</div>
+      <div class="notif-content">
+        <div class="notif-title">会员购买成功</div>
+        <div class="notif-desc">恭喜您成功升级为 <strong>年度超级会员</strong>！支付金额 ¥59.00，有效期至 2026-04-20。即刻享受无限自动抢票权益。</div>
+        <div class="notif-time">2024-04-20 09:12</div>
+      </div>
+    </div>
+
+    <!-- READ: system -->
+    <div class="notif-item" data-type="system">
+      <div class="read-dot"></div>
+      <div class="notif-icon ni-gray">📋</div>
+      <div class="notif-content">
+        <div class="notif-title">用户服务协议更新</div>
+        <div class="notif-desc">我们更新了《用户服务协议》和《隐私政策》，主要变更：新增数据保存期限说明（6个月）。继续使用即视为同意。</div>
+        <div class="notif-time">2024-04-01</div>
+        <div class="notif-actions">
+          <button class="notif-btn nb-ghost" onclick="window.location.href='terms.html'">查看协议</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>深圳大学体育预约系统 · Demo · © 2025 SZU Sports</footer>
+
+<script>
+  function filterTab(type, el) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.notif-item').forEach(item => {
+      item.style.display = (type==='all' || item.dataset.type===type) ? '' : 'none';
+    });
+  }
+  function markAllRead() {
+    document.querySelectorAll('.notif-item.unread').forEach(item => {
+      item.classList.remove('unread');
+      item.querySelector('.unread-dot')?.classList.replace('unread-dot','read-dot');
+    });
+    document.querySelector('.page-title').innerHTML = '🔔 通知中心';
+    document.querySelector('.notif-dot')?.remove();
+  }
+  function clearRead() {
+    document.querySelectorAll('.notif-item:not(.unread)').forEach(i=>i.remove());
+  }
+  function dismiss(btn) { btn.closest('.notif-item').classList.remove('unread'); btn.closest('.notif-actions').remove(); }
+</script>
+</body>
+</html>

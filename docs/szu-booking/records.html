@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>预约记录 · 深大体育预约</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --red: #C1272D;
+      --blue: #1A4189;
+      --blue-light: #2a5ab8;
+      --blue-pale: #e8eef8;
+      --gray: #f4f5f8;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #dde3ef;
+      --white: #ffffff;
+      --green: #10b981;
+      --orange: #f59e0b;
+    }
+    body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: var(--gray); color: var(--text); }
+
+    .top-bar { background: var(--red); color: white; text-align: center; font-size: 12px; padding: 5px 0; }
+
+    nav {
+      background: var(--blue); padding: 0 40px;
+      display: flex; align-items: center; height: 64px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; margin-right: 48px; }
+    .logo-box { width: 38px; height: 38px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: var(--red); }
+    .nav-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-link { color: rgba(255,255,255,0.75); text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; transition: all .2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { font-weight: 600; }
+    .nav-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+    .avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid rgba(255,255,255,0.35); }
+    .user-name { color: rgba(255,255,255,0.9); font-size: 13px; }
+
+    .page-header {
+      background: linear-gradient(135deg, var(--blue) 0%, #0d2a5c 100%);
+      color: white; padding: 36px 60px 28px;
+    }
+    .page-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .page-header p { font-size: 14px; color: rgba(255,255,255,0.65); }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 1100px;
+      margin: 28px auto 0;
+      padding: 0 40px;
+    }
+    .stat-card {
+      background: white; border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .stat-icon { font-size: 28px; }
+    .stat-num { font-size: 24px; font-weight: 800; color: var(--text); }
+    .stat-lbl { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 1100px; margin: 24px auto 40px;
+      padding: 0 40px;
+    }
+
+    /* tab bar */
+    .tab-bar {
+      display: flex; gap: 0;
+      background: white; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .tab-item {
+      flex: 1; padding: 12px 0;
+      text-align: center; font-size: 14px;
+      color: var(--sub); cursor: pointer;
+      border-right: 1px solid var(--border);
+      transition: all .18s;
+    }
+    .tab-item:last-child { border-right: none; }
+    .tab-item.active { background: var(--blue); color: white; font-weight: 600; }
+    .tab-item .count {
+      display: inline-block;
+      background: rgba(255,255,255,0.25); color: white;
+      border-radius: 10px; padding: 0 7px; font-size: 11px; margin-left: 5px;
+    }
+    .tab-item:not(.active) .count {
+      background: var(--blue-pale); color: var(--blue);
+    }
+
+    /* filter row */
+    .filter-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .filter-row input[type=text] {
+      flex: 1; padding: 9px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit; outline: none;
+    }
+    .filter-row input[type=text]:focus { border-color: var(--blue); }
+    .filter-row select {
+      padding: 9px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 13px; font-family: inherit; outline: none;
+      background: white; color: var(--text);
+    }
+
+    /* table */
+    .records-table { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .table-head {
+      display: grid;
+      grid-template-columns: 60px 1fr 140px 120px 100px 140px 110px;
+      background: #f8f9fc;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      font-size: 12px; font-weight: 600; color: var(--sub);
+    }
+    .record-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 140px 120px 100px 140px 110px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      transition: background .15s;
+    }
+    .record-row:last-child { border-bottom: none; }
+    .record-row:hover { background: #f8f9fc; }
+
+    .rec-id { font-size: 12px; color: var(--sub); }
+    .rec-venue { }
+    .rec-venue .name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .rec-venue .sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+    .rec-time { font-size: 13px; color: var(--text); }
+    .rec-slot { font-size: 13px; color: var(--text); }
+    .rec-price { font-size: 13px; color: var(--text); font-weight: 500; }
+    .rec-method { font-size: 12px; color: var(--sub); }
+
+    /* status badges */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .status-badge.upcoming { background: #dbeafe; color: #1d4ed8; }
+    .status-badge.auto { background: #d1fae5; color: #065f46; }
+    .status-badge.completed { background: #f3f4f6; color: #6b7280; }
+    .status-badge.cancelled { background: #fee2e2; color: #991b1b; }
+    .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .action-btns { display: flex; gap: 6px; }
+    .act-btn {
+      padding: 5px 10px; border-radius: 5px;
+      font-size: 12px; font-weight: 500; cursor: pointer; border: none;
+      font-family: inherit; transition: opacity .15s;
+    }
+    .act-btn:hover { opacity: .8; }
+    .act-btn.primary { background: var(--blue); color: white; }
+    .act-btn.danger { background: #fee2e2; color: var(--red); }
+    .act-btn.ghost { background: var(--gray); color: var(--sub); }
+
+    /* upcoming highlight card */
+    .upcoming-banner {
+      background: linear-gradient(135deg, #1a4189, #2a5ab8);
+      border-radius: 12px; padding: 20px 24px;
+      margin-bottom: 20px; color: white;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .upcoming-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .upcoming-info p { font-size: 13px; opacity: .8; }
+    .upcoming-meta { display: flex; gap: 20px; }
+    .upcoming-meta-item { text-align: center; }
+    .upcoming-meta-item .um-num { font-size: 22px; font-weight: 800; color: #fbbf24; }
+    .upcoming-meta-item .um-lbl { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+    .countdown {
+      background: rgba(255,255,255,0.15); border-radius: 8px;
+      padding: 8px 16px; text-align: center;
+    }
+    .countdown .ct-num { font-size: 24px; font-weight: 800; color: #fbbf24; }
+    .countdown .ct-lbl { font-size: 11px; opacity: .75; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">深圳大学体育场地自动预约系统</div>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-box">SZU</div>
+    <span>体育预约</span>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html" class="nav-link">🏟️ 场地浏览</a>
+    <a href="auto-booking.html" class="nav-link">⚡ 自动预约</a>
+    <a href="records.html" class="nav-link active">📋 预约记录</a>
+    <a href="membership.html" class="nav-link">👑 会员中心</a>
+  </div>
+  <div class="nav-right">
+    <a href="notifications.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:20px;line-height:1;">🔔</a>
+    <a href="rewards.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">积分</a>
+    <a href="about.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">关于</a>
+    <a href="profile.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+      <span class="user-name">王同学</span>
+      <div class="avatar">👤</div>
+    </a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>📋 预约记录</h1>
+  <p>查看所有手动及自动抢场的预约详情和历史记录</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon">📅</div>
+    <div>
+      <div class="stat-num">23</div>
+      <div class="stat-lbl">本学期预约次数</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⚡</div>
+    <div>
+      <div class="stat-num">18</div>
+      <div class="stat-lbl">自动抢场成功</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⏱️</div>
+    <div>
+      <div class="stat-num">34h</div>
+      <div class="stat-lbl">累计运动时长</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div>
+      <div class="stat-num">¥86</div>
+      <div class="stat-lbl">本学期消费</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Upcoming banner -->
+  <div class="upcoming-banner">
+    <div class="upcoming-info">
+      <h3>🗓️ 最近即将到来的预约</h3>
+      <p>篮球场 A区 3号场 · 粤海校区 · 自动预约成功</p>
+    </div>
+    <div class="upcoming-meta">
+      <div class="upcoming-meta-item">
+        <div class="um-num">明天</div>
+        <div class="um-lbl">预约日期</div>
+      </div>
+      <div class="upcoming-meta-item">
+        <div class="um-num">19:00</div>
+        <div class="um-lbl">开始时间</div>
+      </div>
+      <div class="upcoming-meta-item">
+        <div class="um-num">1.5h</div>
+        <div class="um-lbl">时长</div>
+      </div>
+    </div>
+    <div class="countdown">
+      <div class="ct-num" id="countdown">22:14:36</div>
+      <div class="ct-lbl">距开始还有</div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <div class="tab-item active">即将到来 <span class="count">3</span></div>
+    <div class="tab-item">全部记录 <span class="count">23</span></div>
+    <div class="tab-item">已完成 <span class="count">18</span></div>
+    <div class="tab-item">已取消 <span class="count">2</span></div>
+  </div>
+
+  <!-- Filter row -->
+  <div class="filter-row">
+    <input type="text" placeholder="🔍 搜索场地、时间…" />
+    <select>
+      <option>全部类型</option>
+      <option>篮球</option>
+      <option>羽毛球</option>
+      <option>游泳</option>
+    </select>
+    <select>
+      <option>最近30天</option>
+      <option>本学期</option>
+      <option>自定义</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="records-table">
+    <div class="table-head">
+      <div>编号</div>
+      <div>场地</div>
+      <div>预约日期</div>
+      <div>时段</div>
+      <div>费用</div>
+      <div>状态</div>
+      <div>操作</div>
+    </div>
+
+    <div class="record-row">
+      <div class="rec-id">#2048</div>
+      <div class="rec-venue">
+        <div class="name">🏀 篮球场 A区 3号</div>
+        <div class="sub">粤海校区 · ⚡ 自动预约</div>
+      </div>
+      <div class="rec-time">2024-04-21<br/><span style="font-size:11px;color:var(--sub)">明天</span></div>
+      <div class="rec-slot">19:00–20:30</div>
+      <div class="rec-price" style="color:var(--green)">免费</div>
+      <div><span class="status-badge auto"><span class="dot"></span>自动已抢</span></div>
+      <div class="action-btns">
+        <button class="act-btn danger">取消</button>
+        <button class="act-btn ghost">详情</button>
+      </div>
+    </div>
+
+    <div class="record-row">
+      <div class="rec-id">#2047</div>
+      <div class="rec-venue">
+        <div class="name">🏸 羽毛球馆 6号台</div>
+        <div class="sub">粤海校区 · ⚡ 自动预约</div>
+      </div>
+      <div class="rec-time">2024-04-22<br/><span style="font-size:11px;color:var(--sub)">后天</span></div>
+      <div class="rec-slot">09:00–10:30</div>
+      <div class="rec-price">¥12</div>
+      <div><span class="status-badge upcoming"><span class="dot"></span>待开始</span></div>
+      <div class="action-btns">
+        <button class="act-btn primary" onclick="location.href='payment.html'">付款</button>
+        <button class="act-btn danger">取消</button>
+      </div>
+    </div>
+
+    <div class="record-row">
+      <div class="rec-id">#2046</div>
+      <div class="rec-venue">
+        <div class="name">🎾 网球场 2号</div>
+        <div class="sub">粤海校区 · 手动预约</div>
+      </div>
+      <div class="rec-time">2024-04-23</div>
+      <div class="rec-slot">16:00–17:30</div>
+      <div class="rec-price">¥15</div>
+      <div><span class="status-badge upcoming"><span class="dot"></span>待开始</span></div>
+      <div class="action-btns">
+        <button class="act-btn primary" onclick="location.href='payment.html'">付款</button>
+        <button class="act-btn danger">取消</button>
+      </div>
+    </div>
+
+    <div class="record-row" style="opacity:.75">
+      <div class="rec-id">#2045</div>
+      <div class="rec-venue">
+        <div class="name">🏊 游泳馆</div>
+        <div class="sub">粤海校区 · 手动预约</div>
+      </div>
+      <div class="rec-time">2024-04-18</div>
+      <div class="rec-slot">08:00–09:00</div>
+      <div class="rec-price">¥15</div>
+      <div><span class="status-badge completed"><span class="dot"></span>已完成</span></div>
+      <div class="action-btns">
+        <button class="act-btn ghost">评价</button>
+        <button class="act-btn ghost">再次预约</button>
+      </div>
+    </div>
+
+    <div class="record-row" style="opacity:.75">
+      <div class="rec-id">#2044</div>
+      <div class="rec-venue">
+        <div class="name">🏀 篮球场 B区 1号</div>
+        <div class="sub">粤海校区 · ⚡ 自动预约</div>
+      </div>
+      <div class="rec-time">2024-04-17</div>
+      <div class="rec-slot">19:00–20:30</div>
+      <div class="rec-price" style="color:var(--green)">免费</div>
+      <div><span class="status-badge completed"><span class="dot"></span>已完成</span></div>
+      <div class="action-btns">
+        <button class="act-btn ghost">评价</button>
+        <button class="act-btn ghost">再次预约</button>
+      </div>
+    </div>
+
+    <div class="record-row" style="opacity:.6">
+      <div class="rec-id">#2040</div>
+      <div class="rec-venue">
+        <div class="name">🏸 羽毛球馆 3号台</div>
+        <div class="sub">粤海校区 · ⚡ 自动预约</div>
+      </div>
+      <div class="rec-time">2024-04-14</div>
+      <div class="rec-slot">10:00–11:30</div>
+      <div class="rec-price">¥12</div>
+      <div><span class="status-badge cancelled"><span class="dot"></span>已取消</span></div>
+      <div class="action-btns">
+        <button class="act-btn ghost">详情</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.tab-item').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab-item').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+  // Countdown timer
+  function updateCountdown() {
+    const el = document.getElementById('countdown');
+    const parts = el.textContent.split(':').map(Number);
+    let total = parts[0]*3600 + parts[1]*60 + parts[2];
+    total--;
+    if (total < 0) total = 0;
+    const h = String(Math.floor(total/3600)).padStart(2,'0');
+    const m = String(Math.floor((total%3600)/60)).padStart(2,'0');
+    const s = String(total%60).padStart(2,'0');
+    el.textContent = `${h}:${m}:${s}`;
+  }
+  setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>

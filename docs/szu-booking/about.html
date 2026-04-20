@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>关于我们 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --success:#16a34a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-r { display:flex; gap:1.2rem; }
+    .nav-r a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; }
+    /* HERO */
+    .hero { background:linear-gradient(135deg,#0d2d6b 0%,var(--blue) 50%,#8b1a1d 100%); padding:5rem 2rem; text-align:center; }
+    .hero-icon { font-size:4rem; margin-bottom:1.2rem; }
+    .hero h1 { font-size:2.2rem; font-weight:900; color:#fff; margin-bottom:.6rem; }
+    .hero .tagline { font-size:1rem; color:rgba(255,255,255,.75); margin-bottom:2rem; }
+    .hero-badges { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .h-badge { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:20px; padding:6px 16px; font-size:.82rem; }
+    /* MAIN */
+    main { flex:1; max-width:860px; margin:0 auto; padding:3rem 1.5rem; width:100%; }
+    /* STAT CARDS */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:3rem; }
+    .stat-box { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+    .stat-box .sv { font-size:1.8rem; font-weight:900; color:var(--blue); }
+    .stat-box .sl { font-size:.78rem; color:var(--muted); margin-top:6px; }
+    /* SECTIONS */
+    .section { margin-bottom:3rem; }
+    .section h2 { font-size:1.2rem; font-weight:800; color:var(--text); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+    .section h2::after { content:''; flex:1; height:2px; background:linear-gradient(90deg,var(--border),transparent); }
+    .section p { font-size:.9rem; color:#374151; line-height:1.9; }
+    /* FEATURE GRID */
+    .feature-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .feat { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; }
+    .feat-icon { font-size:1.8rem; margin-bottom:10px; }
+    .feat-title { font-size:.9rem; font-weight:700; margin-bottom:6px; }
+    .feat-desc { font-size:.8rem; color:var(--muted); line-height:1.6; }
+    /* TEAM */
+    .team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .member { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+    .member-avatar { width:56px; height:56px; border-radius:50%; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:700; color:#fff; }
+    .member-name { font-size:.88rem; font-weight:700; margin-bottom:4px; }
+    .member-role { font-size:.75rem; color:var(--muted); }
+    /* TIMELINE */
+    .timeline { position:relative; padding-left:24px; }
+    .timeline::before { content:''; position:absolute; left:7px; top:8px; bottom:8px; width:2px; background:var(--border); }
+    .tl-item { position:relative; padding-bottom:24px; }
+    .tl-item:last-child { padding-bottom:0; }
+    .tl-dot { position:absolute; left:-24px; top:4px; width:14px; height:14px; border-radius:50%; border:2px solid var(--blue); background:#fff; }
+    .tl-item.done .tl-dot { background:var(--blue); }
+    .tl-date { font-size:.75rem; color:var(--muted); margin-bottom:4px; }
+    .tl-title { font-size:.88rem; font-weight:700; color:var(--text); margin-bottom:2px; }
+    .tl-desc { font-size:.8rem; color:var(--muted); line-height:1.5; }
+    /* CONTACT */
+    .contact-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .contact-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+    .contact-icon { font-size:1.8rem; margin-bottom:10px; }
+    .contact-title { font-size:.88rem; font-weight:700; margin-bottom:6px; }
+    .contact-info { font-size:.82rem; color:var(--muted); line-height:1.6; }
+    .contact-info a { color:var(--blue); text-decoration:none; }
+    /* CTA */
+    .cta { background:linear-gradient(135deg,var(--blue),#0d2d6b); border-radius:16px; padding:2.5rem; text-align:center; color:#fff; margin-bottom:0; }
+    .cta h2 { font-size:1.4rem; font-weight:800; margin-bottom:.6rem; }
+    .cta p { opacity:.8; font-size:.9rem; margin-bottom:1.5rem; }
+    .cta-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .btn-cta { padding:12px 28px; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; border:none; }
+    .btn-cta.primary { background:linear-gradient(135deg,var(--red),#a01f23); color:#fff; }
+    .btn-cta.outline { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3); }
+    footer { text-align:center; padding:2rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); }
+    footer .links { display:flex; gap:20px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; }
+    footer .links a { color:var(--blue); text-decoration:none; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-em">🏟️</div><div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div></a>
+  <div class="nav-r"><a href="venues.html">场地预约</a><a href="auto-booking.html">⚡ 自动抢票</a><a href="records.html">预约记录</a><a href="membership.html">👑 会员中心</a><a href="notifications.html">🔔</a><a href="rewards.html">积分</a><a href="profile.html">我的</a></div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-icon">🏟️</div>
+  <h1>深大体育自动预约系统</h1>
+  <p class="tagline">让运动预约更简单 · 让每次抢票都不缺席</p>
+  <div class="hero-badges">
+    <span class="h-badge">🎓 学生自研项目</span>
+    <span class="h-badge">💻 开源精神</span>
+    <span class="h-badge">🏃 服务深大师生</span>
+    <span class="h-badge">🔒 独立账号体系</span>
+  </div>
+</div>
+
+<main>
+  <!-- STATS -->
+  <div class="stat-row">
+    <div class="stat-box"><div class="sv">12+</div><div class="sl">接入场地数量</div></div>
+    <div class="stat-box"><div class="sv">5,000+</div><div class="sl">注册用户</div></div>
+    <div class="stat-box"><div class="sv">98%</div><div class="sl">自动抢票成功率</div></div>
+    <div class="stat-box"><div class="sv">2,000+</div><div class="sl">每月预约次数</div></div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="section">
+    <h2>📖 项目介绍</h2>
+    <p>深大体育自动预约系统是由深圳大学在校学生开发的第三方场地预约辅助工具。系统独立于深圳大学官方信息化平台，通过绑定深大学号来验证在校身份，确保场地资源仅供在校师生使用。</p>
+    <br/>
+    <p>项目的核心功能是「自动抢票」——体育场地往往在开放瞬间（如每天08:00）被抢光，需要用户手速极快或全程守候。本系统通过设置预约规则，在目标时间精准代替用户提交预约请求，让运动爱好者不再受「抢不到场地」之苦。</p>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <h2>✨ 核心功能</h2>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-icon">📅</div><div class="feat-title">智能时段展示</div><div class="feat-desc">实时显示各场地可用时段，绿/黄/红三色区分紧张程度，快速掌握场地状态。</div></div>
+      <div class="feat"><div class="feat-icon">⚡</div><div class="feat-title">自动抢票引擎</div><div class="feat-desc">设置规则后，系统在开放时刻毫秒级触发请求，支持多场地轮换、备选时段、失败重试。</div></div>
+      <div class="feat"><div class="feat-icon">👑</div><div class="feat-title">会员订阅制</div><div class="feat-desc">免费用户享1次体验，付费会员解锁无限自动抢票。月付¥12起，年付低至¥59。</div></div>
+      <div class="feat"><div class="feat-icon">📋</div><div class="feat-title">预约记录管理</div><div class="feat-desc">统一管理所有预约记录，倒计时提醒，历史记录可查，一键取消或评价。</div></div>
+      <div class="feat"><div class="feat-icon">🔔</div><div class="feat-title">实时消息推送</div><div class="feat-desc">抢票结果、预约提醒、会员到期短信通知，不错过任何重要信息。</div></div>
+      <div class="feat"><div class="feat-icon">🎁</div><div class="feat-title">积分奖励体系</div><div class="feat-desc">预约、评价、邀请好友均可获得积分，积分可兑换会员天数和场地优惠券。</div></div>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div class="section">
+    <h2>👥 项目团队</h2>
+    <div class="team-grid">
+      <div class="member">
+        <div class="member-avatar" style="background:linear-gradient(135deg,var(--blue),#0d2d6b);">产</div>
+        <div class="member-name">产品负责人</div>
+        <div class="member-role">计算机学院 · 大三</div>
+      </div>
+      <div class="member">
+        <div class="member-avatar" style="background:linear-gradient(135deg,var(--red),#8b1a1d);">前</div>
+        <div class="member-name">前端工程师</div>
+        <div class="member-role">软件工程 · 大二</div>
+      </div>
+      <div class="member">
+        <div class="member-avatar" style="background:linear-gradient(135deg,#16a34a,#15803d);">后</div>
+        <div class="member-name">后端工程师</div>
+        <div class="member-role">计算机学院 · 大三</div>
+      </div>
+      <div class="member">
+        <div class="member-avatar" style="background:linear-gradient(135deg,#7e22ce,#6b21a8);">测</div>
+        <div class="member-name">测试/运营</div>
+        <div class="member-role">信息管理 · 大二</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="section">
+    <h2>🗓️ 开发历程</h2>
+    <div class="timeline">
+      <div class="tl-item done"><div class="tl-dot"></div><div class="tl-date">2025年4月</div><div class="tl-title">M0 完成 — 前端 Demo 全量上线</div><div class="tl-desc">完成 13 个 HTML 页面 Demo，含 Admin 后台，PRD/PM/架构文档齐全。</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025年5月</div><div class="tl-title">M1-M2 后端框架 + 账号体系</div><div class="tl-desc">搭建 Node.js API 服务、数据库、注册登录真实上线。</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025年6-7月</div><div class="tl-title">M3-M4 手动预约 + 支付</div><div class="tl-desc">对接深大场馆 API，微信/支付宝/校园卡真实支付接入。</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025年8-9月</div><div class="tl-title">M5 自动抢票引擎上线</div><div class="tl-desc">Bull Queue 驱动的抢票核心模块正式运行，通过高峰压测。</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-date">2025年10月</div><div class="tl-title">M11 正式对外上线</div><div class="tl-desc">ICP 备案完成，全量开放注册，运营推广启动。</div></div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="section">
+    <h2>📬 联系我们</h2>
+    <div class="contact-grid">
+      <div class="contact-card"><div class="contact-icon">📧</div><div class="contact-title">邮件联系</div><div class="contact-info"><a href="mailto:sports@szu-booking.com">sports@szu-booking.com</a><br/>工作日 48小时内回复</div></div>
+      <div class="contact-card"><div class="contact-icon">🐛</div><div class="contact-title">问题反馈</div><div class="contact-info">在任意页面点击<br/>「问题反馈」按钮提交 Bug</div></div>
+      <div class="contact-card"><div class="contact-icon">💬</div><div class="contact-title">用户群</div><div class="contact-info">微信公众号：深大体育预约<br/>用户交流群（扫码加入）</div></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>开始使用深大体育预约系统</h2>
+    <p>注册账号，绑定深大学号，告别手动抢票烦恼</p>
+    <div class="cta-btns">
+      <button class="btn-cta primary" onclick="window.location.href='register.html'">立即注册</button>
+      <button class="btn-cta outline" onclick="window.location.href='venues.html'">浏览场地</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="links">
+    <a href="index.html">首页</a>
+    <a href="venues.html">场地浏览</a>
+    <a href="auto-booking.html">自动预约</a>
+    <a href="records.html">预约记录</a>
+    <a href="membership.html">会员中心</a>
+    <a href="rewards.html">积分兑换</a>
+    <a href="profile.html">个人中心</a>
+    <a href="notifications.html">通知中心</a>
+    <a href="terms.html">用户协议</a>
+    <a href="about.html">关于我们</a>
+    <a href="design-spec.html">系统设计文档</a>
+    <a href="admin.html">管理后台</a>
+  </div>
+  深圳大学体育场地自动预约系统 · 学生自研项目 Demo · © 2025 SZU Sports · 与深圳大学官方无关
+</footer>
+</body>
+</html>

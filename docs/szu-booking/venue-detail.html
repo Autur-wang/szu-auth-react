@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>篮球场3号 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --blue-l:#2a5bb5; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --success:#16a34a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); }
+    /* NAV */
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); position:sticky; top:0; z-index:100; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-r { display:flex; align-items:center; gap:1.5rem; }
+    .nav-r a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; }
+    .nav-r a:hover { color:#fff; }
+    /* BREADCRUMB */
+    .breadcrumb { background:#fff; border-bottom:1px solid var(--border); padding:.75rem 2rem; font-size:.82rem; color:var(--muted); }
+    .breadcrumb a { color:var(--blue); text-decoration:none; }
+    .breadcrumb a:hover { text-decoration:underline; }
+    /* LAYOUT */
+    .page { max-width:1100px; margin:0 auto; padding:2rem; display:grid; grid-template-columns:1fr 340px; gap:28px; align-items:start; }
+    /* GALLERY */
+    .gallery { border-radius:16px; overflow:hidden; margin-bottom:20px; background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%); height:260px; display:flex; align-items:center; justify-content:center; font-size:7rem; position:relative; }
+    .gallery-badge { position:absolute; top:16px; right:16px; background:#16a34a; color:#fff; border-radius:8px; padding:5px 12px; font-size:.78rem; font-weight:700; }
+    /* MAIN INFO */
+    .venue-name { font-size:1.8rem; font-weight:800; color:var(--text); margin-bottom:8px; }
+    .venue-meta { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+    .meta-tag { display:inline-flex; align-items:center; gap:5px; background:#f3f4f6; border-radius:8px; padding:5px 12px; font-size:.82rem; color:#374151; }
+    .meta-tag.highlight { background:#dbeafe; color:var(--blue); }
+    /* TABS */
+    .tab-bar { display:flex; gap:4px; border-bottom:2px solid var(--border); margin-bottom:20px; }
+    .tab { padding:10px 20px; font-size:.88rem; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; }
+    .tab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:700; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    /* SLOT GRID */
+    .date-nav { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px; }
+    .date-btn { padding:8px 16px; border:1.5px solid var(--border); border-radius:10px; background:#fff; font-size:.82rem; cursor:pointer; white-space:nowrap; transition:all .15s; text-align:center; }
+    .date-btn .d { font-weight:700; color:var(--text); }
+    .date-btn .w { font-size:.7rem; color:var(--muted); }
+    .date-btn.active { border-color:var(--blue); background:#eff6ff; }
+    .date-btn.active .d { color:var(--blue); }
+    .slots-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .slot { border:1.5px solid var(--border); border-radius:8px; padding:10px 8px; text-align:center; font-size:.8rem; cursor:pointer; transition:all .15s; }
+    .slot .time { font-weight:700; color:var(--text); }
+    .slot .status { font-size:.7rem; margin-top:3px; }
+    .slot.available { border-color:#bbf7d0; background:#f0fdf4; }
+    .slot.available .status { color:var(--success); }
+    .slot.available:hover { border-color:var(--success); background:#dcfce7; }
+    .slot.available.selected { border-color:var(--blue); background:#eff6ff; box-shadow:0 0 0 2px rgba(26,65,137,.15); }
+    .slot.available.selected .time { color:var(--blue); }
+    .slot.booked { border-color:#fca5a5; background:#fff5f5; cursor:not-allowed; opacity:.7; }
+    .slot.booked .status { color:#dc2626; }
+    .slot.peak { border-color:#fed7aa; background:#fff7ed; }
+    .slot.peak .status { color:#d97706; }
+    .slot.peak.selected { border-color:var(--blue); background:#eff6ff; }
+    /* SLOT LEGEND */
+    .legend { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+    .leg { display:flex; align-items:center; gap:6px; font-size:.75rem; color:var(--muted); }
+    .leg-dot { width:10px; height:10px; border-radius:3px; }
+    /* INFO TABLE */
+    .info-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    .info-table td { padding:11px 0; border-bottom:1px solid #f3f4f6; vertical-align:top; }
+    .info-table td:first-child { color:var(--muted); width:100px; }
+    .info-table tr:last-child td { border-bottom:none; }
+    /* REVIEWS */
+    .rating-summary { display:flex; align-items:center; gap:24px; padding:20px; background:#f9fafb; border-radius:12px; margin-bottom:20px; }
+    .big-score { font-size:3rem; font-weight:900; color:var(--text); line-height:1; }
+    .stars { font-size:1.3rem; color:#f59e0b; }
+    .score-bars { flex:1; }
+    .score-bar-row { display:flex; align-items:center; gap:8px; font-size:.75rem; color:var(--muted); margin-bottom:4px; }
+    .score-bar-row .lbl { width:20px; }
+    .score-bar-track { flex:1; height:5px; background:#e5e7eb; border-radius:3px; overflow:hidden; }
+    .score-bar-fill { height:100%; background:#f59e0b; border-radius:3px; }
+    .review-item { padding:16px 0; border-bottom:1px solid #f3f4f6; }
+    .review-item:last-child { border-bottom:none; }
+    .rv-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .rv-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--red)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.9rem; font-weight:700; }
+    .rv-user { flex:1; }
+    .rv-name { font-size:.85rem; font-weight:600; color:var(--text); }
+    .rv-date { font-size:.72rem; color:var(--muted); }
+    .rv-stars { font-size:.9rem; color:#f59e0b; }
+    .rv-text { font-size:.83rem; color:#374151; line-height:1.7; }
+    .rv-dims { display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; }
+    .rv-dim { font-size:.72rem; background:#f3f4f6; padding:2px 8px; border-radius:6px; color:var(--muted); }
+    .rv-dim span { color:var(--text); font-weight:600; }
+    /* STICKY SIDEBAR */
+    .sidebar { position:sticky; top:84px; }
+    .book-card { background:#fff; border-radius:16px; border:1px solid var(--border); box-shadow:0 4px 20px rgba(26,65,137,.1); overflow:hidden; }
+    .book-card-head { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:18px 20px; }
+    .price-display { color:#fff; }
+    .price-display .amount { font-size:2rem; font-weight:800; }
+    .price-display .unit { font-size:.85rem; opacity:.8; }
+    .price-display .total { font-size:.82rem; opacity:.75; margin-top:4px; }
+    .book-card-body { padding:20px; }
+    .selected-slot-info { background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:14px; margin-bottom:16px; font-size:.85rem; }
+    .selected-slot-info .si-label { color:var(--muted); font-size:.75rem; margin-bottom:4px; }
+    .selected-slot-info .si-val { font-weight:700; color:var(--blue); }
+    .duration-select { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:.9rem; margin-bottom:14px; background:#fafbfc; outline:none; cursor:pointer; }
+    .duration-select:focus { border-color:var(--blue); }
+    .btn-book { width:100%; padding:14px; background:linear-gradient(135deg,var(--red),#a01f23); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:1px; transition:opacity .2s; margin-bottom:10px; }
+    .btn-book:hover { opacity:.9; }
+    .btn-auto { width:100%; padding:12px; background:linear-gradient(135deg,var(--blue),#0d2d6b); color:#fff; border:none; border-radius:10px; font-size:.9rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn-auto:hover { opacity:.9; }
+    .book-note { text-align:center; margin-top:10px; font-size:.75rem; color:var(--muted); }
+    /* SIMILAR */
+    .similar-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .sim-card { background:#fff; border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; transition:box-shadow .15s; }
+    .sim-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .sim-thumb { height:70px; display:flex; align-items:center; justify-content:center; font-size:2.2rem; }
+    .sim-body { padding:10px 12px; }
+    .sim-name { font-size:.82rem; font-weight:700; margin-bottom:3px; }
+    .sim-meta { font-size:.72rem; color:var(--muted); }
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:500; align-items:center; justify-content:center; }
+    .modal.show { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; padding:2rem; max-width:440px; width:90%; }
+    .modal-title { font-size:1.1rem; font-weight:700; margin-bottom:.4rem; }
+    .modal-sub { font-size:.83rem; color:var(--muted); margin-bottom:1.5rem; }
+    .order-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #f3f4f6; font-size:.85rem; }
+    .order-row:last-of-type { border:none; }
+    .order-total { display:flex; justify-content:space-between; padding:12px 0 0; font-size:1rem; font-weight:800; border-top:2px solid var(--border); margin-top:4px; }
+    .pay-methods { display:flex; gap:8px; margin:14px 0; }
+    .pay-opt { flex:1; padding:10px; border:1.5px solid var(--border); border-radius:8px; text-align:center; font-size:.78rem; cursor:pointer; transition:all .15s; }
+    .pay-opt.sel { border-color:var(--blue); background:#eff6ff; color:var(--blue); font-weight:700; }
+    .btn-confirm { width:100%; padding:13px; background:linear-gradient(135deg,var(--red),#a01f23); color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:12px; }
+    .btn-cancel { width:100%; padding:11px; background:#f3f4f6; border:none; border-radius:10px; font-size:.9rem; cursor:pointer; margin-top:8px; color:var(--muted); }
+    /* SUCCESS */
+    .success-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:600; align-items:center; justify-content:center; }
+    .success-overlay.show { display:flex; }
+    .success-box { background:#fff; border-radius:20px; padding:2.5rem; text-align:center; max-width:380px; width:90%; }
+    .s-icon { font-size:3.5rem; margin-bottom:1rem; }
+    .s-title { font-size:1.3rem; font-weight:800; margin-bottom:.5rem; }
+    .s-sub { font-size:.85rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.6; }
+    .btn-goto { width:100%; padding:13px; background:linear-gradient(135deg,var(--blue),#0d2d6b); color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; }
+    footer { text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); margin-top:2rem; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-em">🏟️</div><div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div></a>
+  <div class="nav-r">
+    <a href="venues.html">场地浏览</a>
+    <a href="auto-booking.html">⚡ 自动抢票</a>
+    <a href="records.html">预约记录</a>
+    <a href="membership.html">👑 会员中心</a>
+    <a href="notifications.html">🔔</a>
+    <a href="rewards.html">积分</a>
+    <a href="about.html">关于</a>
+    <a href="profile.html">我的</a>
+  </div>
+</nav>
+
+<div class="breadcrumb">
+  <a href="index.html">首页</a> › <a href="venues.html">场地浏览</a> › 篮球场3号
+</div>
+
+<div class="page">
+  <!-- LEFT MAIN -->
+  <div>
+    <!-- GALLERY -->
+    <div class="gallery">
+      🏀
+      <div class="gallery-badge">✅ 开放中</div>
+    </div>
+
+    <!-- NAME & META -->
+    <div class="venue-name">篮球场3号</div>
+    <div class="venue-meta">
+      <span class="meta-tag">📍 粤海校区 · 体育馆一楼</span>
+      <span class="meta-tag">🏟️ 标准5人制</span>
+      <span class="meta-tag">👥 最多10人</span>
+      <span class="meta-tag highlight">⭐ 4.8分（127条评价）</span>
+      <span class="meta-tag highlight">🔥 热门场地</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="showTab('slots',this)">📅 可用时段</div>
+      <div class="tab" onclick="showTab('info',this)">ℹ️ 场地介绍</div>
+      <div class="tab" onclick="showTab('reviews',this)">⭐ 用户评价 (127)</div>
+    </div>
+
+    <!-- SLOTS TAB -->
+    <div class="tab-panel active" id="tab-slots">
+      <div class="date-nav" id="dateNav"></div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#dcfce7;border:1px solid #bbf7d0;"></div>充裕</div>
+        <div class="leg"><div class="leg-dot" style="background:#fff7ed;border:1px solid #fed7aa;"></div>紧张（高峰）</div>
+        <div class="leg"><div class="leg-dot" style="background:#fff5f5;border:1px solid #fca5a5;"></div>已满</div>
+        <div class="leg"><div class="leg-dot" style="background:#eff6ff;border:1.5px solid var(--blue);"></div>已选</div>
+      </div>
+      <div class="slots-grid" id="slotsGrid"></div>
+    </div>
+
+    <!-- INFO TAB -->
+    <div class="tab-panel" id="tab-info">
+      <table class="info-table">
+        <tr><td>场地类型</td><td>室内标准篮球场（木地板）</td></tr>
+        <tr><td>场地面积</td><td>约 420㎡（28×15m）</td></tr>
+        <tr><td>照明设施</td><td>LED专业照明，照度≥500lux</td></tr>
+        <tr><td>设施配套</td><td>篮球架2副、记分牌、更衣室、淋浴间</td></tr>
+        <tr><td>开放时间</td><td>周一至周日 06:00 - 22:00</td></tr>
+        <tr><td>收费标准</td><td>平时 ¥20/小时 · 峰时（18:00-22:00）¥30/小时</td></tr>
+        <tr><td>支付方式</td><td>校园卡 · 微信支付 · 支付宝</td></tr>
+        <tr><td>注意事项</td><td>须穿球鞋方可入场；不得携带食品饮料；超时按分钟计费</td></tr>
+        <tr><td>场地位置</td><td>粤海校区体育馆一楼，从东门进入约步行5分钟</td></tr>
+      </table>
+    </div>
+
+    <!-- REVIEWS TAB -->
+    <div class="tab-panel" id="tab-reviews">
+      <div class="rating-summary">
+        <div style="text-align:center;">
+          <div class="big-score">4.8</div>
+          <div class="stars">★★★★★</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">127条评价</div>
+        </div>
+        <div class="score-bars">
+          <div class="score-bar-row"><div class="lbl">5★</div><div class="score-bar-track"><div class="score-bar-fill" style="width:78%"></div></div><div style="width:28px;text-align:right;">78%</div></div>
+          <div class="score-bar-row"><div class="lbl">4★</div><div class="score-bar-track"><div class="score-bar-fill" style="width:15%"></div></div><div style="width:28px;text-align:right;">15%</div></div>
+          <div class="score-bar-row"><div class="lbl">3★</div><div class="score-bar-track"><div class="score-bar-fill" style="width:5%"></div></div><div style="width:28px;text-align:right;">5%</div></div>
+          <div class="score-bar-row"><div class="lbl">2★</div><div class="score-bar-track"><div class="score-bar-fill" style="width:1%"></div></div><div style="width:28px;text-align:right;">1%</div></div>
+          <div class="score-bar-row"><div class="lbl">1★</div><div class="score-bar-track"><div class="score-bar-fill" style="width:1%"></div></div><div style="width:28px;text-align:right;">1%</div></div>
+        </div>
+      </div>
+
+      <div class="review-item">
+        <div class="rv-head">
+          <div class="rv-avatar">王</div>
+          <div class="rv-user"><div class="rv-name">王同学</div><div class="rv-date">2025-04-18</div></div>
+          <div class="rv-stars">★★★★★</div>
+        </div>
+        <div class="rv-text">地板很好，灯光充足，和朋友打了2小时很爽！设施维护得不错，每次来都很干净。唯一不足是停车场离场馆稍远。</div>
+        <div class="rv-dims">
+          <div class="rv-dim">场地质量 <span>5/5</span></div>
+          <div class="rv-dim">设施完好 <span>5/5</span></div>
+          <div class="rv-dim">服务体验 <span>4/5</span></div>
+        </div>
+      </div>
+      <div class="review-item">
+        <div class="rv-head">
+          <div class="rv-avatar" style="background:linear-gradient(135deg,#16a34a,#15803d);">李</div>
+          <div class="rv-user"><div class="rv-name">李同学（匿名）</div><div class="rv-date">2025-04-15</div></div>
+          <div class="rv-stars">★★★★★</div>
+        </div>
+        <div class="rv-text">自动抢票功能太好用了，提前设好规则，周五的场次全抢到了。场地本身也很棒，木地板手感一流。</div>
+        <div class="rv-dims">
+          <div class="rv-dim">场地质量 <span>5/5</span></div>
+          <div class="rv-dim">设施完好 <span>5/5</span></div>
+          <div class="rv-dim">服务体验 <span>5/5</span></div>
+        </div>
+      </div>
+      <div class="review-item">
+        <div class="rv-head">
+          <div class="rv-avatar" style="background:linear-gradient(135deg,#d97706,#b45309);">张</div>
+          <div class="rv-user"><div class="rv-name">张同学</div><div class="rv-date">2025-04-10</div></div>
+          <div class="rv-stars">★★★★☆</div>
+        </div>
+        <div class="rv-text">总体不错，就是晚高峰 20:00-22:00 特别难抢，每次要靠自动抢票才能订到。建议增加场次或限制每人每周预约次数。</div>
+        <div class="rv-dims">
+          <div class="rv-dim">场地质量 <span>5/5</span></div>
+          <div class="rv-dim">设施完好 <span>4/5</span></div>
+          <div class="rv-dim">服务体验 <span>4/5</span></div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px;">
+        <button style="padding:9px 24px;border:1px solid var(--border);background:#fff;border-radius:8px;font-size:.85rem;cursor:pointer;color:var(--muted);" onclick="window.location.href='review.html'">查看全部评价 → </button>
+      </div>
+    </div>
+
+    <!-- SIMILAR VENUES -->
+    <div style="margin-top:28px;">
+      <h3 style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:14px;">同类场地推荐</h3>
+      <div class="similar-grid">
+        <div class="sim-card" onclick="window.location.href='venue-detail.html'">
+          <div class="sim-thumb" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);">🏀</div>
+          <div class="sim-body"><div class="sim-name">篮球场1号</div><div class="sim-meta">粤海校区 · ¥20/h · ⭐ 4.6</div></div>
+        </div>
+        <div class="sim-card" onclick="window.location.href='venue-detail.html'">
+          <div class="sim-thumb" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);">🏀</div>
+          <div class="sim-body"><div class="sim-name">篮球场2号</div><div class="sim-meta">丽湖校区 · ¥20/h · ⭐ 4.7</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="book-card">
+      <div class="book-card-head">
+        <div class="price-display">
+          <div><span class="amount">¥20</span><span class="unit">/小时</span></div>
+          <div class="total" id="totalHint">请先选择时段</div>
+        </div>
+      </div>
+      <div class="book-card-body">
+        <div class="selected-slot-info" id="slotInfo">
+          <div class="si-label">已选时段</div>
+          <div class="si-val" id="slotDisplay">请点击左侧时段选择</div>
+        </div>
+
+        <div style="font-size:.82rem;font-weight:600;color:#374151;margin-bottom:6px;">预约时长</div>
+        <select class="duration-select" id="durSelect" onchange="updateTotal()">
+          <option value="1">1小时</option>
+          <option value="2" selected>2小时</option>
+          <option value="3">3小时</option>
+        </select>
+
+        <button class="btn-book" onclick="openBookModal()">立即预约</button>
+        <button class="btn-auto" onclick="window.location.href='auto-booking.html'">⚡ 设置自动抢票</button>
+        <div class="book-note">支持校园卡 · 微信 · 支付宝</div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div style="margin-top:16px;background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:12px;">场地数据</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:.82rem;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">本周预约率</span><span style="font-weight:700;color:var(--red);">92%</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">峰时抢票成功率</span><span style="font-weight:700;color:var(--blue);">41%</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">本月使用人次</span><span style="font-weight:700;">486次</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">用户满意度</span><span style="font-weight:700;color:#f59e0b;">⭐ 4.8/5</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOK MODAL -->
+<div class="modal" id="bookModal">
+  <div class="modal-box">
+    <div class="modal-title">确认预约</div>
+    <div class="modal-sub" id="modal-sub">篮球场3号 · 今日 18:00-20:00</div>
+    <div class="order-row"><span style="color:var(--muted);">场地费用</span><span id="m-fee">¥40.00</span></div>
+    <div class="order-row"><span style="color:var(--muted);">优惠</span><span style="color:#16a34a;">-¥0.00</span></div>
+    <div class="order-total"><span>合计</span><span style="color:var(--red);" id="m-total">¥40.00</span></div>
+    <div style="font-size:.82rem;font-weight:600;color:#374151;margin:14px 0 8px;">支付方式</div>
+    <div class="pay-methods">
+      <div class="pay-opt sel" onclick="selPay(this)">💳 校园卡</div>
+      <div class="pay-opt" onclick="selPay(this)">💚 微信</div>
+      <div class="pay-opt" onclick="selPay(this)">🔵 支付宝</div>
+    </div>
+    <button class="btn-confirm" onclick="confirmPay()">确认支付</button>
+    <button class="btn-cancel" onclick="document.getElementById('bookModal').classList.remove('show')">取消</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="s-icon">🎉</div>
+    <div class="s-title">预约成功！</div>
+    <div class="s-sub">篮球场3号已预约成功<br/>请准时前往，超时将自动释放</div>
+    <button class="btn-goto" onclick="window.location.href='records.html'">查看我的预约 →</button>
+    <button style="width:100%;padding:11px;background:#f3f4f6;border:none;border-radius:10px;font-size:.9rem;cursor:pointer;margin-top:8px;color:var(--muted);" onclick="document.getElementById('successOverlay').classList.remove('show')">继续浏览场地</button>
+  </div>
+</div>
+
+<footer>深圳大学体育预约系统 · Demo · © 2025 SZU Sports</footer>
+
+<script>
+  const days = ['日','一','二','三','四','五','六'];
+  let selectedSlot = null;
+
+  // Build date nav
+  const dateNav = document.getElementById('dateNav');
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const btn = document.createElement('div');
+    btn.className = 'date-btn' + (i === 0 ? ' active' : '');
+    btn.innerHTML = `<div class="d">${i === 0 ? '今天' : (d.getMonth()+1)+'/'+(d.getDate())}</div><div class="w">周${days[d.getDay()]}</div>`;
+    btn.onclick = () => { document.querySelectorAll('.date-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderSlots(i); };
+    dateNav.appendChild(btn);
+  }
+
+  // Build slots
+  function renderSlots(dayOffset) {
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = '';
+    const slots = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+    const booked = [2, 3, 9, 12, 13];
+    const peak = [12, 13, 14, 15];
+    slots.forEach((t, i) => {
+      const div = document.createElement('div');
+      const end = slots[i+1] || '22:00';
+      if (booked.includes(i)) {
+        div.className = 'slot booked';
+        div.innerHTML = `<div class="time">${t}</div><div class="status">已满</div>`;
+      } else if (peak.includes(i)) {
+        div.className = 'slot peak';
+        div.innerHTML = `<div class="time">${t}</div><div class="status">🔥 峰时</div>`;
+        div.onclick = () => selectSlot(div, t, end, true);
+      } else {
+        div.className = 'slot available';
+        div.innerHTML = `<div class="time">${t}</div><div class="status">可预约</div>`;
+        div.onclick = () => selectSlot(div, t, end, false);
+      }
+      grid.appendChild(div);
+    });
+    selectedSlot = null;
+    document.getElementById('slotDisplay').textContent = '请点击左侧时段选择';
+    document.getElementById('totalHint').textContent = '请先选择时段';
+  }
+
+  function selectSlot(el, start, end, isPeak) {
+    document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedSlot = { start, end, isPeak };
+    document.getElementById('slotDisplay').textContent = `${start} - ${end}`;
+    updateTotal();
+  }
+
+  function updateTotal() {
+    if (!selectedSlot) return;
+    const dur = parseInt(document.getElementById('durSelect').value);
+    const price = selectedSlot.isPeak ? 30 : 20;
+    const total = price * dur;
+    document.getElementById('totalHint').textContent = `合计 ¥${total}`;
+  }
+
+  renderSlots(0);
+
+  function showTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-'+id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function openBookModal() {
+    if (!selectedSlot) { alert('请先选择时段'); return; }
+    const dur = parseInt(document.getElementById('durSelect').value);
+    const price = selectedSlot.isPeak ? 30 : 20;
+    const total = price * dur;
+    document.getElementById('modal-sub').textContent = `篮球场3号 · ${selectedSlot.start} - 结束`;
+    document.getElementById('m-fee').textContent = `¥${total}.00`;
+    document.getElementById('m-total').textContent = `¥${total}.00`;
+    document.getElementById('bookModal').classList.add('show');
+  }
+
+  function selPay(el) { document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); }
+
+  function confirmPay() {
+    document.getElementById('bookModal').classList.remove('show');
+    setTimeout(() => document.getElementById('successOverlay').classList.add('show'), 300);
+  }
+</script>
+</body>
+</html>

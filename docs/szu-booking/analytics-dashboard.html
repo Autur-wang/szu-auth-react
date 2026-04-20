@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据分析看板 · 深大体育预约系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --blue:#1A4189;--red:#C1272D;--green:#16a34a;--orange:#ea580c;--purple:#7c3aed;
+  --blue-light:#EEF3FB;--bg:#f0f4fb;--border:#dde3f0;--text:#1e293b;--muted:#64748b;
+  --card:#fff;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── 侧边栏 ── */
+.sidebar{width:var(--sidebar);background:var(--blue);position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sidebar-logo h2{color:#fff;font-size:15px;font-weight:700;line-height:1.4}
+.sidebar-logo span{color:rgba(255,255,255,.6);font-size:11px}
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-section{padding:6px 18px 4px;color:rgba(255,255,255,.45);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;color:rgba(255,255,255,.75);font-size:13px;cursor:pointer;border-left:3px solid transparent;transition:.15s}
+.nav-item:hover,.nav-item.active{color:#fff;background:rgba(255,255,255,.1);border-left-color:#fff}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 18px;border-top:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:11px}
+.live-dot{display:inline-block;width:7px;height:7px;background:#22c55e;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── 主内容 ── */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-weight:700;font-size:16px;color:var(--blue)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.date-range{background:var(--blue-light);border:1px solid var(--border);padding:5px 12px;border-radius:6px;font-size:12px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-refresh{background:var(--blue);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer}
+.content{padding:24px 28px;flex:1}
+
+/* ── 视图面板 ── */
+.view{display:none}
+.view.active{display:block}
+
+/* ── KPI 卡片 ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border-radius:10px;padding:18px 20px;border:1px solid var(--border);position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;right:0;width:4px;height:100%;border-radius:0 10px 10px 0}
+.kpi-card.blue::after{background:var(--blue)}
+.kpi-card.green::after{background:var(--green)}
+.kpi-card.orange::after{background:var(--orange)}
+.kpi-card.red::after{background:var(--red)}
+.kpi-card.purple::after{background:var(--purple)}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.kpi-value{font-size:28px;font-weight:700;color:var(--text)}
+.kpi-sub{font-size:12px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.kpi-sub.up{color:var(--green)} .kpi-sub.down{color:var(--red)}
+
+/* ── 图表区 ── */
+.chart-grid{display:grid;gap:16px}
+.chart-grid.col2{grid-template-columns:1fr 1fr}
+.chart-grid.col3{grid-template-columns:2fr 1fr 1fr}
+.chart-grid.col-6-4{grid-template-columns:6fr 4fr}
+.chart-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:20px}
+.chart-card h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-card p{font-size:12px;color:var(--muted);margin-bottom:16px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:280px}
+.chart-wrap.short{height:160px}
+
+/* ── 漏斗 ── */
+.funnel-wrap{display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.funnel-step{background:var(--blue-light);border-radius:6px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;transition:.2s;cursor:default}
+.funnel-step:hover{background:#dde8f8}
+.funnel-step-bar{height:100%;background:var(--blue);border-radius:4px;transition:.8s width}
+.funnel-name{font-size:13px;font-weight:500;color:var(--blue)}
+.funnel-val{font-size:13px;font-weight:700;color:var(--text)}
+.funnel-rate{font-size:11px;color:var(--muted);margin-top:2px}
+.funnel-arrow{color:var(--muted);font-size:16px;text-align:center;line-height:1}
+.funnel-bar-row{display:flex;align-items:center;gap:10px;margin-top:4px}
+.funnel-bar-bg{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.funnel-bar-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .8s}
+
+/* ── 实时事件流 ── */
+.stream-list{max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.stream-list::-webkit-scrollbar{width:4px}
+.stream-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.stream-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:12px;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.stream-badge{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.stream-user{color:var(--muted);font-size:11px;min-width:60px}
+.stream-time{color:var(--muted);font-size:10px;margin-left:auto;white-space:nowrap}
+.badge-view{background:#dbeafe;color:#1d4ed8}
+.badge-click{background:#dcfce7;color:#15803d}
+.badge-booking{background:#fef9c3;color:#854d0e}
+.badge-pay{background:#f0fdf4;color:#166534}
+.badge-error{background:#fee2e2;color:#dc2626}
+.badge-auto{background:#f3e8ff;color:#7e22ce}
+
+/* ── 表格 ── */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{background:var(--blue);color:#fff;padding:10px 14px;text-align:left;font-weight:600;font-size:12px}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.data-table tr:nth-child(even) td{background:#f8fafc}
+.data-table tr:hover td{background:var(--blue-light)}
+.rank-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;background:var(--blue-light);color:var(--blue)}
+.rank-num.top1{background:var(--red);color:#fff}
+.rank-num.top2{background:#f97316;color:#fff}
+.rank-num.top3{background:#eab308;color:#fff}
+.bar-mini{display:inline-block;height:6px;border-radius:3px;background:var(--blue);vertical-align:middle;margin-right:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.tag-up{background:#dcfce7;color:#15803d}
+.tag-down{background:#fee2e2;color:#dc2626}
+.tag-flat{background:#f1f5f9;color:#64748b}
+
+/* ── 地图热力图（模拟） ── */
+.heatmap-grid{display:grid;grid-template-columns:repeat(24,1fr);gap:2px}
+.heatmap-cell{aspect-ratio:1;border-radius:2px;background:#e2e8f0;cursor:pointer;transition:.15s}
+.heatmap-cell:hover{transform:scale(1.3);z-index:1;position:relative}
+.heatmap-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px}
+.heatmap-legend{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.hm-box{width:12px;height:12px;border-radius:2px}
+
+/* ── 指标路径桑基（简化版）── */
+.path-row{display:flex;align-items:center;gap:4px;margin-bottom:6px;font-size:12px}
+.path-node{padding:4px 10px;border-radius:4px;font-weight:600;white-space:nowrap}
+.path-edge{flex:1;height:2px;background:var(--border);position:relative}
+.path-edge::after{content:attr(data-pct);position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* ── 用户分布 ── */
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px}
+.dist-label{width:90px;color:var(--muted)}
+.dist-bar-bg{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.dist-bar-fill{height:100%;border-radius:4px}
+.dist-val{width:40px;text-align:right;font-weight:600;color:var(--text)}
+
+/* ── Segment 卡片 ── */
+.seg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.seg-card{background:var(--blue-light);border-radius:8px;padding:14px 16px;border:1px solid #c7d7ef}
+.seg-card h4{font-size:12px;color:var(--blue);font-weight:700;margin-bottom:8px}
+.seg-stat{font-size:20px;font-weight:700;color:var(--text)}
+.seg-desc{font-size:11px;color:var(--muted);margin-top:3px}
+</style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h2>📊 数据分析看板</h2>
+    <span>深大体育预约系统</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">概览</div>
+    <div class="nav-item active" data-view="overview" onclick="switchView('overview',this)"><span class="icon">🏠</span>总览仪表盘</div>
+    <div class="nav-item" data-view="realtime" onclick="switchView('realtime',this)"><span class="icon">⚡</span>实时监控</div>
+    <div class="nav-section">用户分析</div>
+    <div class="nav-item" data-view="funnel" onclick="switchView('funnel',this)"><span class="icon">🔻</span>转化漏斗</div>
+    <div class="nav-item" data-view="retention" onclick="switchView('retention',this)"><span class="icon">🔄</span>留存分析</div>
+    <div class="nav-item" data-view="segment" onclick="switchView('segment',this)"><span class="icon">👥</span>用户分群</div>
+    <div class="nav-section">业务分析</div>
+    <div class="nav-item" data-view="venue" onclick="switchView('venue',this)"><span class="icon">🏟️</span>场地热度</div>
+    <div class="nav-item" data-view="events" onclick="switchView('events',this)"><span class="icon">📋</span>事件明细</div>
+    <div class="nav-section">系统</div>
+    <div class="nav-item" onclick="window.open('ops-dashboard.html')"><span class="icon">🔧</span>运维看板</div>
+    <div class="nav-item" onclick="window.open('admin.html')"><span class="icon">⚙️</span>管理后台</div>
+  </nav>
+  <div class="sidebar-footer"><span class="live-dot"></span>数据实时更新中</div>
+</aside>
+
+<!-- 主内容 -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">📊 数据分析 · 深大体育预约系统</div>
+    <div class="topbar-right">
+      <div class="date-range">📅 2026-04-13 ~ 2026-04-20 <strong>▾</strong></div>
+      <button class="btn-refresh" onclick="refreshAll()">↻ 刷新</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ 总览 ══ -->
+    <div id="view-overview" class="view active">
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-label">📱 日活跃用户 (DAU)</div>
+          <div class="kpi-value" id="kpi-dau">1,284</div>
+          <div class="kpi-sub up">▲ 12.4% 较上周同期</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">✅ 预约成功数（今日）</div>
+          <div class="kpi-value" id="kpi-bookings">386</div>
+          <div class="kpi-sub up">▲ 8.7% 较昨日</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-label">💰 支付金额（今日）</div>
+          <div class="kpi-value" id="kpi-revenue">¥7,720</div>
+          <div class="kpi-sub up">▲ 15.2% 较昨日</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">🏆 整体预约转化率</div>
+          <div class="kpi-value" id="kpi-cvr">34.2%</div>
+          <div class="kpi-sub down">▼ 1.3% 较上周</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-label">🆕 新注册用户（今日）</div>
+          <div class="kpi-value" id="kpi-reg">47</div>
+          <div class="kpi-sub up">▲ 5 较昨日</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">⚡ 自动抢场成功（今日）</div>
+          <div class="kpi-value" id="kpi-auto">128</div>
+          <div class="kpi-sub up">▲ 22 较昨日</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">👑 会员购买（本周）</div>
+          <div class="kpi-value" id="kpi-mem">93</div>
+          <div class="kpi-sub up">▲ 18.4%</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-label">💬 用户评价（本周）</div>
+          <div class="kpi-value" id="kpi-review">214</div>
+          <div class="kpi-sub up">▲ 平均 4.7 ⭐</div>
+        </div>
+      </div>
+
+      <!-- 趋势 + 漏斗 -->
+      <div class="chart-grid col-6-4" style="margin-bottom:16px">
+        <div class="chart-card">
+          <h3>📈 近7日活跃趋势</h3>
+          <p>DAU · 预约数 · 支付金额（元/10）</p>
+          <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>🔻 预约转化漏斗（今日）</h3>
+          <p>UV → 浏览场地 → 选时段 → 支付完成</p>
+          <div id="funnel-main" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- 事件分布 + 设备 -->
+      <div class="chart-grid col2" style="margin-bottom:16px">
+        <div class="chart-card">
+          <h3>📊 今日事件分布（Top 10）</h3>
+          <p>各事件触发次数占比</p>
+          <div class="chart-wrap"><canvas id="eventPieChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>📱 访问设备与平台</h3>
+          <p>今日活跃用户设备分布</p>
+          <div class="chart-wrap"><canvas id="deviceChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- 场地排行 -->
+      <div class="chart-card">
+        <h3>🏟️ 场地预约热度排行（本周）</h3>
+        <p>按预约成功次数降序，含环比变化</p>
+        <table class="data-table" style="margin-top:8px">
+          <thead><tr><th>排名</th><th>场地名称</th><th>类型</th><th>预约次数</th><th>占比</th><th>环比</th></tr></thead>
+          <tbody id="venue-rank-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ 实时监控 ══ -->
+    <div id="view-realtime" class="view">
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi-card blue"><div class="kpi-label">🟢 在线用户</div><div class="kpi-value" id="rt-online">42</div></div>
+        <div class="kpi-card green"><div class="kpi-label">📨 事件/分钟</div><div class="kpi-value" id="rt-epm">186</div></div>
+        <div class="kpi-card orange"><div class="kpi-label">⚡ 自动预约队列</div><div class="kpi-value" id="rt-queue">23</div></div>
+        <div class="kpi-card purple"><div class="kpi-label">💳 支付中订单</div><div class="kpi-value" id="rt-paying">8</div></div>
+        <div class="kpi-card red"><div class="kpi-label">❌ 错误率</div><div class="kpi-value" id="rt-err">0.3%</div></div>
+      </div>
+      <div class="chart-grid col2" style="margin-bottom:16px;margin-top:16px">
+        <div class="chart-card">
+          <h3>⚡ 实时事件流（最新50条）</h3>
+          <p>自动滚动更新</p>
+          <div id="stream-list" class="stream-list" style="margin-top:8px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>📈 分钟级事件量</h3>
+          <p>最近 30 分钟</p>
+          <div class="chart-wrap tall"><canvas id="rtChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>🗓️ 时段热力图（本周 · 按小时）</h3>
+        <p>颜色越深表示该时段事件量越高</p>
+        <div id="heatmap" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- ══ 转化漏斗 ══ -->
+    <div id="view-funnel" class="view">
+      <div class="chart-grid col2">
+        <div class="chart-card">
+          <h3>🔻 完整注册漏斗</h3>
+          <p>访问注册页 → 填写手机 → 验证码 → 绑定学号 → 完成注册</p>
+          <div id="funnel-reg" style="margin-top:12px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>🔻 预约转化漏斗</h3>
+          <p>进入场地 → 查看详情 → 选择时段 → 锁定时段 → 确认预约 → 支付完成</p>
+          <div id="funnel-book" style="margin-top:12px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>🔻 会员购买漏斗</h3>
+          <p>会员门控触发 → 浏览套餐 → 点击购买 → 支付完成</p>
+          <div id="funnel-mem" style="margin-top:12px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>📊 各漏斗总览对比</h3>
+          <p>各关键流程首步→末步总转化率</p>
+          <div class="chart-wrap tall"><canvas id="funnelBarChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 留存分析 ══ -->
+    <div id="view-retention" class="view">
+      <div class="chart-card" style="margin-bottom:16px">
+        <h3>🔄 次日/7日/30日留存率</h3>
+        <p>按注册周次追踪用户留存</p>
+        <div class="chart-wrap tall"><canvas id="retentionChart"></canvas></div>
+      </div>
+      <div class="chart-grid col2">
+        <div class="chart-card">
+          <h3>📊 留存率热力矩阵</h3>
+          <p>行：注册周，列：登录后第N天</p>
+          <div id="retention-heatmap" style="overflow-x:auto;margin-top:12px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>🔄 关键行为与留存关联</h3>
+          <p>完成以下行为的用户7日留存率更高</p>
+          <div id="behavior-retention" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 用户分群 ══ -->
+    <div id="view-segment" class="view">
+      <div class="seg-grid" style="margin-bottom:20px">
+        <div class="seg-card"><h4>🆕 新用户（7日内注册）</h4><div class="seg-stat">312</div><div class="seg-desc">占今日活跃 24.3%</div></div>
+        <div class="seg-card"><h4>🔄 回归用户（30日+ 首次回访）</h4><div class="seg-stat">87</div><div class="seg-desc">占今日活跃 6.8%</div></div>
+        <div class="seg-card"><h4>👑 会员用户</h4><div class="seg-stat">543</div><div class="seg-desc">月均预约 8.4 次</div></div>
+        <div class="seg-card"><h4>⚡ 自动预约用户</h4><div class="seg-stat">421</div><div class="seg-desc">开启规则平均 2.1 条</div></div>
+        <div class="seg-card"><h4>😴 沉默用户（14日无登录）</h4><div class="seg-stat">1,208</div><div class="seg-desc">待召回，流失风险</div></div>
+        <div class="seg-card"><h4>🌟 高价值用户（月消费 ≥ ¥100）</h4><div class="seg-stat">178</div><div class="seg-desc">贡献总收入 41.3%</div></div>
+      </div>
+      <div class="chart-grid col2">
+        <div class="chart-card">
+          <h3>👤 用户来源渠道分布</h3>
+          <p>今日新增用户来源</p>
+          <div class="chart-wrap"><canvas id="sourceChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>📊 用户活跃度分层</h3>
+          <p>按月登录次数分层</p>
+          <div id="activity-dist" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 场地热度 ══ -->
+    <div id="view-venue" class="view">
+      <div class="chart-grid col2" style="margin-bottom:16px">
+        <div class="chart-card">
+          <h3>🏟️ 各类型场地预约占比</h3>
+          <p>本周预约分布</p>
+          <div class="chart-wrap"><canvas id="venueTypeChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>⏰ 热门预约时段分布</h3>
+          <p>按时段预约密度</p>
+          <div class="chart-wrap"><canvas id="timeSlotChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>📉 场地预约量趋势（近30日 · Top 5 场地）</h3>
+        <p></p>
+        <div class="chart-wrap tall"><canvas id="venueTrendChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ 事件明细 ══ -->
+    <div id="view-events" class="view">
+      <div class="chart-card" style="margin-bottom:16px">
+        <h3>📋 全站事件触发量（近7日）</h3>
+        <p>按事件名称聚合，含日均、环比</p>
+        <table class="data-table" style="margin-top:8px" id="events-table">
+          <thead><tr><th>#</th><th>事件名称</th><th>事件描述</th><th>今日</th><th>7日合计</th><th>日均</th><th>环比</th></tr></thead>
+          <tbody id="events-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- .content -->
+</main>
+
+<script>
+/* ── 工具 ── */
+const R = (min,max) => Math.floor(Math.random()*(max-min+1)+min);
+const days7 = ['4/14','4/15','4/16','4/17','4/18','4/19','4/20'];
+const BLUE='#1A4189', RED='#C1272D', GREEN='#16a34a', ORANGE='#ea580c', PURPLE='#7c3aed';
+const COLORS=[BLUE,'#2563eb','#0ea5e9',GREEN,'#10b981',ORANGE,RED,PURPLE,'#db2777','#6366f1'];
+
+/* ── 导航 ── */
+function switchView(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  initView(id);
+}
+
+const initialized = {};
+function initView(id){
+  if(initialized[id]) return;
+  initialized[id]=true;
+  ({
+    overview: initOverview,
+    realtime: initRealtime,
+    funnel: initFunnel,
+    retention: initRetention,
+    segment: initSegment,
+    venue: initVenue,
+    events: initEvents,
+  }[id] || (()=>{}))();
+}
+
+function refreshAll(){
+  Object.keys(initialized).forEach(k=>delete initialized[k]);
+  document.querySelectorAll('.nav-item.active').forEach(el=>{
+    const v=el.dataset.view; if(v) initView(v);
+  });
+  if(initialized['overview']) initOverview();
+}
+
+/* ── 概览 ── */
+function initOverview(){
+  // 趋势图
+  const dau=[980,1050,1120,1090,1180,1230,1284];
+  const books=[280,310,340,320,360,370,386];
+  const rev=[5200,6100,6800,6200,7100,7400,7720];
+  makeLineChart('trendChart',[
+    {label:'DAU',data:dau,color:BLUE},
+    {label:'预约数',data:books,color:GREEN},
+    {label:'收入(元/10)',data:rev.map(v=>v/10),color:ORANGE},
+  ],days7);
+
+  // 漏斗（主）
+  makeFunnel('funnel-main',[
+    {name:'访问首页',val:1284,pct:100},
+    {name:'进入场地列表',val:987,pct:76.9},
+    {name:'查看场地详情',val:714,pct:55.6},
+    {name:'选择时段',val:512,pct:39.9},
+    {name:'支付完成',val:386,pct:30.1},
+  ]);
+
+  // 事件饼图
+  makePieChart('eventPieChart',[
+    {label:'page_view',val:4820},
+    {label:'venue_card_click',val:1480},
+    {label:'slot_select',val:780},
+    {label:'booking_confirm',val:512},
+    {label:'payment_success',val:386},
+    {label:'auto_rule_create',val:203},
+    {label:'login_success',val:184},
+    {label:'membership_view',val:162},
+    {label:'review_submit',val:87},
+    {label:'其他',val:340},
+  ]);
+
+  // 设备图
+  makePieChart('deviceChart',[
+    {label:'Android',val:48,color:'#22c55e'},
+    {label:'iOS',val:31,color:'#0ea5e9'},
+    {label:'Windows',val:15,color:BLUE},
+    {label:'macOS',val:6,color:PURPLE},
+  ],true);
+
+  // 场地排行
+  const venues=[
+    ['综合体育馆 - 羽毛球场 A','羽毛球',312,'34.8%','+18%'],
+    ['综合体育馆 - 篮球场 1','篮球',287,'32.0%','+12%'],
+    ['田径运动场 - 跑道','田径',189,'21.1%','+5%'],
+    ['游泳馆 - 公共泳道','游泳',156,'17.4%','-3%'],
+    ['综合体育馆 - 乒乓球室','乒乓球',134,'14.9%','+22%'],
+    ['网球场 - 1号场','网球',98,'10.9%','+8%'],
+    ['综合体育馆 - 羽毛球场 B','羽毛球',84,'9.4%','+2%'],
+  ];
+  const ranks=['top1','top2','top3','','','',''];
+  const tbody=document.getElementById('venue-rank-tbody');
+  venues.forEach(([n,t,cnt,pct,chg],i)=>{
+    const up=chg.startsWith('+');
+    tbody.innerHTML+=`<tr>
+      <td><span class="rank-num ${ranks[i]}">${i+1}</span></td>
+      <td>${n}</td><td>${t}</td>
+      <td><span class="bar-mini" style="width:${Math.round(cnt/312*80)}px"></span>${cnt}</td>
+      <td>${pct}</td>
+      <td><span class="tag ${up?'tag-up':'tag-down'}">${chg}</span></td>
+    </tr>`;
+  });
+}
+
+/* ── 实时 ── */
+let rtInterval=null, streamInterval=null;
+function initRealtime(){
+  // 实时折线
+  const rtData=Array.from({length:30},()=>R(80,260));
+  const rtLabels=Array.from({length:30},(_,i)=>i+' 分前');
+  const rtCtx=document.getElementById('rtChart').getContext('2d');
+  const rtChart=new Chart(rtCtx,{
+    type:'line',
+    data:{labels:rtLabels.reverse(),datasets:[{
+      label:'事件数/分钟',data:rtData,
+      borderColor:BLUE,backgroundColor:'rgba(26,65,137,.1)',
+      fill:true,tension:.4,pointRadius:0,borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{display:false},y:{grid:{color:'#f1f5f9'}}}}
+  });
+  rtInterval=setInterval(()=>{
+    rtChart.data.datasets[0].data.shift();
+    rtChart.data.datasets[0].data.push(R(80,260));
+    rtChart.update('none');
+    document.getElementById('rt-online').textContent=R(35,65);
+    document.getElementById('rt-epm').textContent=R(120,250);
+    document.getElementById('rt-queue').textContent=R(10,40);
+  },3000);
+
+  // 事件流
+  buildStream();
+  streamInterval=setInterval(addStreamItem,2000);
+
+  // 热力图
+  buildHeatmap();
+}
+
+const EVENT_TYPES=[
+  {n:'page_view',c:'badge-view',users:['王同学','李同学','张同学','陈同学','刘同学']},
+  {n:'venue_card_click',c:'badge-click',users:['王同学','赵同学','孙同学']},
+  {n:'slot_select',c:'badge-booking',users:['李同学','吴同学']},
+  {n:'payment_success',c:'badge-pay',users:['张同学','周同学']},
+  {n:'auto_booking_success',c:'badge-auto',users:['王同学','郑同学']},
+  {n:'js_error',c:'badge-error',users:['匿名用户']},
+];
+
+function buildStream(){
+  const list=document.getElementById('stream-list');
+  for(let i=0;i<20;i++) appendStreamItem(list, true);
+}
+
+function addStreamItem(){
+  const list=document.getElementById('stream-list');
+  appendStreamItem(list, false);
+  if(list.children.length>50) list.lastChild.remove();
+}
+
+function appendStreamItem(list, prepend){
+  const et=EVENT_TYPES[R(0,EVENT_TYPES.length-1)];
+  const user=et.users[R(0,et.users.length-1)];
+  const secs=R(0,59);
+  const div=document.createElement('div');
+  div.className='stream-item';
+  div.innerHTML=`<span class="stream-badge ${et.c}">${et.n}</span>
+    <span class="stream-user">${user}</span>
+    <span class="stream-time">${secs}s 前</span>`;
+  if(prepend) list.appendChild(div);
+  else list.insertBefore(div, list.firstChild);
+}
+
+function buildHeatmap(){
+  const container=document.getElementById('heatmap');
+  const days=['周一','周二','周三','周四','周五','周六','周日'];
+  const hours=Array.from({length:24},(_,i)=>`${i}:00`);
+  const html=['<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:40px"></div>'];
+  hours.forEach(h=>html.push(`<div style="width:28px;font-size:9px;color:#94a3b8;text-align:center">${h.split(':')[0]}</div>`));
+  html.push('</div>');
+  days.forEach(day=>{
+    html.push(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:40px;font-size:11px;color:#64748b">${day}</div>`);
+    for(let h=0;h<24;h++){
+      const v=h>=7&&h<=22?R(10,100):R(0,20);
+      const alpha=(v/100).toFixed(2);
+      html.push(`<div title="${day} ${h}:00  ${v} 事件" style="width:28px;height:20px;border-radius:3px;background:rgba(26,65,137,${alpha});cursor:pointer;transition:.15s" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform=''"></div>`);
+    }
+    html.push('</div>');
+  });
+  html.push(`<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:#94a3b8">
+    <span>低</span>${[.1,.25,.5,.75,1].map(a=>`<div style="width:14px;height:14px;border-radius:2px;background:rgba(26,65,137,${a})"></div>`).join('')}<span>高</span>
+  </div>`);
+  container.innerHTML=html.join('');
+}
+
+/* ── 漏斗通用 ── */
+function makeFunnel(id, steps){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const max=steps[0].val;
+  let html='';
+  steps.forEach((s,i)=>{
+    const w=Math.max(30, Math.round(s.pct));
+    html+=`<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <span style="font-size:12px;font-weight:500;color:#1e293b">${s.name}</span>
+        <span style="font-size:12px;font-weight:700">${s.val.toLocaleString()} <span style="color:#64748b;font-weight:400">(${s.pct}%)</span></span>
+      </div>
+      <div style="height:28px;background:#e2e8f0;border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:linear-gradient(90deg,${BLUE},#2563eb);border-radius:6px;transition:width .8s;display:flex;align-items:center;padding-left:8px">
+          ${w>20?`<span style="color:#fff;font-size:11px;font-weight:600">${s.pct}%</span>`:''}
+        </div>
+      </div>
+      ${i<steps.length-1?`<div style="text-align:right;font-size:10px;color:#94a3b8;margin-top:2px">转化率 ${(steps[i+1].pct/s.pct*100).toFixed(1)}% ↓</div>`:''}
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+/* ── 漏斗页 ── */
+function initFunnel(){
+  makeFunnel('funnel-reg',[
+    {name:'访问注册页',val:486,pct:100},
+    {name:'填写手机号',val:421,pct:86.6},
+    {name:'验证码验证',val:389,pct:80.0},
+    {name:'绑定学号',val:312,pct:64.2},
+    {name:'注册完成',val:298,pct:61.3},
+  ]);
+  makeFunnel('funnel-book',[
+    {name:'进入场地详情',val:714,pct:100},
+    {name:'选择时段',val:512,pct:71.7},
+    {name:'锁定时段',val:478,pct:66.9},
+    {name:'确认预约',val:443,pct:62.0},
+    {name:'支付完成',val:386,pct:54.1},
+  ]);
+  makeFunnel('funnel-mem',[
+    {name:'会员门控触发',val:312,pct:100},
+    {name:'浏览会员套餐',val:218,pct:69.9},
+    {name:'点击立即购买',val:142,pct:45.5},
+    {name:'支付完成',val:93,pct:29.8},
+  ]);
+  // 漏斗对比柱状图
+  new Chart(document.getElementById('funnelBarChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:['注册漏斗','预约漏斗','会员漏斗'],
+      datasets:[
+        {label:'首步UV',data:[486,714,312],backgroundColor:BLUE+'aa'},
+        {label:'末步完成',data:[298,386,93],backgroundColor:GREEN+'aa'},
+        {label:'转化率%',data:[61.3,54.1,29.8],backgroundColor:ORANGE+'aa',yAxisID:'y2'},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{grid:{color:'#f1f5f9'}},y2:{position:'right',max:100,grid:{display:false}}}}
+  });
+}
+
+/* ── 留存 ── */
+function initRetention(){
+  new Chart(document.getElementById('retentionChart').getContext('2d'),{
+    type:'line',
+    data:{
+      labels:['第1周','第2周','第3周','第4周','第5周','第6周','第7周'],
+      datasets:[
+        {label:'次日留存',data:[62,58,61,64,60,63,65],borderColor:BLUE,tension:.4,fill:false},
+        {label:'7日留存',data:[38,35,37,40,36,39,41],borderColor:GREEN,tension:.4,fill:false},
+        {label:'30日留存',data:[22,20,21,24,20,23,25],borderColor:ORANGE,tension:.4,fill:false},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}}},
+      plugins:{legend:{position:'bottom'}}}
+  });
+
+  // 热力矩阵
+  const weeks=['W14','W15','W16','W17','W18','W19','W20'];
+  const days=[1,2,3,5,7,10,14,21,30];
+  let html='<table style="border-collapse:collapse;font-size:11px">';
+  html+='<tr><th style="padding:4px 8px;background:#f1f5f9">注册周</th>';
+  days.forEach(d=>html+=`<th style="padding:4px 8px;background:#f1f5f9">D${d}</th>`);
+  html+='</tr>';
+  weeks.forEach(w=>{
+    html+=`<tr><td style="padding:5px 8px;font-weight:600;color:#1A4189">${w}</td>`;
+    days.forEach(d=>{
+      const v=Math.max(5,100-d*2-R(0,15));
+      const alpha=(v/100*.9+.1).toFixed(2);
+      html+=`<td style="padding:5px 8px;background:rgba(26,65,137,${alpha});color:${v>50?'#fff':'#1e293b'};text-align:center;border-radius:3px">${v}%</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</table>';
+  document.getElementById('retention-heatmap').innerHTML=html;
+
+  // 行为-留存
+  const beh=[
+    {b:'完成自动预约设置',v:'58%',d:'+20pp'},
+    {b:'购买会员',v:'71%',d:'+33pp'},
+    {b:'写过评价',v:'52%',d:'+14pp'},
+    {b:'绑定学号',v:'48%',d:'+10pp'},
+    {b:'使用积分兑换',v:'55%',d:'+17pp'},
+    {b:'仅浏览场地（无预约）',v:'18%',d:'-20pp'},
+  ];
+  document.getElementById('behavior-retention').innerHTML=beh.map(b=>`
+    <div class="dist-row">
+      <div class="dist-label" style="width:180px">${b.b}</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${parseInt(b.v)}%;background:${parseInt(b.d)>0?BLUE:RED}"></div></div>
+      <div class="dist-val">${b.v}</div>
+      <span class="tag ${parseInt(b.d)>0?'tag-up':'tag-down'}" style="width:50px;text-align:center">${b.d}</span>
+    </div>`).join('');
+}
+
+/* ── 用户分群 ── */
+function initSegment(){
+  makePieChart('sourceChart',[
+    {label:'直接访问',val:42,color:BLUE},
+    {label:'邀请链接',val:28,color:GREEN},
+    {label:'学校通知',val:18,color:ORANGE},
+    {label:'搜索引擎',val:8,color:PURPLE},
+    {label:'其他',val:4,color:RED},
+  ],true);
+
+  const dist=[
+    {l:'重度（≥20次/月）',v:12,c:BLUE},
+    {l:'高频（10-19次）',v:24,c:'#2563eb'},
+    {l:'中频（5-9次）',v:31,c:'#60a5fa'},
+    {l:'低频（1-4次）',v:23,c:'#93c5fd'},
+    {l:'沉默（0次）',v:10,c:'#e2e8f0'},
+  ];
+  document.getElementById('activity-dist').innerHTML=dist.map(d=>`
+    <div class="dist-row">
+      <div class="dist-label">${d.l}</div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${d.v*3}%;background:${d.c}"></div></div>
+      <div class="dist-val">${d.v}%</div>
+    </div>`).join('');
+}
+
+/* ── 场地 ── */
+function initVenue(){
+  makePieChart('venueTypeChart',[
+    {label:'羽毛球',val:38,color:BLUE},
+    {label:'篮球',val:28,color:GREEN},
+    {label:'游泳',val:14,color:'#0ea5e9'},
+    {label:'田径',val:11,color:ORANGE},
+    {label:'网球',val:6,color:PURPLE},
+    {label:'其他',val:3,color:RED},
+  ],true);
+
+  const slots=['7:00','8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+  const slotData=[30,62,85,78,54,42,38,55,72,88,94,96,100,87,70,45];
+  new Chart(document.getElementById('timeSlotChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:slots,datasets:[{
+      label:'预约密度',data:slotData,
+      backgroundColor:slotData.map(v=>v>80?RED:v>60?ORANGE:BLUE+'aa'),
+      borderRadius:4
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:'#f1f5f9'}}}}
+  });
+
+  const colors=[BLUE,'#2563eb',GREEN,ORANGE,RED];
+  const venues5=['羽毛球A','篮球1','游泳馆','田径场','乒乓球'];
+  const trend30=Array.from({length:30},()=>null);
+  const labels30=Array.from({length:30},(_,i)=>i===0?'3/22':i===29?'4/20':'');
+  new Chart(document.getElementById('venueTrendChart').getContext('2d'),{
+    type:'line',
+    data:{
+      labels:labels30,
+      datasets:venues5.map((v,i)=>({
+        label:v,
+        data:Array.from({length:30},()=>R(8,45)),
+        borderColor:colors[i],backgroundColor:colors[i]+'22',
+        fill:false,tension:.4,pointRadius:0,borderWidth:2
+      }))
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{grid:{color:'#f1f5f9'}}},plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+/* ── 事件明细 ── */
+function initEvents(){
+  const evts=[
+    ['page_view','页面浏览',4820,33740,4820,'+8%'],
+    ['venue_card_click','场地卡片点击',1480,10360,1480,'+12%'],
+    ['slot_select','选择时段',780,5460,780,'+6%'],
+    ['booking_confirm_click','点击确认预约',512,3584,512,'+5%'],
+    ['payment_success','支付成功',386,2702,386,'+15%'],
+    ['login_success','登录成功',184,1288,184,'+3%'],
+    ['auto_rule_create','创建自动预约规则',203,1421,203,'+22%'],
+    ['auto_booking_success','自动预约成功',128,896,128,'+18%'],
+    ['membership_view','浏览会员页',162,1134,162,'+7%'],
+    ['membership_purchase_success','会员购买成功',93,651,93,'+18%'],
+    ['venue_favorite','收藏场地',124,868,124,'+4%'],
+    ['review_submit','提交评价',87,609,87,'+9%'],
+    ['booking_cancel','取消预约',42,294,42,'-5%'],
+    ['payment_fail','支付失败',18,126,18,'-12%'],
+    ['js_error','前端JS错误',7,49,7,'-30%'],
+  ];
+  const tbody=document.getElementById('events-tbody');
+  evts.forEach(([name,desc,today,w7,avg,chg],i)=>{
+    const up=chg.startsWith('+');
+    tbody.innerHTML+=`<tr>
+      <td>${i+1}</td><td><code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">${name}</code></td>
+      <td style="color:#64748b">${desc}</td>
+      <td style="font-weight:600">${today.toLocaleString()}</td>
+      <td>${w7.toLocaleString()}</td>
+      <td>${avg.toLocaleString()}</td>
+      <td><span class="tag ${up?'tag-up':'tag-down'}">${chg}</span></td>
+    </tr>`;
+  });
+}
+
+/* ── 图表工厂 ── */
+function makeLineChart(id, datasets, labels){
+  new Chart(document.getElementById(id).getContext('2d'),{
+    type:'line',
+    data:{labels, datasets:datasets.map((d,i)=>({
+      label:d.label, data:d.data,
+      borderColor:d.color||COLORS[i], backgroundColor:(d.color||COLORS[i])+'22',
+      fill:false, tension:.4, pointRadius:3, borderWidth:2,
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{grid:{color:'#f1f5f9'}}},plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+function makePieChart(id, data, doughnut=false){
+  new Chart(document.getElementById(id).getContext('2d'),{
+    type:doughnut?'doughnut':'pie',
+    data:{
+      labels:data.map(d=>d.label),
+      datasets:[{data:data.map(d=>d.val), backgroundColor:data.map((d,i)=>d.color||COLORS[i])}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right'}}}
+  });
+}
+
+/* ── 初始化 ── */
+initView('overview');
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>场地评价 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --success:#16a34a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-r { display:flex; gap:1.2rem; align-items:center; }
+    .nav-r a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; }
+    main { flex:1; max-width:640px; margin:0 auto; padding:2rem 1rem; width:100%; }
+    .page-title { font-size:1.3rem; font-weight:800; color:var(--text); margin-bottom:1.5rem; }
+    /* VENUE CARD */
+    .venue-ref { background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; gap:14px; align-items:center; margin-bottom:24px; }
+    .venue-icon { width:56px; height:56px; background:linear-gradient(135deg,#dbeafe,#bfdbfe); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; }
+    .venue-info .name { font-weight:700; font-size:.95rem; margin-bottom:4px; }
+    .venue-info .meta { font-size:.78rem; color:var(--muted); }
+    .venue-info .time { font-size:.78rem; color:var(--blue); margin-top:2px; }
+    /* CARD */
+    .c { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+    .c-title { font-size:.95rem; font-weight:700; color:var(--text); margin-bottom:16px; }
+    /* STAR RATING */
+    .star-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .star-label { min-width:64px; font-size:.83rem; color:#374151; font-weight:500; }
+    .stars-input { display:flex; gap:6px; }
+    .star { font-size:1.5rem; cursor:pointer; color:#d1d5db; transition:color .15s; }
+    .star.active, .star:hover { color:#f59e0b; }
+    .star-text { font-size:.78rem; color:var(--muted); margin-left:4px; }
+    /* TAG KEYWORDS */
+    .tag-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .kw-tag { padding:7px 14px; border:1.5px solid var(--border); border-radius:20px; font-size:.82rem; color:var(--muted); cursor:pointer; transition:all .15s; }
+    .kw-tag.sel { border-color:var(--blue); background:#eff6ff; color:var(--blue); font-weight:600; }
+    /* TEXTAREA */
+    textarea { width:100%; border:1.5px solid var(--border); border-radius:10px; padding:12px 14px; font-size:.88rem; resize:none; outline:none; background:#fafbfc; font-family:inherit; }
+    textarea:focus { border-color:var(--blue); background:#fff; }
+    .char-count { text-align:right; font-size:.72rem; color:var(--muted); margin-top:4px; }
+    /* PHOTO UPLOAD */
+    .photo-grid { display:flex; gap:10px; flex-wrap:wrap; }
+    .photo-add { width:80px; height:80px; border:1.5px dashed var(--border); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; font-size:.7rem; color:var(--muted); transition:all .15s; }
+    .photo-add:hover { border-color:var(--blue); color:var(--blue); background:#eff6ff; }
+    .photo-thumb { width:80px; height:80px; border-radius:10px; overflow:hidden; position:relative; }
+    .photo-thumb img { width:100%; height:100%; object-fit:cover; }
+    .photo-del { position:absolute; top:2px; right:2px; background:rgba(0,0,0,.5); color:#fff; border-radius:50%; width:18px; height:18px; font-size:.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    /* ANON */
+    .anon-row { display:flex; align-items:center; gap:10px; font-size:.85rem; color:#374151; }
+    .anon-row input { accent-color:var(--blue); width:16px; height:16px; }
+    /* SUBMIT */
+    .btn-submit { width:100%; padding:14px; background:linear-gradient(135deg,var(--red),#a01f23); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:1px; margin-top:4px; transition:opacity .2s; }
+    .btn-submit:hover { opacity:.9; }
+    /* SUCCESS */
+    .success-page { display:none; text-align:center; padding:3rem 0; }
+    .success-page.show { display:block; }
+    .success-icon { font-size:4rem; margin-bottom:1rem; }
+    .success-title { font-size:1.4rem; font-weight:800; color:var(--text); margin-bottom:.5rem; }
+    .success-desc { font-size:.88rem; color:var(--muted); margin-bottom:2rem; line-height:1.6; }
+    .btn-back { padding:12px 32px; background:linear-gradient(135deg,var(--blue),#0d2d6b); color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; }
+    footer { text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-em">🏟️</div><div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div></a>
+  <div class="nav-r"><a href="venues.html">场地预约</a><a href="auto-booking.html">⚡ 自动抢票</a><a href="records.html">预约记录</a><a href="membership.html">👑 会员中心</a><a href="notifications.html">🔔</a><a href="rewards.html">积分</a><a href="about.html">关于</a><a href="profile.html">我的</a></div>
+</nav>
+
+<main>
+  <!-- FORM SECTION -->
+  <div id="formSection">
+    <div class="page-title">✍️ 场地评价</div>
+
+    <!-- VENUE REF -->
+    <div class="venue-ref">
+      <div class="venue-icon">🏀</div>
+      <div class="venue-info">
+        <div class="name">篮球场3号</div>
+        <div class="meta">粤海校区 · 2025-04-18（周五）</div>
+        <div class="time">20:00 - 22:00 · 已完成使用</div>
+      </div>
+    </div>
+
+    <!-- OVERALL RATING -->
+    <div class="c">
+      <div class="c-title">综合评分</div>
+      <div class="star-row">
+        <div class="star-label">整体满意度</div>
+        <div class="stars-input" id="overall">
+          <span class="star" onclick="setStars('overall',1)" onmouseover="hoverStars('overall',1)" onmouseout="resetStars('overall')">★</span>
+          <span class="star" onclick="setStars('overall',2)" onmouseover="hoverStars('overall',2)" onmouseout="resetStars('overall')">★</span>
+          <span class="star" onclick="setStars('overall',3)" onmouseover="hoverStars('overall',3)" onmouseout="resetStars('overall')">★</span>
+          <span class="star" onclick="setStars('overall',4)" onmouseover="hoverStars('overall',4)" onmouseout="resetStars('overall')">★</span>
+          <span class="star" onclick="setStars('overall',5)" onmouseover="hoverStars('overall',5)" onmouseout="resetStars('overall')">★</span>
+        </div>
+        <span class="star-text" id="overall-lbl">点击评分</span>
+      </div>
+    </div>
+
+    <!-- DIM RATINGS -->
+    <div class="c">
+      <div class="c-title">多维度评分</div>
+      <div class="star-row">
+        <div class="star-label">场地质量</div>
+        <div class="stars-input" id="d1">
+          <span class="star" onclick="setStars('d1',1)" onmouseover="hoverStars('d1',1)" onmouseout="resetStars('d1')">★</span>
+          <span class="star" onclick="setStars('d1',2)" onmouseover="hoverStars('d1',2)" onmouseout="resetStars('d1')">★</span>
+          <span class="star" onclick="setStars('d1',3)" onmouseover="hoverStars('d1',3)" onmouseout="resetStars('d1')">★</span>
+          <span class="star" onclick="setStars('d1',4)" onmouseover="hoverStars('d1',4)" onmouseout="resetStars('d1')">★</span>
+          <span class="star" onclick="setStars('d1',5)" onmouseover="hoverStars('d1',5)" onmouseout="resetStars('d1')">★</span>
+        </div>
+        <span class="star-text" id="d1-lbl">-</span>
+      </div>
+      <div class="star-row">
+        <div class="star-label">设施完好</div>
+        <div class="stars-input" id="d2">
+          <span class="star" onclick="setStars('d2',1)" onmouseover="hoverStars('d2',1)" onmouseout="resetStars('d2')">★</span>
+          <span class="star" onclick="setStars('d2',2)" onmouseover="hoverStars('d2',2)" onmouseout="resetStars('d2')">★</span>
+          <span class="star" onclick="setStars('d2',3)" onmouseover="hoverStars('d2',3)" onmouseout="resetStars('d2')">★</span>
+          <span class="star" onclick="setStars('d2',4)" onmouseover="hoverStars('d2',4)" onmouseout="resetStars('d2')">★</span>
+          <span class="star" onclick="setStars('d2',5)" onmouseover="hoverStars('d2',5)" onmouseout="resetStars('d2')">★</span>
+        </div>
+        <span class="star-text" id="d2-lbl">-</span>
+      </div>
+      <div class="star-row">
+        <div class="star-label">服务体验</div>
+        <div class="stars-input" id="d3">
+          <span class="star" onclick="setStars('d3',1)" onmouseover="hoverStars('d3',1)" onmouseout="resetStars('d3')">★</span>
+          <span class="star" onclick="setStars('d3',2)" onmouseover="hoverStars('d3',2)" onmouseout="resetStars('d3')">★</span>
+          <span class="star" onclick="setStars('d3',3)" onmouseover="hoverStars('d3',3)" onmouseout="resetStars('d3')">★</span>
+          <span class="star" onclick="setStars('d3',4)" onmouseover="hoverStars('d3',4)" onmouseout="resetStars('d3')">★</span>
+          <span class="star" onclick="setStars('d3',5)" onmouseover="hoverStars('d3',5)" onmouseout="resetStars('d3')">★</span>
+        </div>
+        <span class="star-text" id="d3-lbl">-</span>
+      </div>
+    </div>
+
+    <!-- KEYWORDS -->
+    <div class="c">
+      <div class="c-title">选择标签（可多选）</div>
+      <div class="tag-grid">
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🏀 地板手感好</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">💡 灯光充足</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🧹 环境整洁</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🚿 淋浴齐全</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">📍 位置便利</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">⏰ 预约流畅</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🔇 隔音良好</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">💨 通风不足</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🛠️ 设施老旧</div>
+        <div class="kw-tag" onclick="this.classList.toggle('sel')">🚗 停车不便</div>
+      </div>
+    </div>
+
+    <!-- TEXT REVIEW -->
+    <div class="c">
+      <div class="c-title">文字评价 <span style="color:var(--muted);font-weight:400;font-size:.82rem;">（选填）</span></div>
+      <textarea id="reviewText" rows="4" placeholder="分享您的使用体验，帮助更多同学做出选择..." maxlength="200" oninput="document.getElementById('charCount').textContent=this.value.length+'/200'"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/200</div>
+    </div>
+
+    <!-- PHOTOS -->
+    <div class="c">
+      <div class="c-title">上传图片 <span style="color:var(--muted);font-weight:400;font-size:.82rem;">（最多3张，选填）</span></div>
+      <div class="photo-grid" id="photoGrid">
+        <div class="photo-add" onclick="addPhoto()">
+          <span style="font-size:1.5rem;">📷</span>
+          <span>添加图片</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANON + SUBMIT -->
+    <div class="c">
+      <div class="anon-row" style="margin-bottom:16px;">
+        <input type="checkbox" id="anon" />
+        <label for="anon">匿名评价（其他用户只看到「同学」而不显示真实昵称）</label>
+      </div>
+      <button class="btn-submit" onclick="submitReview()">提交评价 · 获得 +2 积分</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS SECTION -->
+  <div class="success-page" id="successPage">
+    <div class="success-icon">⭐</div>
+    <div class="success-title">评价提交成功！</div>
+    <div class="success-desc">感谢您的真实评价，已获得 <strong>+2 积分</strong>。<br/>您的评价将帮助更多同学选择合适的场地。</div>
+    <button class="btn-back" onclick="window.location.href='records.html'">返回预约记录</button>
+    <br/><br/>
+    <a href="rewards.html" style="font-size:.85rem;color:var(--blue);text-decoration:none;">查看我的积分 →</a>
+  </div>
+</main>
+
+<footer>深圳大学体育预约系统 · Demo · © 2025 SZU Sports</footer>
+
+<script>
+  const ratings = { overall:0, d1:0, d2:0, d3:0 };
+  const lbls = { 0:'点击评分', 1:'很差', 2:'较差', 3:'一般', 4:'不错', 5:'非常好' };
+
+  function hoverStars(id, n) {
+    document.querySelectorAll(`#${id} .star`).forEach((s,i) => s.style.color = i < n ? '#f59e0b' : '#d1d5db');
+  }
+  function resetStars(id) {
+    const n = ratings[id];
+    document.querySelectorAll(`#${id} .star`).forEach((s,i) => { s.classList.toggle('active', i < n); s.style.color = ''; });
+  }
+  function setStars(id, n) {
+    ratings[id] = n;
+    document.querySelectorAll(`#${id} .star`).forEach((s,i) => s.classList.toggle('active', i < n));
+    document.getElementById(`${id}-lbl`).textContent = lbls[n];
+  }
+
+  let photoCount = 0;
+  const photoUrls = ['https://images.unsplash.com/photo-1546519638-68e109498ffc?w=160','https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=160','https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=160'];
+  function addPhoto() {
+    if (photoCount >= 3) { alert('最多上传3张图片'); return; }
+    const grid = document.getElementById('photoGrid');
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = `<img src="${photoUrls[photoCount]}" alt="场地图片" /><div class="photo-del" onclick="this.parentElement.remove();photoCount--;">✕</div>`;
+    grid.insertBefore(thumb, grid.firstChild);
+    photoCount++;
+  }
+
+  function submitReview() {
+    if (ratings.overall === 0) { alert('请先选择综合评分'); return; }
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('successPage').classList.add('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+</script>
+</body>
+</html>

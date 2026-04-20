@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>用户协议 & 隐私政策 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    main { flex:1; max-width:800px; margin:0 auto; padding:2rem 1rem; width:100%; }
+    /* TABS */
+    .doc-tabs { display:flex; gap:4px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:2rem; }
+    .doc-tab { flex:1; text-align:center; padding:10px; border-radius:8px; font-size:.9rem; font-weight:500; color:var(--muted); cursor:pointer; transition:all .15s; }
+    .doc-tab.active { background:var(--blue); color:#fff; font-weight:700; }
+    /* DOC PANEL */
+    .doc-panel { display:none; }
+    .doc-panel.active { display:block; }
+    .doc-header { background:#fff; border:1px solid var(--border); border-radius:12px 12px 0 0; padding:2rem; border-bottom:none; }
+    .doc-title { font-size:1.5rem; font-weight:800; color:var(--text); margin-bottom:.4rem; }
+    .doc-meta { font-size:.8rem; color:var(--muted); }
+    .doc-body { background:#fff; border:1px solid var(--border); border-radius:0 0 12px 12px; padding:2rem; }
+    .info-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:14px; margin-bottom:1.5rem; font-size:.85rem; color:#1e40af; line-height:1.6; }
+    h2 { font-size:1rem; font-weight:700; color:var(--text); margin:1.6rem 0 .6rem; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    h2:first-child { margin-top:0; }
+    p { font-size:.88rem; color:#374151; line-height:1.8; margin-bottom:.8rem; }
+    ul { padding-left:1.4rem; margin-bottom:.8rem; }
+    li { font-size:.88rem; color:#374151; line-height:1.8; }
+    strong { color:var(--text); }
+    .highlight { background:#fff3cd; padding:2px 6px; border-radius:4px; }
+    table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.83rem; }
+    th { background:#f3f4f6; padding:8px 12px; text-align:left; border:1px solid var(--border); font-weight:600; color:var(--text); }
+    td { padding:8px 12px; border:1px solid var(--border); color:#374151; vertical-align:top; }
+    tr:nth-child(even) td { background:#fafbfc; }
+    .agree-bar { position:sticky; bottom:0; background:#fff; border-top:1px solid var(--border); padding:16px; display:flex; gap:12px; justify-content:flex-end; box-shadow:0 -4px 12px rgba(0,0,0,.06); }
+    .btn-agree { padding:11px 28px; background:linear-gradient(135deg,var(--red),#a01f23); color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; }
+    .btn-back { padding:11px 20px; border:1px solid var(--border); background:#fff; border-radius:10px; font-size:.9rem; cursor:pointer; color:var(--text); }
+    footer { text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); margin-top:2rem; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-em">🏟️</div>
+    <div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div>
+  </a>
+  <div style="display:flex;gap:1.2rem;margin-left:auto;">
+    <a href="venues.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;">场地预约</a>
+    <a href="membership.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;">👑 会员中心</a>
+    <a href="about.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;">关于我们</a>
+    <a href="profile.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;">我的</a>
+  </div>
+</nav>
+
+<main>
+  <div class="doc-tabs">
+    <div class="doc-tab active" onclick="showDoc('terms',this)">📄 用户服务协议</div>
+    <div class="doc-tab" onclick="showDoc('privacy',this)">🔒 隐私政策</div>
+  </div>
+
+  <!-- ═══ TERMS OF SERVICE ═══ -->
+  <div class="doc-panel active" id="doc-terms">
+    <div class="doc-header">
+      <div class="doc-title">用户服务协议</div>
+      <div class="doc-meta">生效日期：2025年4月20日 &nbsp;|&nbsp; 版本：v1.0 &nbsp;|&nbsp; 深圳大学体育场地自动预约系统</div>
+    </div>
+    <div class="doc-body">
+      <div class="info-box">📌 请在使用本系统前仔细阅读本协议。使用本系统即表示您已阅读、理解并同意本协议全部条款。</div>
+
+      <h2>第一条 &nbsp;服务说明</h2>
+      <p>深大体育自动预约系统（以下简称"本系统"）是由深圳大学学生自研的场地预约辅助工具，独立于深圳大学信息化管理体系。本系统提供以下服务：</p>
+      <ul>
+        <li>场地信息浏览与手动预约</li>
+        <li>自动抢票规则设置（付费会员功能）</li>
+        <li>预约记录管理</li>
+        <li>会员订阅服务</li>
+      </ul>
+
+      <h2>第二条 &nbsp;账号注册与安全</h2>
+      <p>2.1 用户须使用真实有效的手机号注册，并绑定本人深大学号方可使用预约功能。</p>
+      <p>2.2 用户应妥善保管账号密码，因密码泄露导致的损失由用户自行承担。</p>
+      <p>2.3 <span class="highlight">禁止将账号借予他人使用或从事账号交易</span>，违规账号将被永久封禁。</p>
+      <p>2.4 同一学号只能绑定一个账号。</p>
+
+      <h2>第三条 &nbsp;预约规则与合规使用</h2>
+      <p>3.1 本系统自动抢票功能本质上是代替用户在开放时间准时提交预约请求，不使用任何破解或漏洞利用技术。</p>
+      <p>3.2 用户须遵守深圳大学体育场馆的相关规定，按时使用预约的场地。</p>
+      <p>3.3 <span class="highlight">严禁利用系统漏洞或异常手段大量占用场地资源</span>，一经发现立即封号并追究责任。</p>
+      <p>3.4 用户每日自动抢票次数上限为5次，具体规则以系统实际显示为准。</p>
+
+      <h2>第四条 &nbsp;付费服务</h2>
+      <table>
+        <tr><th>服务名称</th><th>内容</th><th>价格</th><th>有效期</th></tr>
+        <tr><td>运动会员（月付）</td><td>无限自动抢票、优先预约</td><td>¥12.00</td><td>1个月</td></tr>
+        <tr><td>运动会员（季付）</td><td>同上</td><td>¥29.00</td><td>3个月</td></tr>
+        <tr><td>年度超级会员</td><td>全部特权 + 专属客服</td><td>¥59.00</td><td>1年</td></tr>
+      </table>
+      <p>4.1 付费内容一经购买，原则上不支持退款。如因系统故障导致服务不可用，将按比例补偿会员天数。</p>
+      <p>4.2 本系统保留调整价格的权利，已购用户按购买时价格享受服务直至到期。</p>
+
+      <h2>第五条 &nbsp;免责声明</h2>
+      <p>5.1 本系统无法保证100%抢票成功率，抢票结果取决于场地实际可用情况。</p>
+      <p>5.2 因深大场馆系统维护、政策调整等不可抗力导致的预约失败，本系统不承担责任。</p>
+      <p>5.3 本系统是<strong>学生自研项目</strong>，与深圳大学官方无关，不代表学校立场。</p>
+
+      <h2>第六条 &nbsp;协议变更</h2>
+      <p>本系统有权随时修改本协议，修改后将在系统内公告，继续使用即视为同意修改后的协议。</p>
+    </div>
+  </div>
+
+  <!-- ═══ PRIVACY POLICY ═══ -->
+  <div class="doc-panel" id="doc-privacy">
+    <div class="doc-header">
+      <div class="doc-title">隐私政策</div>
+      <div class="doc-meta">生效日期：2025年4月20日 &nbsp;|&nbsp; 版本：v1.0 &nbsp;|&nbsp; 深圳大学体育场地自动预约系统</div>
+    </div>
+    <div class="doc-body">
+      <div class="info-box">🔒 我们非常重视您的隐私保护。本政策说明我们如何收集、使用和保护您的个人信息，请仔细阅读。</div>
+
+      <h2>一、我们收集哪些信息</h2>
+      <table>
+        <tr><th>信息类型</th><th>具体内容</th><th>收集目的</th></tr>
+        <tr><td>账号信息</td><td>手机号、加密密码、昵称、头像</td><td>账号注册与身份识别</td></tr>
+        <tr><td>学籍信息</td><td>深大学号、真实姓名、院系</td><td>在校身份验证，防止外校人员使用</td></tr>
+        <tr><td>预约数据</td><td>预约场地、时间、来源（手动/自动）</td><td>提供预约服务、改善体验</td></tr>
+        <tr><td>支付信息</td><td>订单金额、支付方式（不存储完整卡号）</td><td>处理付费会员订单</td></tr>
+        <tr><td>设备信息</td><td>IP地址、浏览器类型、登录时间</td><td>安全防护、异常登录检测</td></tr>
+        <tr><td>使用行为</td><td>点击行为、功能使用频率</td><td>产品改进（匿名统计）</td></tr>
+      </table>
+
+      <h2>二、我们如何使用信息</h2>
+      <ul>
+        <li>提供预约、抢票、会员等核心服务</li>
+        <li>发送预约成功/失败的通知短信</li>
+        <li>分析使用情况，改善产品体验（匿名化处理）</li>
+        <li>防范违规行为和账号安全风险</li>
+        <li><strong>不会</strong>将您的信息出售给第三方</li>
+        <li><strong>不会</strong>用于商业广告投放</li>
+      </ul>
+
+      <h2>三、信息保存与删除</h2>
+      <p>3.1 账号信息保存至您主动注销账号后 <span class="highlight">6个月</span>，期满后永久删除。</p>
+      <p>3.2 支付记录依据财务法规保留 <span class="highlight">5年</span>。</p>
+      <p>3.3 您可以随时在「个人中心 → 账号注销」申请删除所有个人数据。</p>
+
+      <h2>四、信息安全</h2>
+      <ul>
+        <li>密码使用 bcrypt 算法加密存储，无人可获取明文</li>
+        <li>全站 HTTPS 加密传输</li>
+        <li>学号、手机号在日志中自动脱敏显示</li>
+        <li>数据库定期加密备份</li>
+      </ul>
+
+      <h2>五、您的权利</h2>
+      <p>您有权随时：查看、更正您的个人信息；撤回对特定功能的授权；申请删除账号及数据。如需行使上述权利，请联系：sports@szu-booking.com</p>
+
+      <h2>六、未成年人保护</h2>
+      <p>本系统面向18周岁及以上在校学生。若发现未成年人注册，我们将及时删除其账号及数据。</p>
+
+      <h2>七、联系我们</h2>
+      <p>如您对本政策有任何疑问，请发送邮件至 <strong>privacy@szu-booking.com</strong>，我们将在 7 个工作日内回复。</p>
+    </div>
+  </div>
+
+  <div class="agree-bar">
+    <button class="btn-back" onclick="history.back()">返回</button>
+    <button class="btn-agree" onclick="history.back();alert('已同意')">我已阅读并同意</button>
+  </div>
+</main>
+
+<footer>深圳大学体育预约系统 · Demo · © 2025 SZU Sports</footer>
+
+<script>
+  function showDoc(id, el) {
+    document.querySelectorAll('.doc-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.doc-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('doc-'+id).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+</script>
+</body>
+</html>

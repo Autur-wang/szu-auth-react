@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>注册账号 — 深大体育自动预约系统</title>
+  <style>
+    :root {
+      --red: #C1272D;
+      --blue: #1A4189;
+      --blue-light: #2a5bb5;
+      --gold: #D4A017;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --border: #e0e5f0;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --success: #16a34a;
+      --step-done: #16a34a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, var(--blue) 0%, #0d2d6b 100%);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .logo-emblem {
+      width: 40px;
+      height: 40px;
+      background: var(--red);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+    .logo-text { color: #fff; }
+    .logo-text .main { font-size: 1rem; font-weight: 700; letter-spacing: 1px; }
+    .logo-text .sub { font-size: 0.7rem; opacity: 0.75; }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1rem;
+    }
+
+    h1.page-title {
+      font-size: 1.6rem;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      text-align: center;
+    }
+    .page-subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    /* ── STEPPER ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 2.5rem;
+      width: 100%;
+      max-width: 520px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: calc(50% + 18px);
+      right: calc(-50% + 18px);
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+      transition: background 0.4s;
+    }
+    .step-item.done:not(:last-child)::after {
+      background: var(--step-done);
+    }
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+    .step-item.active .step-circle {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+    .step-item.done .step-circle {
+      border-color: var(--step-done);
+      background: var(--step-done);
+      color: #fff;
+    }
+    .step-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .step-item.active .step-label { color: var(--blue); font-weight: 600; }
+    .step-item.done .step-label { color: var(--step-done); }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(26,65,137,0.1);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* ── FORM PANEL ── */
+    .form-panel { display: none; }
+    .form-panel.active { display: block; }
+
+    .panel-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+    .panel-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.8rem;
+      line-height: 1.6;
+    }
+
+    /* ── FIELDS ── */
+    .field-group { margin-bottom: 1.2rem; }
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    label .required { color: var(--red); }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #fafbfc;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(26,65,137,0.12);
+      background: #fff;
+    }
+    input.error { border-color: var(--red); }
+    .field-error {
+      font-size: 0.78rem;
+      color: var(--red);
+      margin-top: 4px;
+      display: none;
+    }
+    .field-error.show { display: block; }
+
+    /* ── CODE INPUT ROW ── */
+    .code-row {
+      display: flex;
+      gap: 10px;
+    }
+    .code-row input { flex: 1; }
+    .btn-send-code {
+      padding: 11px 14px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      min-width: 96px;
+    }
+    .btn-send-code:hover { background: var(--blue-light); }
+    .btn-send-code:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    /* ── PASSWORD STRENGTH ── */
+    .pwd-strength {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      align-items: center;
+    }
+    .pwd-bar {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .pwd-label {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-left: 6px;
+      min-width: 24px;
+    }
+
+    /* ── AGREE CHECKBOX ── */
+    .agree-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      margin-top: 0.4rem;
+    }
+    .agree-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      accent-color: var(--blue);
+      flex-shrink: 0;
+    }
+    .agree-row span {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .agree-row a { color: var(--blue); text-decoration: none; }
+    .agree-row a:hover { text-decoration: underline; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--red), #a01f23);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { opacity: 0.92; }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-blue {
+      background: linear-gradient(135deg, var(--blue), #0d2d6b);
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1.4rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .login-link a { color: var(--blue); text-decoration: none; font-weight: 600; }
+    .login-link a:hover { text-decoration: underline; }
+
+    /* ── STEP 2: STUDENT ID ── */
+    .id-card-preview {
+      background: linear-gradient(135deg, #1A4189 0%, #0d2d6b 100%);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .id-card-preview::before {
+      content: '深圳大学';
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%) rotate(15deg);
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.06);
+      letter-spacing: 4px;
+    }
+    .id-card-preview .school { font-size: 0.72rem; opacity: 0.8; margin-bottom: 4px; letter-spacing: 2px; }
+    .id-card-preview .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+    .id-card-preview .field-row { display: flex; gap: 2rem; }
+    .id-card-preview .f-item .f-label { font-size: 0.68rem; opacity: 0.65; margin-bottom: 2px; }
+    .id-card-preview .f-item .f-val {
+      font-size: 0.92rem;
+      font-weight: 600;
+      min-width: 80px;
+      min-height: 20px;
+    }
+    .id-card-preview .f-item .f-val.placeholder { opacity: 0.35; font-style: italic; font-size: 0.78rem; }
+
+    .info-note {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: #1e40af;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .info-note::before { content: 'ℹ️  '; }
+
+    .verify-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: var(--success);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    /* ── STEP 3: SUCCESS ── */
+    .success-panel {
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 24px rgba(22,163,74,0.3);
+      animation: pop 0.5s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .success-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .success-info-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+    .success-info-card .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .success-info-card .row:last-child { border-bottom: none; }
+    .success-info-card .row .k { color: var(--muted); }
+    .success-info-card .row .v { font-weight: 600; color: var(--text); }
+
+    .countdown-redirect {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+    .countdown-redirect span { color: var(--blue); font-weight: 700; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-emblem">🏟️</div>
+    <div class="logo-text">
+      <div class="main">深大体育预约</div>
+      <div class="sub">SZU Sports Booking</div>
+    </div>
+  </a>
+</header>
+
+<main>
+  <h1 class="page-title">创建新账号</h1>
+  <p class="page-subtitle">独立账号体系 · 绑定深大学号后可使用全部功能</p>
+
+  <!-- STEPPER -->
+  <div class="stepper" id="stepper">
+    <div class="step-item active" id="step-item-1">
+      <div class="step-circle" id="sc1">1</div>
+      <div class="step-label">填写账号信息</div>
+    </div>
+    <div class="step-item" id="step-item-2">
+      <div class="step-circle" id="sc2">2</div>
+      <div class="step-label">绑定深大学号</div>
+    </div>
+    <div class="step-item" id="step-item-3">
+      <div class="step-circle" id="sc3">3</div>
+      <div class="step-label">注册成功</div>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+
+    <!-- ===== STEP 1 ===== -->
+    <div class="form-panel active" id="panel1">
+      <div class="panel-title">基本账号信息</div>
+      <p class="panel-desc">请填写您的手机号和密码，用于登录深大体育预约系统。</p>
+
+      <div class="field-group">
+        <label>手机号 <span class="required">*</span></label>
+        <div class="code-row">
+          <input type="tel" id="phone" placeholder="请输入11位手机号" maxlength="11" />
+          <button class="btn-send-code" id="btnCode" onclick="sendCode()">发送验证码</button>
+        </div>
+        <div class="field-error" id="err-phone">请输入正确的手机号</div>
+      </div>
+
+      <div class="field-group">
+        <label>短信验证码 <span class="required">*</span></label>
+        <input type="text" id="code" placeholder="请输入6位验证码" maxlength="6" />
+        <div class="field-error" id="err-code">验证码不正确</div>
+      </div>
+
+      <div class="field-group">
+        <label>设置密码 <span class="required">*</span></label>
+        <input type="password" id="pwd" placeholder="8-20位，含字母和数字" oninput="checkStrength(this.value)" />
+        <div class="pwd-strength">
+          <div class="pwd-bar" id="bar1"></div>
+          <div class="pwd-bar" id="bar2"></div>
+          <div class="pwd-bar" id="bar3"></div>
+          <div class="pwd-label" id="pwd-label"></div>
+        </div>
+        <div class="field-error" id="err-pwd">密码至少8位，需包含字母和数字</div>
+      </div>
+
+      <div class="field-group">
+        <label>确认密码 <span class="required">*</span></label>
+        <input type="password" id="pwd2" placeholder="请再次输入密码" />
+        <div class="field-error" id="err-pwd2">两次密码输入不一致</div>
+      </div>
+
+      <div class="agree-row">
+        <input type="checkbox" id="agree" />
+        <span>我已阅读并同意 <a href="terms.html">《用户服务协议》</a> 和 <a href="terms.html">《隐私政策》</a></span>
+      </div>
+      <div class="field-error" id="err-agree" style="margin-top:-12px;margin-bottom:12px;">请勾选同意服务协议</div>
+
+      <button class="btn-primary btn-blue" onclick="goStep2()">下一步：绑定学号</button>
+
+      <div class="login-link">
+        已有账号？<a href="index.html">立即登录</a>
+      </div>
+    </div>
+
+    <!-- ===== STEP 2 ===== -->
+    <div class="form-panel" id="panel2">
+      <div class="panel-title">绑定深大学号</div>
+      <p class="panel-desc">绑定学号后，系统将验证您的深大在校身份，确保场地资源仅供在校师生使用。</p>
+
+      <div class="id-card-preview" id="idCardPreview">
+        <div class="school">SHENZHEN UNIVERSITY</div>
+        <div class="card-title">深圳大学 学生证</div>
+        <div class="field-row">
+          <div class="f-item">
+            <div class="f-label">学号</div>
+            <div class="f-val placeholder" id="prev-id">待填写</div>
+          </div>
+          <div class="f-item">
+            <div class="f-label">姓名</div>
+            <div class="f-val placeholder" id="prev-name">待验证</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-note">
+        本系统与深大教务系统独立，学号信息仅用于身份验证，不存储完整个人档案。
+      </div>
+
+      <div class="field-group">
+        <label>深大学号 <span class="required">*</span></label>
+        <input type="text" id="stuId" placeholder="请输入10位学号（如 2020123456）"
+               maxlength="10" oninput="updatePreviewId(this.value)" />
+        <div class="field-error" id="err-stuId">请输入正确的10位学号</div>
+      </div>
+
+      <div class="field-group">
+        <label>真实姓名 <span class="required">*</span></label>
+        <input type="text" id="realName" placeholder="与学籍系统一致的姓名"
+               oninput="updatePreviewName(this.value)" />
+        <div class="field-error" id="err-realName">请输入真实姓名</div>
+      </div>
+
+      <div class="field-group">
+        <label>院系 <span class="required">*</span></label>
+        <input type="text" id="dept" placeholder="如：计算机与软件学院" />
+        <div class="field-error" id="err-dept">请填写院系</div>
+      </div>
+
+      <div id="verifyResult" style="display:none;">
+        <div class="verify-badge">✅ 身份验证成功，学号与姓名匹配</div>
+      </div>
+
+      <br/>
+      <button class="btn-primary btn-blue" onclick="verifyAndNext()" id="btnVerify">验证并完成注册</button>
+      <div style="text-align:center;margin-top:12px;">
+        <a href="#" onclick="goBack()" style="font-size:0.83rem;color:var(--muted);text-decoration:none;">← 返回上一步</a>
+      </div>
+    </div>
+
+    <!-- ===== STEP 3 ===== -->
+    <div class="form-panel" id="panel3">
+      <div class="success-panel">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">注册成功！</div>
+        <p class="success-desc">
+          您的账号已创建并绑定深大学号。<br/>
+          现在可以开始预约场地、设置自动抢票了。
+        </p>
+
+        <div class="success-info-card" id="successInfoCard">
+          <div class="row"><span class="k">注册手机号</span><span class="v" id="s-phone">—</span></div>
+          <div class="row"><span class="k">深大学号</span><span class="v" id="s-stuid">—</span></div>
+          <div class="row"><span class="k">姓名</span><span class="v" id="s-name">—</span></div>
+          <div class="row"><span class="k">账号类型</span><span class="v" style="color:var(--muted);">免费用户（1次体验机会）</span></div>
+        </div>
+
+        <button class="btn-primary" onclick="window.location.href='index.html'">立即登录，开始预约 →</button>
+        <button class="btn-primary btn-blue" onclick="window.location.href='membership.html'"
+                style="margin-top:10px;">🚀 升级会员，解锁无限抢票</button>
+
+        <p class="countdown-redirect">
+          <span id="countdown">5</span> 秒后自动跳转到登录页…
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</main>
+
+<footer>
+  深圳大学体育预约系统 · 学生自研项目 Demo · 版权所有 © 2025 SZU Sports
+</footer>
+
+<script>
+  let codeTimer = null;
+  let cdTimer = null;
+  let verifiedId = '';
+  let verifiedName = '';
+
+  /* ── SEND CODE ── */
+  function sendCode() {
+    const phone = document.getElementById('phone').value.trim();
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      showErr('err-phone', 'phone');
+      return;
+    }
+    clearErr('err-phone', 'phone');
+    const btn = document.getElementById('btnCode');
+    let sec = 60;
+    btn.disabled = true;
+    btn.textContent = sec + 's后重发';
+    codeTimer = setInterval(() => {
+      sec--;
+      btn.textContent = sec + 's后重发';
+      if (sec <= 0) {
+        clearInterval(codeTimer);
+        btn.disabled = false;
+        btn.textContent = '重新发送';
+      }
+    }, 1000);
+    // Demo: show toast
+    showToast('验证码已发送（Demo：请输入 888888）');
+  }
+
+  /* ── PASSWORD STRENGTH ── */
+  function checkStrength(val) {
+    const bars = ['bar1','bar2','bar3'];
+    const label = document.getElementById('pwd-label');
+    bars.forEach(id => document.getElementById(id).style.background = '#e5e7eb');
+    if (!val) { label.textContent = ''; return; }
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[a-zA-Z]/.test(val) && /\d/.test(val)) score++;
+    if (val.length >= 12 && /[!@#$%^&*]/.test(val)) score++;
+    const colors = ['#ef4444','#f59e0b','#16a34a'];
+    const labels = ['弱','中','强'];
+    for (let i = 0; i < score; i++) {
+      document.getElementById(bars[i]).style.background = colors[score-1];
+    }
+    label.textContent = labels[score-1] || '';
+    label.style.color = colors[score-1] || '#9ca3af';
+  }
+
+  /* ── LIVE PREVIEW ── */
+  function updatePreviewId(val) {
+    const el = document.getElementById('prev-id');
+    if (val.trim()) {
+      el.textContent = val.trim();
+      el.classList.remove('placeholder');
+    } else {
+      el.textContent = '待填写';
+      el.classList.add('placeholder');
+    }
+  }
+  function updatePreviewName(val) {
+    const el = document.getElementById('prev-name');
+    if (val.trim()) {
+      el.textContent = val.trim();
+      el.classList.remove('placeholder');
+    } else {
+      el.textContent = '待验证';
+      el.classList.add('placeholder');
+    }
+  }
+
+  /* ── STEP 1 → STEP 2 ── */
+  function goStep2() {
+    let ok = true;
+    const phone = document.getElementById('phone').value.trim();
+    const code = document.getElementById('code').value.trim();
+    const pwd = document.getElementById('pwd').value;
+    const pwd2 = document.getElementById('pwd2').value;
+    const agree = document.getElementById('agree').checked;
+
+    if (!/^1[3-9]\d{9}$/.test(phone)) { showErr('err-phone','phone'); ok=false; } else clearErr('err-phone','phone');
+    if (code !== '888888') { showErr('err-code','code'); ok=false; } else clearErr('err-code','code');
+    if (!/(?=.*[a-zA-Z])(?=.*\d).{8,}/.test(pwd)) { showErr('err-pwd','pwd'); ok=false; } else clearErr('err-pwd','pwd');
+    if (pwd !== pwd2) { showErr('err-pwd2','pwd2'); ok=false; } else clearErr('err-pwd2','pwd2');
+    if (!agree) { document.getElementById('err-agree').classList.add('show'); ok=false; }
+    else document.getElementById('err-agree').classList.remove('show');
+
+    if (!ok) return;
+
+    // Advance
+    setStep(2);
+  }
+
+  function goBack() {
+    setStep(1);
+  }
+
+  /* ── STEP 2 → STEP 3 ── */
+  function verifyAndNext() {
+    let ok = true;
+    const stuId = document.getElementById('stuId').value.trim();
+    const name = document.getElementById('realName').value.trim();
+    const dept = document.getElementById('dept').value.trim();
+
+    if (!/^\d{10}$/.test(stuId)) { showErr('err-stuId','stuId'); ok=false; } else clearErr('err-stuId','stuId');
+    if (!name) { showErr('err-realName','realName'); ok=false; } else clearErr('err-realName','realName');
+    if (!dept) { showErr('err-dept','dept'); ok=false; } else clearErr('err-dept','dept');
+
+    if (!ok) return;
+
+    // Simulate async verification
+    const btn = document.getElementById('btnVerify');
+    btn.textContent = '验证中…';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      // Show badge
+      document.getElementById('verifyResult').style.display = 'block';
+      verifiedId = stuId;
+      verifiedName = name;
+      btn.textContent = '验证并完成注册';
+      btn.disabled = false;
+
+      setTimeout(() => {
+        // Fill success panel
+        const phone = document.getElementById('phone').value.trim();
+        document.getElementById('s-phone').textContent = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        document.getElementById('s-stuid').textContent = stuId;
+        document.getElementById('s-name').textContent = name;
+
+        setStep(3);
+        startCountdown();
+      }, 600);
+    }, 1200);
+  }
+
+  /* ── STEPPER LOGIC ── */
+  function setStep(n) {
+    for (let i = 1; i <= 3; i++) {
+      const item = document.getElementById('step-item-' + i);
+      const panel = document.getElementById('panel' + i);
+      const circle = document.getElementById('sc' + i);
+      item.classList.remove('active','done');
+      panel.classList.remove('active');
+      if (i < n) {
+        item.classList.add('done');
+        circle.textContent = '✓';
+      } else if (i === n) {
+        item.classList.add('active');
+        circle.textContent = i;
+        panel.classList.add('active');
+      } else {
+        circle.textContent = i;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── COUNTDOWN REDIRECT ── */
+  function startCountdown() {
+    let sec = 5;
+    const el = document.getElementById('countdown');
+    cdTimer = setInterval(() => {
+      sec--;
+      el.textContent = sec;
+      if (sec <= 0) {
+        clearInterval(cdTimer);
+        window.location.href = 'index.html';
+      }
+    }, 1000);
+  }
+
+  /* ── HELPERS ── */
+  function showErr(errId, inputId) {
+    document.getElementById(errId).classList.add('show');
+    document.getElementById(inputId).classList.add('error');
+  }
+  function clearErr(errId, inputId) {
+    document.getElementById(errId).classList.remove('show');
+    document.getElementById(inputId).classList.remove('error');
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, {
+      position:'fixed', bottom:'32px', left:'50%', transform:'translateX(-50%)',
+      background:'#1f2937', color:'#fff', padding:'10px 20px', borderRadius:'8px',
+      fontSize:'0.85rem', zIndex:'9999', boxShadow:'0 4px 16px rgba(0,0,0,0.3)',
+      animation:'fadeIn 0.3s ease'
+    });
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

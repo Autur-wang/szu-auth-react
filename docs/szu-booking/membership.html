@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>会员中心 · 深大体育预约</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --red: #C1272D;
+      --red-dark: #9e1f24;
+      --blue: #1A4189;
+      --blue-light: #2a5ab8;
+      --blue-pale: #e8eef8;
+      --gray: #f4f5f8;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #dde3ef;
+      --gold: #d97706;
+      --gold-light: #fbbf24;
+      --gold-pale: #fffbeb;
+      --gold-border: #fde68a;
+      --green: #10b981;
+    }
+    body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: var(--gray); color: var(--text); }
+
+    .top-bar { background: var(--red); color: white; text-align: center; font-size: 12px; padding: 5px 0; }
+
+    nav {
+      background: var(--blue); padding: 0 40px;
+      display: flex; align-items: center; height: 64px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; margin-right: 48px; }
+    .logo-box { width: 38px; height: 38px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: var(--red); }
+    .nav-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-link { color: rgba(255,255,255,0.75); text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; transition: all .2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { font-weight: 600; }
+    .nav-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+    .avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid rgba(255,255,255,0.35); }
+    .user-name { color: rgba(255,255,255,0.9); font-size: 13px; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white; text-align: center;
+      padding: 60px 40px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 60% 50%, rgba(212,175,55,0.12) 0%, transparent 70%);
+    }
+    .crown { font-size: 52px; margin-bottom: 16px; display: block; filter: drop-shadow(0 4px 16px rgba(212,175,55,0.5)); }
+    .hero h1 { font-size: 34px; font-weight: 900; margin-bottom: 12px; }
+    .hero h1 .gold { color: var(--gold-light); }
+    .hero p { font-size: 16px; color: rgba(255,255,255,0.7); max-width: 520px; margin: 0 auto 32px; line-height: 1.7; }
+
+    .trial-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4);
+      border-radius: 30px; padding: 8px 20px;
+      font-size: 14px; color: var(--gold-light);
+      font-weight: 600;
+    }
+
+    /* ── PERIOD SWITCHER ── */
+    .period-wrap { text-align: center; margin: -28px 0 0; position: relative; z-index: 2; }
+    .period-switcher {
+      display: inline-flex;
+      background: white; border-radius: 12px;
+      padding: 5px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
+    }
+    .period-btn {
+      padding: 9px 24px; border-radius: 8px; font-size: 14px;
+      border: none; background: transparent; color: var(--sub);
+      cursor: pointer; font-family: inherit; transition: all .18s;
+      position: relative;
+    }
+    .period-btn.active { background: var(--blue); color: white; font-weight: 600; }
+    .period-btn .save-tag {
+      position: absolute; top: -10px; right: -6px;
+      background: var(--red); color: white;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 6px; border-radius: 8px;
+    }
+
+    /* ── PLANS ── */
+    .plans-section { max-width: 1000px; margin: 40px auto; padding: 0 40px; }
+    .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+    .plan-card {
+      background: white; border-radius: 16px;
+      border: 2px solid var(--border);
+      overflow: hidden; transition: transform .2s, box-shadow .2s;
+      position: relative;
+    }
+    .plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+    .plan-card.featured {
+      border-color: var(--gold);
+      box-shadow: 0 8px 30px rgba(217,119,6,0.2);
+    }
+
+    .popular-ribbon {
+      position: absolute; top: 16px; right: -28px;
+      background: var(--gold); color: white;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 36px; transform: rotate(45deg);
+      letter-spacing: .5px;
+    }
+
+    .plan-header { padding: 28px 24px 20px; text-align: center; }
+    .plan-header.free-header { background: var(--gray); }
+    .plan-header.pro-header { background: linear-gradient(135deg, #1a1a2e, #0f3460); color: white; }
+    .plan-header.annual-header { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; }
+
+    .plan-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+    .plan-name { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .plan-header.free-header .plan-name { color: var(--text); }
+    .plan-sub { font-size: 13px; opacity: .75; }
+    .plan-header.free-header .plan-sub { color: var(--sub); }
+
+    .price-row { margin-top: 16px; display: flex; align-items: baseline; justify-content: center; gap: 4px; }
+    .price-big { font-size: 38px; font-weight: 900; }
+    .price-unit { font-size: 14px; opacity: .8; }
+    .price-original { font-size: 13px; text-decoration: line-through; opacity: .5; margin-left: 4px; }
+    .plan-header.free-header .price-big { color: var(--text); }
+    .plan-header.free-header .price-unit { color: var(--sub); }
+
+    .plan-body { padding: 20px 24px; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; line-height: 1.5;
+    }
+    .feat-icon { font-size: 15px; flex-shrink: 0; }
+    .feat-text { color: var(--text); }
+    .feat-text.disabled { color: var(--sub); text-decoration: line-through; }
+
+    .plan-footer { padding: 0 24px 24px; }
+    .btn-plan {
+      display: block; width: 100%; padding: 13px;
+      border-radius: 10px; font-size: 14px; font-weight: 700;
+      cursor: pointer; border: none; font-family: inherit;
+      text-align: center; text-decoration: none; transition: all .18s;
+    }
+    .btn-free {
+      background: var(--gray); color: var(--sub); border: 1.5px solid var(--border);
+    }
+    .btn-free:hover { background: var(--border); }
+    .btn-pro {
+      background: linear-gradient(135deg, var(--gold) 0%, #f59e0b 100%);
+      color: white;
+    }
+    .btn-pro:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-annual {
+      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+      color: white;
+    }
+    .btn-annual:hover { opacity: .9; transform: translateY(-1px); }
+
+    /* ── COMPARE TABLE ── */
+    .compare-section { max-width: 860px; margin: 0 auto 60px; padding: 0 40px; }
+    .compare-section h2 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 24px; }
+
+    .compare-table { background: white; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+    .ct-head {
+      display: grid; grid-template-columns: 1fr 120px 120px 120px;
+      background: #f8f9fc; padding: 14px 24px;
+      font-size: 13px; font-weight: 700; color: var(--sub);
+      border-bottom: 1px solid var(--border);
+    }
+    .ct-head .col-pro { color: var(--gold); }
+    .ct-head .col-annual { color: #7c3aed; }
+
+    .ct-row {
+      display: grid; grid-template-columns: 1fr 120px 120px 120px;
+      padding: 13px 24px; border-bottom: 1px solid var(--border);
+      align-items: center; font-size: 13px;
+      transition: background .15s;
+    }
+    .ct-row:last-child { border-bottom: none; }
+    .ct-row:hover { background: #f8f9fc; }
+    .ct-feat { color: var(--text); font-weight: 500; }
+    .ct-cell { text-align: center; }
+    .check { color: var(--green); font-size: 18px; }
+    .cross { color: #d1d5db; font-size: 18px; }
+    .ct-val { font-size: 13px; font-weight: 600; }
+    .ct-val.gold { color: var(--gold); }
+    .ct-val.purple { color: #7c3aed; }
+    .ct-val.gray { color: var(--sub); }
+
+    /* ── FAQ ── */
+    .faq-section { max-width: 680px; margin: 0 auto 60px; padding: 0 40px; }
+    .faq-section h2 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 24px; }
+    .faq-item {
+      background: white; border-radius: 10px; border: 1px solid var(--border);
+      margin-bottom: 10px; overflow: hidden;
+    }
+    .faq-q {
+      padding: 16px 20px; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      user-select: none;
+    }
+    .faq-q .arrow { transition: transform .2s; font-size: 12px; color: var(--sub); }
+    .faq-q.open .arrow { transform: rotate(180deg); }
+    .faq-a {
+      padding: 0 20px; max-height: 0; overflow: hidden;
+      font-size: 13px; color: var(--sub); line-height: 1.7;
+      transition: max-height .25s ease, padding .25s;
+    }
+    .faq-a.open { max-height: 200px; padding: 0 20px 16px; }
+
+    /* ── PAYMENT MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white; border-radius: 20px;
+      width: 420px; overflow: hidden;
+      animation: pop .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    .modal-head {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      color: white; padding: 24px 28px;
+    }
+    .modal-head h3 { font-size: 18px; font-weight: 800; }
+    .modal-head .plan-tag {
+      display: inline-block; margin-top: 6px;
+      background: rgba(251,191,36,0.2); color: var(--gold-light);
+      border: 1px solid rgba(251,191,36,0.4);
+      padding: 2px 10px; border-radius: 20px; font-size: 12px;
+    }
+    .modal-body { padding: 24px 28px; }
+    .order-summary {
+      background: var(--gold-pale); border: 1px solid var(--gold-border);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+    }
+    .order-summary .os-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .order-summary .os-row:last-child { margin-bottom: 0; font-weight: 700; font-size: 15px; color: var(--gold); }
+    .modal-pay-methods { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .modal-pay-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 8px;
+      border: 1.5px solid var(--border); cursor: pointer;
+      font-size: 13px; transition: all .15s;
+    }
+    .modal-pay-item:hover, .modal-pay-item.selected {
+      border-color: var(--blue); background: var(--blue-pale);
+    }
+    .modal-pay-item input { accent-color: var(--blue); }
+    .modal-footer { padding: 0 28px 24px; display: flex; gap: 10px; }
+    .btn-modal-pay {
+      flex: 1; padding: 13px; background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: white; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .btn-modal-close {
+      padding: 13px 20px; background: white; border: 1.5px solid var(--border);
+      color: var(--sub); border-radius: 10px; font-size: 14px;
+      cursor: pointer; font-family: inherit;
+    }
+
+    /* success state */
+    .success-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .success-overlay.show { display: flex; }
+    .success-card {
+      background: white; border-radius: 20px; padding: 44px 40px;
+      text-align: center; width: 360px;
+      animation: pop .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    .success-card .big-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-card h2 { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+    .success-card p { font-size: 14px; color: var(--sub); line-height: 1.7; margin-bottom: 20px; }
+    .member-card-preview {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      border-radius: 12px; padding: 18px 20px; color: white; margin-bottom: 20px;
+      border: 2px solid var(--gold);
+    }
+    .mc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .mc-logo { font-size: 14px; font-weight: 700; opacity: .9; }
+    .mc-crown { font-size: 20px; }
+    .mc-name { font-size: 16px; font-weight: 700; }
+    .mc-validity { font-size: 12px; opacity: .65; margin-top: 4px; }
+    .mc-badge { display: inline-block; background: var(--gold); color: #1a1a2e; font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 20px; margin-top: 8px; }
+    .btn-go { display: block; width: 100%; padding: 13px; background: var(--blue); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">深圳大学体育场地自动预约系统</div>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-box">SZU</div>
+    <span>体育预约</span>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html" class="nav-link">🏟️ 场地浏览</a>
+    <a href="auto-booking.html" class="nav-link">⚡ 自动预约</a>
+    <a href="records.html" class="nav-link">📋 预约记录</a>
+    <a href="membership.html" class="nav-link active">👑 会员中心</a>
+  </div>
+  <div class="nav-right">
+    <a href="notifications.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:20px;line-height:1;">🔔</a>
+    <a href="rewards.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">积分</a>
+    <a href="about.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">关于</a>
+    <a href="profile.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+      <span class="user-name">王同学</span>
+      <div class="avatar">👤</div>
+    </a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <span class="crown">👑</span>
+  <h1>开通<span class="gold">深大运动会员</span><br/>解锁无限自动抢场</h1>
+  <p>非会员仅可体验一次自动预约。开通会员后，系统将持续为你定时抢场，再也不会错过心仪时段。</p>
+  <div class="trial-badge">✨ 新用户专享：首次自动预约免费体验一次</div>
+</div>
+
+<!-- Period switcher -->
+<div class="period-wrap">
+  <div class="period-switcher">
+    <button class="period-btn" id="btn-month" onclick="switchPeriod('month')">按月付费</button>
+    <button class="period-btn active" id="btn-quarter" onclick="switchPeriod('quarter')">
+      季度会员
+      <span class="save-tag">省17%</span>
+    </button>
+    <button class="period-btn" id="btn-year" onclick="switchPeriod('year')">
+      年度会员
+      <span class="save-tag">省40%</span>
+    </button>
+  </div>
+</div>
+
+<!-- Plans -->
+<div class="plans-section">
+  <div class="plans-grid">
+
+    <!-- Free -->
+    <div class="plan-card">
+      <div class="plan-header free-header">
+        <span class="plan-icon">🎯</span>
+        <div class="plan-name">免费体验版</div>
+        <div class="plan-sub">注册即享，零门槛感受</div>
+        <div class="price-row">
+          <span class="price-big" style="color:var(--text)">¥0</span>
+          <span class="price-unit" style="color:var(--sub)">/永久</span>
+        </div>
+      </div>
+      <div class="plan-body">
+        <ul class="feature-list">
+          <li><span class="feat-icon">✅</span><span class="feat-text">场地浏览与实时空余查看</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">手动预约场地（不限次数）</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">自动预约体验 <strong>1次</strong></span></li>
+          <li><span class="feat-icon">❌</span><span class="feat-text disabled">定时自动抢场（持续）</span></li>
+          <li><span class="feat-icon">❌</span><span class="feat-text disabled">多场地规则并行</span></li>
+          <li><span class="feat-icon">❌</span><span class="feat-text disabled">抢场成功微信推送</span></li>
+          <li><span class="feat-icon">❌</span><span class="feat-text disabled">候补队列自动顶位</span></li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <a href="auto-booking.html" class="btn-plan btn-free">使用免费版</a>
+      </div>
+    </div>
+
+    <!-- Pro -->
+    <div class="plan-card featured">
+      <div class="popular-ribbon">最受欢迎</div>
+      <div class="plan-header pro-header">
+        <span class="plan-icon">⚡</span>
+        <div class="plan-name" style="color:var(--gold-light)">运动会员</div>
+        <div class="plan-sub">智能抢场，省时省力</div>
+        <div class="price-row">
+          <span class="price-big" style="color:var(--gold-light)" id="pro-price">¥29</span>
+          <span class="price-unit" id="pro-unit">/季度</span>
+          <span class="price-original" id="pro-original">¥35</span>
+        </div>
+      </div>
+      <div class="plan-body">
+        <ul class="feature-list">
+          <li><span class="feat-icon">✅</span><span class="feat-text">场地浏览与实时空余查看</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">手动预约场地（不限次数）</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text"><strong>定时自动抢场（无限次）</strong></span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">多场地规则同时并行</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">抢场成功微信实时推送</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">候补队列自动顶位</span></li>
+          <li><span class="feat-icon">⭐</span><span class="feat-text">优先客服响应</span></li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <button class="btn-plan btn-pro" onclick="openModal('pro')">立即开通会员</button>
+      </div>
+    </div>
+
+    <!-- Annual -->
+    <div class="plan-card">
+      <div class="plan-header annual-header">
+        <span class="plan-icon">🚀</span>
+        <div class="plan-name">年度超级会员</div>
+        <div class="plan-sub">一次搞定，超值省心</div>
+        <div class="price-row">
+          <span class="price-big" id="annual-price">¥59</span>
+          <span class="price-unit" id="annual-unit">/年</span>
+          <span class="price-original" id="annual-original">¥99</span>
+        </div>
+      </div>
+      <div class="plan-body">
+        <ul class="feature-list">
+          <li><span class="feat-icon">✅</span><span class="feat-text">包含所有运动会员权益</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text"><strong>专属场地优先排队权</strong></span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">运动数据统计与分析报告</span></li>
+          <li><span class="feat-icon">✅</span><span class="feat-text">专属会员身份标识</span></li>
+          <li><span class="feat-icon">🎁</span><span class="feat-text">赠送校内合作商家优惠券</span></li>
+          <li><span class="feat-icon">🎁</span><span class="feat-text">赠送 2 次陪练预约机会</span></li>
+          <li><span class="feat-icon">⭐</span><span class="feat-text">专属 1v1 客服通道</span></li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <button class="btn-plan btn-annual" onclick="openModal('annual')">立即开通超级会员</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Compare Table -->
+<div class="compare-section">
+  <h2>功能对比一览</h2>
+  <div class="compare-table">
+    <div class="ct-head">
+      <div>功能</div>
+      <div>免费版</div>
+      <div class="col-pro">⚡ 会员</div>
+      <div class="col-annual">🚀 超级会员</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">场地浏览 & 手动预约</div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">自动预约次数</div>
+      <div class="ct-cell"><span class="ct-val gray">1次</span></div>
+      <div class="ct-cell"><span class="ct-val gold">无限</span></div>
+      <div class="ct-cell"><span class="ct-val purple">无限</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">并行规则数量</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="ct-val gold">最多3条</span></div>
+      <div class="ct-cell"><span class="ct-val purple">不限</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">微信抢场成功通知</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">候补队列自动顶位</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">场地优先排队权</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">运动数据统计报告</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-feat">赠送合作商家优惠券</div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="cross">✗</span></div>
+      <div class="ct-cell"><span class="check">✓</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <h2>常见问题</h2>
+  <div class="faq-item">
+    <div class="faq-q">什么是「自动预约体验1次」？<span class="arrow">▼</span></div>
+    <div class="faq-a">免费用户可以设置一次自动抢场规则并执行一次。系统会在放号时自动帮你抢场，但仅限1次。下次使用需升级为付费会员。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">会员可以随时取消吗？<span class="arrow">▼</span></div>
+    <div class="faq-a">可以。取消后当前付费周期内权益仍然有效，不会立刻失效，到期后自动停止续费。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">支付方式有哪些？<span class="arrow">▼</span></div>
+    <div class="faq-a">支持深大校园卡余额、微信支付、支付宝三种方式，全部实时到账，无手续费。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">自动预约真的能抢到吗？成功率多少？<span class="arrow">▼</span></div>
+    <div class="faq-a">系统在服务器侧于放号毫秒级触发请求，比手动操作快 300-800ms。历史数据显示，会员用户热门时段抢场成功率约 92%，普通时段接近 100%。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">会员费开具发票吗？<span class="arrow">▼</span></div>
+    <div class="faq-a">支持开具电子发票，请在「个人中心 → 订单记录」中申请，1-3个工作日内到账邮箱。</div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">开通运动会员</h3>
+      <span class="plan-tag" id="modal-plan-tag">⚡ 季度会员</span>
+    </div>
+    <div class="modal-body">
+      <div class="order-summary">
+        <div class="os-row"><span>会员套餐</span><span id="ms-plan">运动会员 · 季度</span></div>
+        <div class="os-row"><span>有效期</span><span id="ms-period">2024.04.20 – 2024.07.20</span></div>
+        <div class="os-row"><span>原价</span><span id="ms-original" style="text-decoration:line-through;color:var(--sub)">¥35.00</span></div>
+        <div class="os-row"><span>实付金额</span><span id="ms-price">¥29.00</span></div>
+      </div>
+      <div class="modal-pay-methods">
+        <label class="modal-pay-item selected">
+          <input type="radio" name="mpay" checked/> 🏫 校园卡（余额 ¥142.50）
+        </label>
+        <label class="modal-pay-item">
+          <input type="radio" name="mpay"/> 💬 微信支付
+        </label>
+        <label class="modal-pay-item">
+          <input type="radio" name="mpay"/> 🔵 支付宝
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-close" onclick="closeModal()">取消</button>
+      <button class="btn-modal-pay" onclick="showSuccess()">立即支付</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="big-icon">🎉</div>
+    <h2>会员开通成功！</h2>
+    <p>欢迎成为深大运动会员，自动抢场功能现已解锁，快去设置你的专属规则吧！</p>
+    <div class="member-card-preview">
+      <div class="mc-top">
+        <div class="mc-logo">深大体育预约</div>
+        <div class="mc-crown">👑</div>
+      </div>
+      <div class="mc-name">王同学</div>
+      <div class="mc-validity">有效期至 2024年7月20日</div>
+      <div class="mc-badge">⚡ 运动会员</div>
+    </div>
+    <button class="btn-go" onclick="location.href='auto-booking.html'">🚀 立即去设置自动预约</button>
+  </div>
+</div>
+
+<script>
+  // Period switching
+  const proData = {
+    month:   { price:'¥12', unit:'/月', original:'¥15' },
+    quarter: { price:'¥29', unit:'/季度', original:'¥35' },
+    year:    { price:'¥59', unit:'/年', original:'¥99' }
+  };
+  function switchPeriod(p) {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-'+p).classList.add('active');
+    document.getElementById('pro-price').textContent = proData[p].price;
+    document.getElementById('pro-unit').textContent = proData[p].unit;
+    document.getElementById('pro-original').textContent = proData[p].original;
+  }
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const a = q.nextElementSibling;
+      const isOpen = a.classList.contains('open');
+      document.querySelectorAll('.faq-a').forEach(x => x.classList.remove('open'));
+      document.querySelectorAll('.faq-q').forEach(x => x.classList.remove('open'));
+      if (!isOpen) { a.classList.add('open'); q.classList.add('open'); }
+    });
+  });
+
+  // Modal
+  function openModal(type) {
+    const modal = document.getElementById('payModal');
+    if (type === 'annual') {
+      document.getElementById('modal-title').textContent = '开通超级会员';
+      document.getElementById('modal-plan-tag').textContent = '🚀 年度超级会员';
+      document.getElementById('ms-plan').textContent = '超级会员 · 年度';
+      document.getElementById('ms-period').textContent = '2024.04.20 – 2025.04.20';
+      document.getElementById('ms-original').textContent = '¥99.00';
+      document.getElementById('ms-price').textContent = '¥59.00';
+    } else {
+      document.getElementById('modal-title').textContent = '开通运动会员';
+      document.getElementById('modal-plan-tag').textContent = '⚡ 季度会员';
+      document.getElementById('ms-plan').textContent = '运动会员 · 季度';
+      document.getElementById('ms-period').textContent = '2024.04.20 – 2024.07.20';
+      document.getElementById('ms-original').textContent = '¥35.00';
+      document.getElementById('ms-price').textContent = '¥29.00';
+    }
+    modal.classList.add('show');
+  }
+  function closeModal() { document.getElementById('payModal').classList.remove('show'); }
+  function showSuccess() {
+    closeModal();
+    document.getElementById('successOverlay').classList.add('show');
+  }
+
+  // Modal pay method
+  document.querySelectorAll('.modal-pay-item').forEach(i => {
+    i.addEventListener('click', () => {
+      document.querySelectorAll('.modal-pay-item').forEach(x => x.classList.remove('selected'));
+      i.classList.add('selected');
+    });
+  });
+</script>
+</body>
+</html>

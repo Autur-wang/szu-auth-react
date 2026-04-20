@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>运维监控看板 · 深大体育预约系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#162032;--border:#2d3f5a;
+  --blue:#60a5fa;--blue-d:#1A4189;--green:#4ade80;--red:#f87171;
+  --orange:#fb923c;--yellow:#facc15;--purple:#c084fc;--muted:#94a3b8;
+  --text:#e2e8f0;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',monospace;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── 侧边栏 ── */
+.sidebar{width:var(--sidebar);background:#0a1628;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;border-right:1px solid var(--border)}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo h2{color:#60a5fa;font-size:14px;font-weight:700}
+.sidebar-logo span{color:var(--muted);font-size:10px}
+.nav-section{padding:10px 16px 4px;color:#475569;font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted);font-size:12px;cursor:pointer;border-left:2px solid transparent;transition:.15s}
+.nav-item:hover,.nav-item.active{color:var(--blue);background:rgba(96,165,250,.08);border-left-color:var(--blue)}
+.nav-item .ico{font-size:14px;width:18px}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-red{background:var(--red);box-shadow:0 0 6px var(--red)}
+.dot-yellow{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+.blink{animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── 主内容 ── */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column}
+.topbar{background:#0a1628;border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-weight:700;font-size:14px;color:var(--blue);font-family:monospace}
+.topbar-right{display:flex;align-items:center;gap:14px;font-size:12px}
+.uptime-badge{background:#0d2137;border:1px solid var(--blue);color:var(--blue);padding:4px 10px;border-radius:4px;font-size:11px;font-family:monospace}
+.content{padding:20px 24px;flex:1}
+
+.view{display:none}.view.active{display:block}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;position:relative}
+.kpi-card.alert{border-color:var(--red);box-shadow:0 0 0 1px #f8717155}
+.kpi-card.warn{border-color:var(--yellow)}
+.kpi-label{font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.kpi-val{font-size:24px;font-weight:700;font-family:monospace}
+.kpi-val.green{color:var(--green)}.kpi-val.red{color:var(--red)}.kpi-val.yellow{color:var(--yellow)}.kpi-val.blue{color:var(--blue)}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ── 图表卡 ── */
+.chart-grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g-4-3{grid-template-columns:4fr 3fr}
+.g-3-2{grid-template-columns:3fr 2fr}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+.chart-card h3{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
+.chart-card p{font-size:10px;color:var(--muted);margin-bottom:12px}
+.chart-wrap{position:relative}
+.chart-wrap.h200{height:200px}
+.chart-wrap.h160{height:160px}
+.chart-wrap.h260{height:260px}
+.chart-wrap.h140{height:140px}
+
+/* ── 服务状态 ── */
+.svc-list{display:flex;flex-direction:column;gap:6px}
+.svc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card2);border-radius:6px;font-size:12px}
+.svc-name{display:flex;align-items:center;gap:8px;font-weight:500}
+.svc-tag{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;font-family:monospace}
+.tag-up{background:#052e16;color:var(--green);border:1px solid #16a34a44}
+.tag-down{background:#1c0a0a;color:var(--red);border:1px solid #dc262644}
+.tag-warn{background:#1c1503;color:var(--yellow);border:1px solid #ca8a0444}
+.svc-latency{color:var(--muted);font-family:monospace;font-size:11px}
+.svc-uptime{color:var(--muted);font-size:10px}
+
+/* ── 告警 ── */
+.alert-list{display:flex;flex-direction:column;gap:6px}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:6px;font-size:12px;border-left:3px solid}
+.alert-item.crit{background:#1c0a0a;border-color:var(--red)}
+.alert-item.warn{background:#1c1503;border-color:var(--yellow)}
+.alert-item.info{background:#061528;border-color:var(--blue)}
+.alert-item.ok{background:#052e16;border-color:var(--green)}
+.alert-icon{font-size:14px;margin-top:1px}
+.alert-body{flex:1}
+.alert-title{font-weight:600;color:var(--text)}
+.alert-desc{color:var(--muted);font-size:11px;margin-top:2px}
+.alert-time{font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* ── 队列 ── */
+.queue-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+.queue-label{width:140px;color:var(--muted)}
+.queue-bar-bg{flex:1;height:8px;background:#1e3a5f;border-radius:4px;overflow:hidden}
+.queue-bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.queue-val{width:50px;text-align:right;font-family:monospace;color:var(--text)}
+
+/* ── 日志 ── */
+.log-line{font-family:monospace;font-size:11px;padding:3px 0;border-bottom:1px solid #1e293b;display:flex;gap:10px}
+.log-time{color:#475569;white-space:nowrap}
+.log-level{width:40px;text-align:center;border-radius:3px;font-size:10px;font-weight:700}
+.log-lvl-info{background:#0c2240;color:var(--blue)}
+.log-lvl-warn{background:#1c1503;color:var(--yellow)}
+.log-lvl-error{background:#1c0a0a;color:var(--red)}
+.log-lvl-ok{background:#052e16;color:var(--green)}
+.log-msg{color:var(--muted);flex:1;word-break:break-all}
+.log-wrap{max-height:240px;overflow-y:auto;padding:4px 0}
+.log-wrap::-webkit-scrollbar{width:3px}
+.log-wrap::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* ── 部署表 ── */
+.deploy-table{width:100%;border-collapse:collapse;font-size:11px}
+.deploy-table th{background:#0a1628;color:var(--muted);padding:7px 10px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
+.deploy-table td{padding:7px 10px;border-bottom:1px solid #1e293b;color:var(--text)}
+.deploy-table tr:hover td{background:#162032}
+.deploy-sha{font-family:monospace;color:var(--blue);font-size:10px}
+.deploy-status{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.d-success{background:#052e16;color:var(--green)}
+.d-rollback{background:#1c0a0a;color:var(--red)}
+.d-running{background:#0c2240;color:var(--blue)}
+
+/* ── SLA ── */
+.sla-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sla-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.sla-val{font-size:22px;font-weight:700;font-family:monospace;color:var(--green)}
+.sla-target{font-size:10px;color:var(--muted);margin-top:3px}
+.sla-name{font-size:11px;color:var(--blue);margin-bottom:6px;font-weight:700}
+
+/* ── 进度环 ── */
+.gauge-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.gauge-label{font-size:11px;color:var(--muted);width:120px}
+.gauge-track{flex:1;height:6px;background:#1e3a5f;border-radius:3px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:3px}
+.gauge-val{font-size:11px;font-family:monospace;color:var(--text);width:42px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h2>🔧 OPS DASHBOARD</h2>
+    <span>深大体育预约系统 · 运维</span>
+  </div>
+  <div style="padding:12px 0">
+    <div class="nav-section">监控</div>
+    <div class="nav-item active" data-view="overview" onclick="switchView('overview',this)"><span class="ico">📡</span>系统总览</div>
+    <div class="nav-item" data-view="services" onclick="switchView('services',this)"><span class="ico">🟢</span>服务状态</div>
+    <div class="nav-item" data-view="performance" onclick="switchView('performance',this)"><span class="ico">⚡</span>性能指标</div>
+    <div class="nav-item" data-view="queue" onclick="switchView('queue',this)"><span class="ico">📦</span>队列监控</div>
+    <div class="nav-section">运维</div>
+    <div class="nav-item" data-view="alerts" onclick="switchView('alerts',this)"><span class="ico">🚨</span>告警中心</div>
+    <div class="nav-item" data-view="logs" onclick="switchView('logs',this)"><span class="ico">📋</span>日志查看</div>
+    <div class="nav-item" data-view="deploy" onclick="switchView('deploy',this)"><span class="ico">🚀</span>部署历史</div>
+    <div class="nav-item" data-view="sla" onclick="switchView('sla',this)"><span class="ico">📊</span>SLA 报告</div>
+    <div class="nav-section">跳转</div>
+    <div class="nav-item" onclick="window.open('analytics-dashboard.html')"><span class="ico">📊</span>数据看板</div>
+    <div class="nav-item" onclick="window.open('admin.html')"><span class="ico">⚙️</span>管理后台</div>
+  </div>
+</aside>
+
+<!-- 主内容 -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title">[ OPS ] 深大体育预约系统 · 运维监控看板</div>
+    <div class="topbar-right">
+      <span style="color:var(--green)" class="blink">● LIVE</span>
+      <div class="uptime-badge">UPTIME: <span id="uptime-val">99.97%</span></div>
+      <span style="color:var(--muted);font-size:11px" id="clock"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ 系统总览 ══ -->
+    <div id="view-overview" class="view active">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label"><span class="status-dot dot-green blink"></span>API 可用率</div>
+          <div class="kpi-val green">99.97%</div>
+          <div class="kpi-sub">P99 延迟: 342ms</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">⚡ 平均响应时间</div>
+          <div class="kpi-val blue" id="rt-avg">86ms</div>
+          <div class="kpi-sub">P50/P95/P99</div>
+        </div>
+        <div class="kpi-card warn">
+          <div class="kpi-label">❌ 错误率（5min）</div>
+          <div class="kpi-val yellow" id="err-rate">0.31%</div>
+          <div class="kpi-sub">阈值 &lt;1% · 注意</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🖥️ CPU 使用率</div>
+          <div class="kpi-val blue" id="cpu-val">38%</div>
+          <div class="kpi-sub">4 核 · 峰值 72%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">💾 内存使用率</div>
+          <div class="kpi-val blue" id="mem-val">54%</div>
+          <div class="kpi-sub">8GB · 已用 4.3GB</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">📦 Redis 命中率</div>
+          <div class="kpi-val green">94.2%</div>
+          <div class="kpi-sub">Key: 12,840</div>
+        </div>
+      </div>
+
+      <div class="chart-grid g-4-3" style="margin-bottom:14px">
+        <div class="chart-card">
+          <h3>📈 API 响应时间趋势（近1小时）</h3>
+          <p>P50 / P95 / P99 毫秒</p>
+          <div class="chart-wrap h200"><canvas id="latencyChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>❌ 错误率趋势</h3>
+          <p>5xx + 4xx（%）</p>
+          <div class="chart-wrap h200"><canvas id="errChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid g3">
+        <div class="chart-card">
+          <h3>🖥️ CPU / 内存</h3>
+          <p>实时使用率</p>
+          <div class="chart-wrap h160"><canvas id="sysChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>🌐 QPS（请求/秒）</h3>
+          <p>近30分钟</p>
+          <div class="chart-wrap h160"><canvas id="qpsChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>💿 磁盘 I/O</h3>
+          <p>读/写 MB/s</p>
+          <div class="chart-wrap h160"><canvas id="diskChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 服务状态 ══ -->
+    <div id="view-services" class="view">
+      <div class="chart-grid g2">
+        <div class="chart-card">
+          <h3>🟢 核心服务健康状态</h3>
+          <p>实时探活结果（每30s刷新）</p>
+          <div class="svc-list" style="margin-top:4px" id="svc-list"></div>
+        </div>
+        <div class="chart-card">
+          <h3>📊 API 端点响应时间（Top 10 慢接口）</h3>
+          <p>近1小时 P95 延迟排行</p>
+          <div class="chart-wrap h260"><canvas id="apiChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>🗄️ 数据库连接池</h3>
+          <p>MySQL 连接状态</p>
+          <div id="db-pool" style="margin-top:8px"></div>
+        </div>
+        <div class="chart-card">
+          <h3>💾 Redis 内存 & 键分布</h3>
+          <p></p>
+          <div class="chart-wrap h200"><canvas id="redisChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 性能 ══ -->
+    <div id="view-performance" class="view">
+      <div class="chart-grid g2" style="margin-bottom:14px">
+        <div class="chart-card">
+          <h3>⚡ 各接口平均响应时间（ms）</h3>
+          <p>近24小时</p>
+          <div class="chart-wrap h260"><canvas id="perfApiChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>📊 响应时间分位数分布</h3>
+          <p>P50 / P95 / P99 / Max</p>
+          <div class="chart-wrap h260"><canvas id="perfPctChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>🔥 热点接口 QPS（近30日 · 按小时聚合）</h3>
+        <p></p>
+        <div class="chart-wrap h200"><canvas id="perfHeatChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ 队列监控 ══ -->
+    <div id="view-queue" class="view">
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi-card"><div class="kpi-label">📦 队列中任务</div><div class="kpi-val blue" id="q-waiting">23</div></div>
+        <div class="kpi-card"><div class="kpi-label">⚙️ 处理中</div><div class="kpi-val yellow" id="q-active">8</div></div>
+        <div class="kpi-card"><div class="kpi-label">✅ 今日成功</div><div class="kpi-val green" id="q-done">128</div></div>
+        <div class="kpi-card"><div class="kpi-label">❌ 今日失败</div><div class="kpi-val red" id="q-fail">3</div></div>
+        <div class="kpi-card"><div class="kpi-label">⏱️ 平均等待</div><div class="kpi-val blue">2.4min</div></div>
+      </div>
+      <div class="chart-grid g2" style="margin-top:14px">
+        <div class="chart-card">
+          <h3>📦 Bull 队列状态分布</h3>
+          <p>自动预约任务队列</p>
+          <div style="margin:12px 0" id="queue-bars"></div>
+          <div class="chart-wrap h160"><canvas id="queueChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>⚙️ Worker 处理吞吐量</h3>
+          <p>近30分钟任务处理速率</p>
+          <div class="chart-wrap h260"><canvas id="workerChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 告警 ══ -->
+    <div id="view-alerts" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:12px;color:var(--muted)">共 <strong style="color:var(--text)">14</strong> 条告警（2 个待处理，12 个已解决）</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="filterAlerts('all',this)" style="background:#1e293b;border:1px solid #2d3f5a;color:#94a3b8;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer" class="active-btn">全部</button>
+          <button onclick="filterAlerts('crit',this)" style="background:#1c0a0a;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer">严重</button>
+          <button onclick="filterAlerts('warn',this)" style="background:#1c1503;border:1px solid var(--yellow);color:var(--yellow);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer">警告</button>
+        </div>
+      </div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+
+    <!-- ══ 日志 ══ -->
+    <div id="view-logs" class="view">
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+        <input id="log-search" type="text" placeholder="🔍 过滤日志..." onkeyup="filterLogs()" style="flex:1;background:#1e293b;border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;font-family:monospace">
+        <select id="log-level" onchange="filterLogs()" style="background:#1e293b;border:1px solid var(--border);color:var(--muted);padding:7px 10px;border-radius:6px;font-size:12px">
+          <option value="all">全部级别</option>
+          <option value="error">ERROR</option>
+          <option value="warn">WARN</option>
+          <option value="info">INFO</option>
+        </select>
+        <button onclick="addLogLine()" style="background:var(--blue-d);border:none;color:#fff;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer">模拟日志</button>
+      </div>
+      <div class="chart-card">
+        <h3>📋 实时日志流</h3>
+        <p>Node.js 应用 + MySQL + Redis + Bull Queue</p>
+        <div class="log-wrap" id="log-wrap"></div>
+      </div>
+    </div>
+
+    <!-- ══ 部署历史 ══ -->
+    <div id="view-deploy" class="view">
+      <div class="chart-card" style="margin-bottom:14px">
+        <h3>🚀 部署历史记录</h3>
+        <p>最近 20 次发布，含 SHA · 状态 · 部署时长</p>
+        <table class="deploy-table" style="margin-top:10px">
+          <thead><tr><th>#</th><th>版本</th><th>Commit SHA</th><th>分支</th><th>部署人</th><th>时间</th><th>耗时</th><th>状态</th></tr></thead>
+          <tbody id="deploy-tbody"></tbody>
+        </table>
+      </div>
+      <div class="chart-grid g2">
+        <div class="chart-card">
+          <h3>📈 每次部署后 API 错误率变化</h3>
+          <p></p>
+          <div class="chart-wrap h200"><canvas id="deployErrChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>⏱️ 部署耗时趋势（秒）</h3>
+          <p></p>
+          <div class="chart-wrap h200"><canvas id="deployTimeChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SLA 报告 ══ -->
+    <div id="view-sla" class="view">
+      <div class="sla-grid" style="margin-bottom:20px">
+        <div class="sla-card"><div class="sla-name">整体可用性</div><div class="sla-val">99.97%</div><div class="sla-target">目标 ≥ 99.9%</div></div>
+        <div class="sla-card"><div class="sla-name">API P95 延迟</div><div class="sla-val" style="color:#60a5fa">187ms</div><div class="sla-target">目标 &lt; 500ms</div></div>
+        <div class="sla-card"><div class="sla-name">自动预约成功率</div><div class="sla-val">96.8%</div><div class="sla-target">目标 ≥ 95%</div></div>
+        <div class="sla-card"><div class="sla-name">支付成功率</div><div class="sla-val">99.1%</div><div class="sla-target">目标 ≥ 98%</div></div>
+      </div>
+      <div class="chart-grid g2" style="margin-bottom:14px">
+        <div class="chart-card">
+          <h3>📊 月度可用率趋势</h3>
+          <p>近6个月 · 与 SLA 目标对比</p>
+          <div class="chart-wrap h200"><canvas id="slaChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>⏱️ 本月故障事件</h3>
+          <p>影响范围 · 持续时间 · 状态</p>
+          <div id="incident-list" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>📈 P0/P1/P2 故障响应时间分析（近90天）</h3>
+        <p>MTTD（平均检测时间）· MTTR（平均恢复时间）</p>
+        <div class="chart-wrap h200"><canvas id="mttrChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1)+a);
+const BLUE='#60a5fa', GREEN='#4ade80', RED='#f87171', ORANGE='#fb923c', YELLOW='#facc15', PURPLE='#c084fc';
+const GRID='rgba(255,255,255,0.05)';
+const chartDefaults={responsive:true,maintainAspectRatio:false,animation:{duration:400},
+  plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+  scales:{x:{grid:{color:GRID},ticks:{color:'#475569',font:{size:10}}},
+         y:{grid:{color:GRID},ticks:{color:'#475569',font:{size:10}}}}};
+
+// 时钟
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString('zh-CN')},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('zh-CN');
+
+// 实时 KPI 抖动
+setInterval(()=>{
+  document.getElementById('rt-avg').textContent=R(72,120)+'ms';
+  document.getElementById('err-rate').textContent=(Math.random()*0.6).toFixed(2)+'%';
+  document.getElementById('cpu-val').textContent=R(25,65)+'%';
+  document.getElementById('mem-val').textContent=R(48,68)+'%';
+},5000);
+
+/* ── 导航 ── */
+const inited={};
+function switchView(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(!inited[id]){inited[id]=true;({
+    overview:initOverview,services:initServices,performance:initPerf,
+    queue:initQueue,alerts:initAlerts,logs:initLogs,deploy:initDeploy,sla:initSLA,
+  }[id]||function(){})();}
+}
+
+/* ── 折线工厂 ── */
+function lineChart(id,datasets,labels,yMax){
+  const opts=JSON.parse(JSON.stringify(chartDefaults));
+  if(yMax) opts.scales.y.max=yMax;
+  new Chart(document.getElementById(id).getContext('2d'),{
+    type:'line',data:{labels,datasets:datasets.map(d=>({
+      label:d.l,data:d.d,borderColor:d.c,backgroundColor:d.c+'22',
+      fill:false,tension:.4,pointRadius:0,borderWidth:2,...(d.o||{})
+    }))},options:opts
+  });
+}
+
+/* ── 概览 ── */
+function initOverview(){
+  const mins60=Array.from({length:60},(_,i)=>i%10===0?i+'min':'');
+  const p50=Array.from({length:60},()=>R(60,100));
+  const p95=Array.from({length:60},()=>R(150,220));
+  const p99=Array.from({length:60},()=>R(280,400));
+  lineChart('latencyChart',[{l:'P50',d:p50,c:GREEN},{l:'P95',d:p95,c:YELLOW},{l:'P99',d:p99,c:RED}],mins60);
+  lineChart('errChart',[{l:'5xx',d:Array.from({length:60},()=>R(0,8)/10),c:RED},{l:'4xx',d:Array.from({length:60},()=>R(1,15)/10),c:ORANGE}],mins60,5);
+
+  const labels30=Array.from({length:30},(_,i)=>i%5===0?i+'min':'');
+  lineChart('qpsChart',[{l:'QPS',d:Array.from({length:30},()=>R(80,320)),c:BLUE}],labels30);
+  lineChart('diskChart',[{l:'读 MB/s',d:Array.from({length:30},()=>R(1,40)),c:BLUE},{l:'写 MB/s',d:Array.from({length:30},()=>R(1,25)),c:ORANGE}],labels30);
+
+  // CPU + Mem 实时
+  const cpuD=Array.from({length:30},()=>R(25,65));
+  const memD=Array.from({length:30},()=>R(48,68));
+  const sysCtx=document.getElementById('sysChart').getContext('2d');
+  const sysChart=new Chart(sysCtx,{
+    type:'line',data:{labels:Array.from({length:30},(_,i)=>i===0?'30min':i===29?'now':''),
+    datasets:[{label:'CPU%',data:cpuD,borderColor:BLUE,backgroundColor:BLUE+'22',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+              {label:'MEM%',data:memD,borderColor:PURPLE,backgroundColor:PURPLE+'22',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},
+    options:{...JSON.parse(JSON.stringify(chartDefaults)),scales:{x:{grid:{color:GRID},ticks:{color:'#475569'}},y:{max:100,grid:{color:GRID},ticks:{color:'#475569',callback:v=>v+'%'}}}}
+  });
+  setInterval(()=>{
+    sysChart.data.datasets[0].data.shift();sysChart.data.datasets[0].data.push(R(25,65));
+    sysChart.data.datasets[1].data.shift();sysChart.data.datasets[1].data.push(R(48,68));
+    sysChart.update('none');
+  },3000);
+}
+
+/* ── 服务状态 ── */
+function initServices(){
+  const svcs=[
+    {n:'Node.js API Server',s:'up',lat:'86ms',up:'99.97%',icon:'🟢'},
+    {n:'MySQL 8.0 (Primary)',s:'up',lat:'12ms',up:'99.99%',icon:'🟢'},
+    {n:'MySQL (Replica)',s:'up',lat:'15ms',up:'99.98%',icon:'🟢'},
+    {n:'Redis 7.0',s:'up',lat:'2ms',up:'100%',icon:'🟢'},
+    {n:'Bull Queue Worker',s:'up',lat:'—',up:'99.95%',icon:'🟢'},
+    {n:'SMS 短信服务 (阿里云)',s:'up',lat:'210ms',up:'99.90%',icon:'🟢'},
+    {n:'支付网关 (微信/支付宝)',s:'warn',lat:'380ms',up:'99.82%',icon:'🟡'},
+    {n:'学号验证 API (深大)',s:'up',lat:'145ms',up:'99.70%',icon:'🟢'},
+    {n:'CDN (静态资源)',s:'up',lat:'18ms',up:'100%',icon:'🟢'},
+    {n:'Sentry 错误监控',s:'up',lat:'—',up:'100%',icon:'🟢'},
+  ];
+  document.getElementById('svc-list').innerHTML=svcs.map(s=>`
+    <div class="svc-row">
+      <div class="svc-name">${s.icon} ${s.n}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="svc-latency">${s.lat}</span>
+        <span class="svc-uptime">${s.up}</span>
+        <span class="svc-tag ${s.s==='up'?'tag-up':s.s==='warn'?'tag-warn':'tag-down'}">${s.s.toUpperCase()}</span>
+      </div>
+    </div>`).join('');
+
+  // API latency bar
+  const apis=['GET /venues','GET /slots','POST /bookings','POST /auth/login','POST /sms/send','GET /auto-rules','POST /payments','GET /notifications','GET /users/me','GET /points'];
+  const lats=[45,62,88,102,210,78,132,41,55,38];
+  new Chart(document.getElementById('apiChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:apis,datasets:[{label:'P95 延迟(ms)',data:lats,backgroundColor:lats.map(v=>v>150?RED:v>100?YELLOW:GREEN),borderRadius:4}]},
+    options:{...JSON.parse(JSON.stringify(chartDefaults)),indexAxis:'y',plugins:{legend:{display:false}}}
+  });
+
+  // DB连接池
+  const poolItems=[{l:'活跃连接',v:8,max:20,c:GREEN},{l:'空闲连接',v:7,max:20,c:BLUE},{l:'等待队列',v:1,max:20,c:YELLOW},{l:'总连接数上限',v:20,max:20,c:'#475569'}];
+  document.getElementById('db-pool').innerHTML=poolItems.map(p=>`
+    <div class="gauge-row">
+      <div class="gauge-label">${p.l}</div>
+      <div class="gauge-track"><div class="gauge-fill" style="width:${Math.round(p.v/p.max*100)}%;background:${p.c}"></div></div>
+      <div class="gauge-val">${p.v} / ${p.max}</div>
+    </div>`).join('');
+
+  // Redis 键分布
+  new Chart(document.getElementById('redisChart').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['session:*','slot_lock:*','member_cache:*','notif:*','rate_limit:*','其他'],
+    datasets:[{data:[4200,1800,2100,1560,820,2360],backgroundColor:[BLUE,GREEN,ORANGE,PURPLE,YELLOW,RED]}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10}}}}}
+  });
+}
+
+/* ── 性能 ── */
+function initPerf(){
+  const apis=['POST /auth/login','POST /sms/send','POST /payments','POST /bookings','GET /auto-rules','GET /venues','GET /slots','GET /users/me','GET /points','GET /notifications'];
+  new Chart(document.getElementById('perfApiChart').getContext('2d'),{
+    type:'bar',indexAxis:'y',
+    data:{labels:apis,datasets:[{label:'平均RT(ms)',data:[98,205,128,82,76,45,60,52,38,41],backgroundColor:BLUE+'aa',borderRadius:3}]},
+    options:{...JSON.parse(JSON.stringify(chartDefaults)),plugins:{legend:{display:false}}}
+  });
+
+  const hours24=Array.from({length:24},(_,i)=>i+':00');
+  new Chart(document.getElementById('perfPctChart').getContext('2d'),{
+    type:'line',
+    data:{labels:hours24,datasets:[
+      {label:'P50',data:Array.from({length:24},()=>R(50,90)),borderColor:GREEN,fill:false,tension:.4,pointRadius:2,borderWidth:2},
+      {label:'P95',data:Array.from({length:24},()=>R(150,250)),borderColor:YELLOW,fill:false,tension:.4,pointRadius:2,borderWidth:2},
+      {label:'P99',data:Array.from({length:24},()=>R(280,420)),borderColor:RED,fill:false,tension:.4,pointRadius:2,borderWidth:2},
+      {label:'Max',data:Array.from({length:24},()=>R(400,800)),borderColor:'#475569',fill:false,tension:.4,pointRadius:2,borderWidth:1,borderDash:[4,4]},
+    ]},
+    options:{...JSON.parse(JSON.stringify(chartDefaults)),plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10}}}}}
+  });
+
+  // 热点 QPS 折线
+  lineChart('perfHeatChart',[
+    {l:'GET /venues',d:Array.from({length:24},(_,h)=>h>=7&&h<=22?R(30,120):R(2,15)),c:BLUE},
+    {l:'POST /bookings',d:Array.from({length:24},(_,h)=>h>=8&&h<=22?R(10,60):R(0,5)),c:GREEN},
+    {l:'POST /payments',d:Array.from({length:24},(_,h)=>h>=8&&h<=22?R(5,30):R(0,3)),c:ORANGE},
+  ],Array.from({length:24},(_,i)=>i+':00'));
+}
+
+/* ── 队列 ── */
+function initQueue(){
+  const queueData=[{l:'waiting',v:23,c:YELLOW},{l:'active',v:8,c:BLUE},{l:'completed',v:128,c:GREEN},{l:'failed',v:3,c:RED},{l:'delayed',v:5,c:PURPLE}];
+  document.getElementById('queue-bars').innerHTML=queueData.map(q=>`
+    <div class="queue-row">
+      <div class="queue-label">${q.l}</div>
+      <div class="queue-bar-bg"><div class="queue-bar-fill" style="width:${Math.min(100,q.v/128*100)}%;background:${q.c}"></div></div>
+      <div class="queue-val">${q.v}</div>
+    </div>`).join('');
+
+  new Chart(document.getElementById('queueChart').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:queueData.map(q=>q.l),datasets:[{data:queueData.map(q=>q.v),backgroundColor:queueData.map(q=>q.c)}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10}}}}}
+  });
+
+  const wLabels=Array.from({length:30},(_,i)=>i%5===0?i+'min':'');
+  lineChart('workerChart',[
+    {l:'完成/分钟',d:Array.from({length:30},()=>R(3,18)),c:GREEN},
+    {l:'失败/分钟',d:Array.from({length:30},()=>R(0,2)),c:RED},
+  ],wLabels);
+
+  setInterval(()=>{
+    document.getElementById('q-waiting').textContent=R(10,40);
+    document.getElementById('q-active').textContent=R(3,15);
+    document.getElementById('q-done').textContent=R(100,160);
+  },4000);
+}
+
+/* ── 告警 ── */
+const ALERTS=[
+  {type:'ok',icon:'✅',title:'自动预约成功率恢复正常',desc:'当前成功率 96.8%，超过阈值 95%，告警已自动解除',time:'2分钟前'},
+  {type:'warn',icon:'⚠️',title:'支付网关响应时间偏高',desc:'P95 延迟 380ms，阈值 300ms。检查微信支付 API 状态',time:'8分钟前'},
+  {type:'info',icon:'ℹ️',title:'Redis 内存使用率 68%',desc:'当前 5.4GB/8GB，近7天趋势上升，建议关注',time:'15分钟前'},
+  {type:'ok',icon:'✅',title:'MySQL 主从复制延迟已恢复',desc:'延迟恢复至 0.3s，低于告警阈值 5s',time:'1小时前'},
+  {type:'crit',icon:'🚨',title:'[已解决] 短信服务超时',desc:'阿里云短信 API 超时率 12%，影响注册验证码发送，已重启服务',time:'2小时前'},
+  {type:'info',icon:'ℹ️',title:'定时任务执行完成',desc:'每日凌晨2点数据库备份任务成功执行，耗时 4分32秒',time:'6小时前'},
+  {type:'warn',icon:'⚠️',title:'[已解决] 磁盘使用率 85%',desc:'已清理7天前日志文件，磁盘降至 62%',time:'昨天'},
+  {type:'ok',icon:'✅',title:'v1.3.2 部署成功',desc:'新版本上线，API 错误率无明显波动，自动预约功能正常',time:'昨天'},
+];
+function initAlerts(){
+  renderAlerts('all');
+}
+function filterAlerts(type,btn){
+  document.querySelectorAll('.active-btn').forEach(b=>b.classList.remove('active-btn'));
+  if(btn) btn.classList.add('active-btn');
+  renderAlerts(type);
+}
+function renderAlerts(type){
+  const list=ALERTS.filter(a=>type==='all'||a.type===type);
+  document.getElementById('alert-list').innerHTML=list.map(a=>`
+    <div class="alert-item ${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+      <div class="alert-time">${a.time}</div>
+    </div>`).join('');
+}
+
+/* ── 日志 ── */
+const LOG_TEMPLATES=[
+  {l:'info',m:'[API] GET /venues 200 45ms userId=1284'},
+  {l:'info',m:'[API] POST /bookings 201 88ms bookingId=5621'},
+  {l:'info',m:'[Queue] auto_booking job completed ruleId=312 slotId=98'},
+  {l:'info',m:'[Auth] login success userId=1847 ip=10.0.0.42'},
+  {l:'info',m:'[Redis] cache hit key=slot_lock:88 ttl=487s'},
+  {l:'warn',m:'[API] POST /payments 200 380ms latency_warn threshold=300ms'},
+  {l:'warn',m:'[Queue] job delayed ruleId=445 attempt=2/3'},
+  {l:'error',m:'[SMS] aliyun timeout after 5000ms phoneHash=***4821'},
+  {l:'info',m:'[MySQL] slow query 1240ms SELECT * FROM bookings WHERE ...'},
+  {l:'ok',m:'[Health] all services OK uptime=99.97%'},
+];
+function initLogs(){
+  const wrap=document.getElementById('log-wrap');
+  for(let i=0;i<30;i++) wrap.appendChild(buildLogEl());
+  setInterval(addLogLine,2500);
+}
+function buildLogEl(){
+  const t=LOG_TEMPLATES[R(0,LOG_TEMPLATES.length-1)];
+  const ts=new Date().toLocaleTimeString('zh-CN');
+  const div=document.createElement('div');
+  div.className='log-line';
+  div.dataset.level=t.l;
+  div.innerHTML=`<span class="log-time">${ts}</span><span class="log-level log-lvl-${t.l}">${t.l.toUpperCase()}</span><span class="log-msg">${t.m}</span>`;
+  return div;
+}
+function addLogLine(){
+  const wrap=document.getElementById('log-wrap');
+  if(!wrap) return;
+  const el=buildLogEl();
+  wrap.insertBefore(el,wrap.firstChild);
+  if(wrap.children.length>100) wrap.lastChild.remove();
+}
+function filterLogs(){
+  const q=document.getElementById('log-search').value.toLowerCase();
+  const lvl=document.getElementById('log-level').value;
+  document.querySelectorAll('.log-line').forEach(el=>{
+    const match=(lvl==='all'||el.dataset.level===lvl)&&(!q||el.textContent.toLowerCase().includes(q));
+    el.style.display=match?'':'none';
+  });
+}
+
+/* ── 部署 ── */
+function initDeploy(){
+  const deployments=[
+    ['v1.3.3','a3f82bc','main','张工','04-20 10:22','48s','running'],
+    ['v1.3.2','b9e14ad','main','张工','04-19 14:10','52s','success'],
+    ['v1.3.1','c71f22e','main','李工','04-17 09:45','61s','success'],
+    ['v1.3.0','d48bc91','main','张工','04-15 16:30','55s','success'],
+    ['v1.2.9','e2a73f4','hotfix/sms','李工','04-13 11:20','38s','success'],
+    ['v1.2.8','f91d823','main','王工','04-10 10:00','49s','success'],
+    ['v1.2.7','g14e567','main','张工','04-07 15:45','53s','rollback'],
+    ['v1.2.6','h63a901','main','李工','04-05 09:00','47s','success'],
+  ];
+  const tbody=document.getElementById('deploy-tbody');
+  deployments.forEach(([v,sha,br,by,t,dur,s],i)=>{
+    const sc=s==='success'?'d-success':s==='rollback'?'d-rollback':'d-running';
+    tbody.innerHTML+=`<tr>
+      <td>${i+1}</td><td style="font-weight:600;color:${s==='rollback'?RED:'#e2e8f0'}">${v}</td>
+      <td><span class="deploy-sha">${sha}</span></td><td style="color:var(--muted)">${br}</td>
+      <td>${by}</td><td style="color:var(--muted)">${t}</td>
+      <td style="font-family:monospace">${dur}</td>
+      <td><span class="deploy-status ${sc}">${s.toUpperCase()}</span></td>
+    </tr>`;
+  });
+
+  const deps=deployments.map(d=>d[0]);
+  lineChart('deployErrChart',[{l:'5xx错误率%',d:[0.8,0.4,0.3,0.5,0.2,0.3,1.8,0.4],c:RED}],deps);
+  lineChart('deployTimeChart',[{l:'部署耗时(s)',d:[48,52,61,55,38,49,53,47],c:BLUE}],deps);
+}
+
+/* ── SLA ── */
+function initSLA(){
+  const months=['Nov','Dec','Jan','Feb','Mar','Apr'];
+  lineChart('slaChart',[
+    {l:'实际可用率%',d:[99.95,99.98,99.92,99.97,99.99,99.97],c:GREEN},
+    {l:'SLA目标99.9%',d:[99.9,99.9,99.9,99.9,99.9,99.9],c:RED,o:{borderDash:[5,5],pointRadius:0}},
+  ],months,100);
+
+  const incidents=[
+    {sev:'P1',title:'短信服务超时（4/13）',dur:'22min',status:'resolved',color:RED},
+    {sev:'P2',title:'MySQL慢查询积压（4/8）',dur:'8min',status:'resolved',color:ORANGE},
+    {sev:'P2',title:'Redis OOM告警（3/28）',dur:'5min',status:'resolved',color:ORANGE},
+    {sev:'P3',title:'CDN节点切换（3/15）',dur:'2min',status:'resolved',color:YELLOW},
+  ];
+  document.getElementById('incident-list').innerHTML=incidents.map(i=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="padding:2px 7px;border-radius:4px;background:${i.color}22;color:${i.color};font-size:10px;font-weight:700;width:30px;text-align:center">${i.sev}</span>
+      <span style="flex:1;color:var(--text)">${i.title}</span>
+      <span style="color:var(--muted);font-family:monospace">${i.dur}</span>
+      <span style="color:${GREEN};font-size:10px">✅ ${i.status}</span>
+    </div>`).join('');
+
+  const mths3=['Jan','Feb','Mar','Apr'];
+  new Chart(document.getElementById('mttrChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:mths3,datasets:[
+      {label:'MTTD(min)',data:[8,5,12,6],backgroundColor:YELLOW+'aa',borderRadius:3},
+      {label:'MTTR(min)',data:[22,14,35,18],backgroundColor:RED+'aa',borderRadius:3},
+    ]},
+    options:{...JSON.parse(JSON.stringify(chartDefaults)),plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10}}}}}
+  });
+}
+
+/* ── 初始化 ── */
+initOverview();inited['overview']=true;
+</script>
+</body>
+</html>

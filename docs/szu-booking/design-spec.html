@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>系统设计文档 · 深大体育预约</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  <style>
+    :root {
+      --red: #C1272D; --blue: #1A4189; --blue-d: #0d2d6b;
+      --bg: #f4f6fb; --card: #fff; --border: #e0e5f0;
+      --text: #1a1a2e; --muted: #6b7280; --code-bg: #0f172a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* NAV */
+    nav { background: linear-gradient(135deg, var(--blue), var(--blue-d)); padding: 0 2rem; height: 64px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.2); position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-em { width: 36px; height: 36px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .logo-t .m { font-size: .9rem; font-weight: 700; color: #fff; }
+    .logo-t .s { font-size: .65rem; color: rgba(255,255,255,.7); }
+    .nav-r { display: flex; gap: 1.2rem; align-items: center; }
+    .nav-r a { color: rgba(255,255,255,.8); text-decoration: none; font-size: .85rem; }
+    .nav-r a:hover { color: #fff; }
+
+    /* HERO */
+    .hero { background: linear-gradient(135deg, var(--blue-d), var(--blue)); padding: 2.5rem 2rem; text-align: center; }
+    .hero h1 { font-size: 1.8rem; font-weight: 900; color: #fff; margin-bottom: .5rem; }
+    .hero p { color: rgba(255,255,255,.7); font-size: .9rem; margin-bottom: 1.2rem; }
+    .hero-meta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .h-badge { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 20px; padding: 5px 14px; font-size: .78rem; }
+
+    /* TABS */
+    .tab-bar { background: #fff; border-bottom: 2px solid var(--border); display: flex; gap: 0; padding: 0 2rem; overflow-x: auto; }
+    .tab { padding: 14px 24px; font-size: .88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all .2s; }
+    .tab:hover { color: var(--blue); }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* CONTENT */
+    main { flex: 1; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; width: 100%; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* SECTION HEADINGS */
+    .sec-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: .4rem; display: flex; align-items: center; gap: 10px; }
+    .sec-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, var(--border), transparent); }
+    .sec-desc { font-size: .85rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.7; }
+
+    /* DIAGRAM CARD */
+    .diagram-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; }
+    .diagram-card h3 { font-size: .95rem; font-weight: 700; color: var(--blue); margin-bottom: .3rem; }
+    .diagram-card .d-desc { font-size: .8rem; color: var(--muted); margin-bottom: 1.2rem; line-height: 1.6; }
+    .diagram-card .d-tag { display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 10px; font-size: .72rem; color: var(--muted); margin-bottom: 1rem; }
+    .mermaid-wrap { background: #fafbff; border-radius: 10px; padding: 1.5rem; border: 1px solid var(--border); overflow-x: auto; }
+    .mermaid { text-align: center; }
+
+    /* ER TABLE SECTION */
+    .entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+    .entity-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .entity-head { padding: 10px 16px; font-weight: 700; font-size: .88rem; color: #fff; }
+    .entity-head.blue { background: linear-gradient(135deg, var(--blue), #2a5ab8); }
+    .entity-head.red { background: linear-gradient(135deg, var(--red), #9e1f24); }
+    .entity-head.green { background: linear-gradient(135deg, #059669, #047857); }
+    .entity-head.purple { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+    .entity-head.orange { background: linear-gradient(135deg, #d97706, #b45309); }
+    .entity-head.teal { background: linear-gradient(135deg, #0891b2, #0e7490); }
+    .entity-head.indigo { background: linear-gradient(135deg, #4f46e5, #3730a3); }
+    .entity-head.pink { background: linear-gradient(135deg, #db2777, #be185d); }
+    .entity-head.slate { background: linear-gradient(135deg, #475569, #334155); }
+    .entity-row { display: flex; align-items: center; padding: 7px 16px; border-bottom: 1px solid #f3f4f6; font-size: .8rem; gap: 8px; }
+    .entity-row:last-child { border-bottom: none; }
+    .col-name { font-weight: 600; color: var(--text); min-width: 140px; }
+    .col-type { color: #2563eb; font-family: 'SF Mono', 'Fira Code', monospace; font-size: .75rem; min-width: 90px; }
+    .col-desc { color: var(--muted); flex: 1; }
+    .pk-badge { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; border-radius: 4px; padding: 1px 5px; font-size: .65rem; font-weight: 700; white-space: nowrap; }
+    .fk-badge { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; border-radius: 4px; padding: 1px 5px; font-size: .65rem; font-weight: 700; white-space: nowrap; }
+    .uk-badge { background: #dcfce7; color: #14532d; border: 1px solid #86efac; border-radius: 4px; padding: 1px 5px; font-size: .65rem; font-weight: 700; white-space: nowrap; }
+
+    /* DDL */
+    .ddl-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+    .ddl-chip { padding: 6px 14px; border-radius: 20px; font-size: .8rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--muted); transition: all .15s; }
+    .ddl-chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .ddl-block { display: none; }
+    .ddl-block.active { display: block; }
+    pre { background: var(--code-bg); color: #e2e8f0; border-radius: 12px; padding: 1.5rem; overflow-x: auto; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: .82rem; line-height: 1.7; }
+    .kw { color: #93c5fd; }
+    .tp { color: #86efac; }
+    .cm { color: #6b7280; font-style: italic; }
+    .st { color: #fde68a; }
+    .fn { color: #f9a8d4; }
+
+    /* RELATION TABLE */
+    .rel-table { width: 100%; border-collapse: collapse; font-size: .83rem; margin-top: 1rem; }
+    .rel-table th { background: var(--blue); color: #fff; padding: 10px 16px; text-align: left; font-weight: 600; }
+    .rel-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); }
+    .rel-table tr:hover td { background: var(--bg); }
+    .rel-label { display: inline-flex; align-items: center; gap: 6px; }
+    .rel-icon { font-size: 1rem; }
+
+    /* FOOTER */
+    footer { text-align: center; padding: 1.5rem; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--border); }
+    footer a { color: var(--blue); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-em">🏟️</div>
+    <div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div>
+  </a>
+  <div class="nav-r">
+    <a href="venues.html">场地预约</a>
+    <a href="auto-booking.html">⚡ 自动抢票</a>
+    <a href="membership.html">👑 会员中心</a>
+    <a href="about.html">关于</a>
+    <a href="admin.html">管理后台</a>
+    <a href="profile.html">我的</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>📐 系统设计文档</h1>
+  <p>Software Design Description · 深大体育场地自动预约系统</p>
+  <div class="hero-meta">
+    <span class="h-badge">版本 v1.0</span>
+    <span class="h-badge">UML 流程建模</span>
+    <span class="h-badge">数据建模 / ER图</span>
+    <span class="h-badge">DDL 建表语句</span>
+    <span class="h-badge">MySQL 8.0</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('flow', this)">📊 业务流程图</div>
+  <div class="tab" onclick="switchTab('seq', this)">🔄 系统时序图</div>
+  <div class="tab" onclick="switchTab('er', this)">🗂️ 数据建模 / ER图</div>
+  <div class="tab" onclick="switchTab('ddl', this)">📋 DDL 建表语句</div>
+</div>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════
+       TAB 1: 业务流程图
+  ══════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-flow">
+
+    <div style="margin-bottom:2rem;">
+      <div class="sec-title">业务流程图 · Business Process Flows</div>
+      <div class="sec-desc">描述系统核心业务的流转逻辑，包括用户旅程全景、注册绑定、手动预约与自动抢场四条主线流程。</div>
+    </div>
+
+    <!-- Flow 1: 整体用户旅程 -->
+    <div class="diagram-card">
+      <div class="d-tag">Flowchart · 整体视图</div>
+      <h3>F-01 &nbsp;用户旅程全景图</h3>
+      <div class="d-desc">覆盖从首次访问到成功预约场地的完整路径，展示手动预约与自动抢场两条核心分支，以及会员升级决策节点。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart TD
+    Start([访问网站]) --> A{已有账号？}
+    A -->|否| B[注册]
+    A -->|是| C[登录]
+    B --> B1[填写手机号\n获取短信验证码] --> B2[绑定深大学号\n输入学号+密码验证] --> B3([注册成功]) --> C
+    C --> D[场地浏览页]
+    D --> E{选择预约方式}
+
+    E -->|手动预约| F[选择场地]
+    F --> F1[选择日期与时间段]
+    F1 --> F2[选择支付方式]
+    F2 --> F3{支付成功？}
+    F3 -->|是| F4([预约成功\n收到通知])
+    F3 -->|否| F5([支付失败\n重新尝试])
+
+    E -->|自动抢场| G{是否会员？}
+    G -->|免费用户| H[仅限体验1次]
+    G -->|会员| I[配置抢场规则]
+    H --> H1{是否升级？}
+    H1 -->|是| J[购买会员]
+    H1 -->|否| I
+    J --> J1[选择套餐] --> J2[支付] --> J3([会员开通\n发送确认通知])
+    J3 --> I
+
+    I --> K[设置目标场地\n时间段\n日期偏好]
+    K --> L([系统定时监控])
+    L --> M{发现空位？}
+    M -->|是| N([自动预约成功\n推送通知])
+    M -->|否| O([继续等待下次])
+
+    style Start fill:#1A4189,color:#fff,stroke:none
+    style F4 fill:#059669,color:#fff,stroke:none
+    style N fill:#059669,color:#fff,stroke:none
+    style J3 fill:#d97706,color:#fff,stroke:none
+    style F5 fill:#C1272D,color:#fff,stroke:none
+        </pre>
+      </div>
+    </div>
+
+    <!-- Flow 2: 注册与学号绑定 -->
+    <div class="diagram-card">
+      <div class="d-tag">Flowchart · 账号体系</div>
+      <h3>F-02 &nbsp;用户注册与学号绑定流程</h3>
+      <div class="d-desc">系统独立于校方账号体系，用户自行注册后需绑定深大学号以获得预约资格。此流程描述注册三步骤的完整校验逻辑。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart TD
+    A([开始注册]) --> B[Step 1: 输入手机号]
+    B --> C[发送短信验证码]
+    C --> D{验证码是否正确？}
+    D -->|否| E[提示错误\n允许重新发送]
+    E --> C
+    D -->|是| F[设置登录密码]
+    F --> G{密码强度检查}
+    G -->|不符合| F
+    G -->|通过| H[Step 2: 学号绑定]
+    H --> I[输入深大学号\n+深大体育系统密码]
+    I --> J[后端调用深大体育API\n模拟登录验证]
+    J --> K{验证成功？}
+    K -->|否| L[显示错误原因\n最多重试3次]
+    L --> M{达到上限？}
+    M -->|是| N([账号暂时锁定\n15分钟后重试])
+    M -->|否| I
+    K -->|是| O[加密存储凭证\nAES-256-GCM]
+    O --> P[更新用户状态\nis_student_verified=true]
+    P --> Q[Step 3: 注册完成]
+    Q --> R[赠送欢迎积分\n+50分]
+    R --> S[发送欢迎通知]
+    S --> T([跳转场地浏览页])
+
+    style A fill:#1A4189,color:#fff,stroke:none
+    style T fill:#059669,color:#fff,stroke:none
+    style N fill:#C1272D,color:#fff,stroke:none
+        </pre>
+      </div>
+    </div>
+
+    <!-- Flow 3: 手动预约 -->
+    <div class="diagram-card">
+      <div class="d-tag">Flowchart · 核心功能</div>
+      <h3>F-03 &nbsp;手动预约流程</h3>
+      <div class="d-desc">用户主动选择场地与时间段，完成即时支付的完整流程。包含时段加锁机制（防止并发超卖）与支付超时自动释放逻辑。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart TD
+    A([进入场地详情页]) --> B[选择日期]
+    B --> C[查看时间段列表]
+    C --> D{选择可用时段}
+    D --> E[点击预约]
+    E --> F[系统锁定时段\n10分钟倒计时]
+    F --> G[展示订单确认弹窗]
+    G --> H[选择支付方式\n微信/支付宝/积分抵扣]
+    H --> I[提交支付]
+    I --> J{调用支付网关}
+    J --> K{支付结果}
+    K -->|成功| L[更新time_slots.status=booked]
+    L --> M[写入bookings记录]
+    M --> N[释放时段锁]
+    N --> O[积分奖励\n+2分/小时]
+    O --> P[发送预约成功通知]
+    P --> Q([展示预约成功页])
+
+    K -->|超时15分钟| R[释放时段锁\n状态恢复available]
+    R --> S([提示超时\n返回场地页])
+
+    K -->|失败| T[保留时段锁\n提示用户重试]
+    T --> H
+
+    style A fill:#1A4189,color:#fff,stroke:none
+    style Q fill:#059669,color:#fff,stroke:none
+    style S fill:#6b7280,color:#fff,stroke:none
+        </pre>
+      </div>
+    </div>
+
+    <!-- Flow 4: 自动抢场 -->
+    <div class="diagram-card">
+      <div class="d-tag">Flowchart · 核心功能 · 会员专属</div>
+      <h3>F-04 &nbsp;自动抢场执行流程</h3>
+      <div class="d-desc">系统最核心的差异化功能。基于 Bull Queue + Redis 的异步任务调度，每分钟扫描活跃规则并执行抢场逻辑，包含重试、并发控制与异常告警。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart TD
+    A([Cron 每分钟触发]) --> B[查询 auto_booking_rules\n条件: is_active=true\n且 target_date 匹配]
+    B --> C{有待执行规则？}
+    C -->|否| Z([本轮结束])
+    C -->|是| D[逐条入队 Bull Queue]
+    D --> E[Worker 取出任务]
+    E --> F{用户会员有效？}
+    F -->|否| G[跳过 + 停用规则\n发送会员到期通知]
+    F -->|是| H[解密用户学号凭证]
+    H --> I[调用深大体育API\n模拟登录]
+    I --> J{登录成功？}
+    J -->|失败| K[记录失败日志\n告警运营团队]
+    J -->|是| L[查询目标场地\n目标时段列表]
+    L --> M{目标时段存在且可预约？}
+    M -->|否| N{距离开放还有多久？}
+    N -->|超过30分钟| O[标记等待\n1小时后重试]
+    N -->|30分钟内| P[高频模式: 30秒轮询]
+    P --> L
+    M -->|是| Q[发送预约请求]
+    Q --> R{预约成功？}
+    R -->|是| S[写入bookings表]
+    S --> T[自动扣款/冻结]
+    T --> U[推送成功通知\n微信+站内]
+    U --> V[更新 success_count+1]
+    V --> W([任务完成])
+    R -->|失败| X{已重试次数}
+    X -->|小于3次| Q
+    X -->|达到上限| Y[标记规则失败\n发送失败通知]
+
+    style A fill:#1A4189,color:#fff,stroke:none
+    style W fill:#059669,color:#fff,stroke:none
+    style G fill:#6b7280,color:#fff,stroke:none
+    style K fill:#C1272D,color:#fff,stroke:none
+        </pre>
+      </div>
+    </div>
+
+  </div><!-- /tab-flow -->
+
+
+  <!-- ═══════════════════════════════════════════
+       TAB 2: 时序图
+  ══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-seq">
+
+    <div style="margin-bottom:2rem;">
+      <div class="sec-title">系统时序图 · Sequence Diagrams</div>
+      <div class="sec-desc">描述关键场景下各系统组件之间的交互时序，包括自动抢场调度链路、支付回调链路与学号认证链路。</div>
+    </div>
+
+    <!-- Seq 1: 自动抢场时序 -->
+    <div class="diagram-card">
+      <div class="d-tag">UML Sequence · 最核心场景</div>
+      <h3>S-01 &nbsp;自动抢场完整时序</h3>
+      <div class="d-desc">展示从定时调度触发到用户收到推送通知的完整调用链。涉及 Cron → Bull Queue → Worker → 深大体育API → MySQL → 通知服务 六个组件。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant CR as ⏰ Cron调度
+    participant Q as 📦 Bull Queue(Redis)
+    participant W as ⚙️ Worker进程
+    participant DB as 🗄️ MySQL数据库
+    participant SZU as 🏫 深大体育系统
+    participant NS as 📣 通知服务
+
+    CR->>DB: 查询 active 规则列表
+    DB-->>CR: 返回规则数组
+    loop 每条规则
+        CR->>Q: enqueue(ruleId, priority)
+    end
+    Q->>W: 分发任务
+    W->>DB: 获取规则详情 + 用户凭证
+    DB-->>W: 规则 + 加密凭证
+    W->>W: AES解密学号密码
+    W->>SZU: POST /api/login {studentId, pwd}
+    SZU-->>W: sessionToken
+    W->>SZU: GET /api/venues/{id}/slots?date=X
+    SZU-->>W: 时段列表
+    alt 目标时段可预约
+        W->>SZU: POST /api/bookings {slotId, token}
+        SZU-->>W: 预约成功 {bookingNo}
+        W->>DB: INSERT bookings (status=paid)
+        W->>DB: UPDATE time_slots (status=booked)
+        W->>DB: UPDATE auto_booking_rules (success_count+1)
+        W->>NS: triggerNotification(userId, SUCCESS)
+        NS-->>用户: 微信公众号推送 + 站内通知
+    else 目标时段已满
+        W->>Q: delay(300s) 重新入队
+        Q-->>W: 5分钟后重试
+    else 登录失败
+        W->>DB: INSERT 错误日志
+        W->>NS: triggerAlert(ADMIN, LOGIN_FAIL)
+    end
+        </pre>
+      </div>
+    </div>
+
+    <!-- Seq 2: 支付时序 -->
+    <div class="diagram-card">
+      <div class="d-tag">UML Sequence · 支付链路</div>
+      <h3>S-02 &nbsp;会员购买支付时序</h3>
+      <div class="d-desc">展示用户发起会员购买到支付完成的完整支付链路，包括支付网关异步回调的 Webhook 处理与幂等性校验。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 用户浏览器
+    participant FE as 🖥️ 前端
+    participant API as 🔧 后端API
+    participant DB as 🗄️ MySQL
+    participant PAY as 💳 支付网关
+    participant WS as 🔌 WebSocket
+
+    U->>FE: 点击「立即购买」
+    FE->>API: POST /membership/orders {plan: monthly}
+    API->>DB: INSERT membership_orders (status=pending)
+    DB-->>API: orderId
+    API->>PAY: 创建支付单 {orderId, amount, notifyUrl}
+    PAY-->>API: {payUrl, qrcode}
+    API-->>FE: 返回支付二维码
+    FE->>U: 展示支付弹窗+二维码
+    U->>PAY: 扫码完成支付
+    PAY->>API: POST /webhooks/payment (异步回调)
+    API->>API: 验签 + 幂等校验
+    API->>DB: UPDATE membership_orders (status=paid)
+    API->>DB: UPDATE users (membership_plan, expires_at)
+    API->>DB: INSERT notifications (type=membership)
+    API->>WS: broadcast(userId, PAYMENT_SUCCESS)
+    WS-->>FE: 实时推送成功消息
+    FE->>U: 显示「会员开通成功」弹窗
+    API-->>PAY: 200 OK (确认回调已处理)
+        </pre>
+      </div>
+    </div>
+
+    <!-- Seq 3: 学号验证时序 -->
+    <div class="diagram-card">
+      <div class="d-tag">UML Sequence · 账号体系</div>
+      <h3>S-03 &nbsp;深大学号验证时序</h3>
+      <div class="d-desc">用户注册第二步的学号绑定流程。后端通过模拟登录深大体育系统验证真实性，成功后加密存储凭证用于后续自动抢场。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 用户
+    participant API as 🔧 后端API
+    participant CACHE as ⚡ Redis缓存
+    participant SZU as 🏫 深大体育系统
+    participant DB as 🗄️ MySQL
+
+    U->>API: POST /students/verify {studentId, szuPassword}
+    API->>CACHE: 检查频率限制 (用户IP + userId)
+    CACHE-->>API: 剩余次数
+    alt 触达上限(3次/15min)
+        API-->>U: 429 Too Many Requests
+    else 正常
+        API->>SZU: 模拟POST登录请求
+        SZU-->>API: 响应结果
+        alt 验证成功
+            API->>API: AES-256-GCM 加密 szuPassword
+            API->>DB: INSERT student_bindings
+            API->>DB: UPDATE users SET is_student_verified=true
+            API->>DB: INSERT points_logs (source=verify, delta=+50)
+            API-->>U: 200 {verified: true, points: +50}
+        else 学号或密码错误
+            API->>CACHE: 失败次数+1
+            API-->>U: 401 {message: 学号或密码错误}
+        else 深大系统无响应
+            API-->>U: 503 {message: 校方系统暂时不可用，请稍后重试}
+        end
+    end
+        </pre>
+      </div>
+    </div>
+
+  </div><!-- /tab-seq -->
+
+
+  <!-- ═══════════════════════════════════════════
+       TAB 3: 数据建模 / ER图
+  ══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-er">
+
+    <div style="margin-bottom:2rem;">
+      <div class="sec-title">数据建模 · Data Model / ER 图</div>
+      <div class="sec-desc">系统共设计 9 张核心表，覆盖用户、场地、预约、自动规则、会员、通知、积分七大业务域。以下为 ER 关系图与各实体字段说明。</div>
+    </div>
+
+    <!-- ER Diagram -->
+    <div class="diagram-card">
+      <div class="d-tag">Mermaid erDiagram · 9 Entities</div>
+      <h3>ER图 &nbsp;— 实体关系总览</h3>
+      <div class="d-desc">展示所有实体及其主要属性与关联关系。使用 crow's foot 符号表示基数（||=一, o|=零或一, }o=零或多, }|=一或多）。</div>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+erDiagram
+    USERS {
+        bigint id PK
+        varchar phone UK
+        varchar password_hash
+        varchar nickname
+        boolean is_student_verified
+        int points
+        enum role
+        enum membership_plan
+        timestamp membership_expires_at
+    }
+    STUDENT_BINDINGS {
+        bigint id PK
+        bigint user_id FK
+        varchar student_id UK
+        varchar real_name
+        varchar college
+        text encrypted_pwd
+        timestamp verified_at
+    }
+    VENUES {
+        int id PK
+        varchar name
+        enum type
+        varchar location
+        decimal price_per_hour
+        int capacity
+        boolean is_active
+    }
+    TIME_SLOTS {
+        bigint id PK
+        int venue_id FK
+        date slot_date
+        time start_time
+        time end_time
+        enum status
+        bigint booked_by FK
+        decimal price
+    }
+    BOOKINGS {
+        bigint id PK
+        bigint user_id FK
+        bigint slot_id FK
+        bigint rule_id FK
+        enum type
+        enum status
+        decimal amount
+        varchar payment_no
+        timestamp booked_at
+    }
+    AUTO_BOOKING_RULES {
+        bigint id PK
+        bigint user_id FK
+        int venue_id FK
+        varchar target_days
+        time target_start
+        time target_end
+        int advance_days
+        boolean is_active
+        int success_count
+    }
+    MEMBERSHIP_ORDERS {
+        bigint id PK
+        bigint user_id FK
+        enum plan
+        decimal amount
+        enum status
+        varchar payment_no
+        timestamp expires_at
+    }
+    NOTIFICATIONS {
+        bigint id PK
+        bigint user_id FK
+        enum type
+        varchar title
+        text content
+        boolean is_read
+        timestamp created_at
+    }
+    POINTS_LOGS {
+        bigint id PK
+        bigint user_id FK
+        int delta
+        enum source
+        varchar ref_id
+        timestamp created_at
+    }
+
+    USERS ||--o| STUDENT_BINDINGS : "绑定学号"
+    USERS ||--o{ BOOKINGS : "发起预约"
+    USERS ||--o{ AUTO_BOOKING_RULES : "创建规则"
+    USERS ||--o{ MEMBERSHIP_ORDERS : "购买会员"
+    USERS ||--o{ NOTIFICATIONS : "接收通知"
+    USERS ||--o{ POINTS_LOGS : "积分记录"
+    VENUES ||--o{ TIME_SLOTS : "划分时段"
+    VENUES ||--o{ AUTO_BOOKING_RULES : "目标场地"
+    TIME_SLOTS ||--o| BOOKINGS : "对应预约"
+    AUTO_BOOKING_RULES ||--o{ BOOKINGS : "触发预约"
+        </pre>
+      </div>
+    </div>
+
+    <!-- Entity Tables -->
+    <div style="margin-bottom:1rem;">
+      <div class="sec-title" style="margin-bottom:1rem;">各实体字段说明</div>
+    </div>
+    <div class="entity-grid">
+
+      <!-- users -->
+      <div class="entity-card">
+        <div class="entity-head blue">👤 users &nbsp;— 用户表</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">phone</span><span class="col-type">VARCHAR(20)</span><span class="uk-badge">UK</span></div>
+        <div class="entity-row"><span class="col-name">password_hash</span><span class="col-type">VARCHAR(255)</span><span class="col-desc">bcrypt</span></div>
+        <div class="entity-row"><span class="col-name">nickname</span><span class="col-type">VARCHAR(50)</span><span class="col-desc">昵称</span></div>
+        <div class="entity-row"><span class="col-name">avatar_url</span><span class="col-type">VARCHAR(500)</span></div>
+        <div class="entity-row"><span class="col-name">is_student_verified</span><span class="col-type">BOOLEAN</span><span class="col-desc">学号已验证</span></div>
+        <div class="entity-row"><span class="col-name">points</span><span class="col-type">INT</span><span class="col-desc">当前积分</span></div>
+        <div class="entity-row"><span class="col-name">role</span><span class="col-type">ENUM</span><span class="col-desc">user / admin</span></div>
+        <div class="entity-row"><span class="col-name">membership_plan</span><span class="col-type">ENUM</span><span class="col-desc">free/monthly/...</span></div>
+        <div class="entity-row"><span class="col-name">membership_expires_at</span><span class="col-type">TIMESTAMP</span></div>
+        <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMP</span><span class="col-desc">DEFAULT NOW()</span></div>
+      </div>
+
+      <!-- student_bindings -->
+      <div class="entity-card">
+        <div class="entity-head teal">🎓 student_bindings &nbsp;— 学号绑定</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK</span><span class="uk-badge" style="margin-left:4px;">UK</span></div>
+        <div class="entity-row"><span class="col-name">student_id</span><span class="col-type">VARCHAR(20)</span><span class="uk-badge">UK</span></div>
+        <div class="entity-row"><span class="col-name">real_name</span><span class="col-type">VARCHAR(50)</span><span class="col-desc">真实姓名</span></div>
+        <div class="entity-row"><span class="col-name">college</span><span class="col-type">VARCHAR(100)</span><span class="col-desc">学院</span></div>
+        <div class="entity-row"><span class="col-name">encrypted_pwd</span><span class="col-type">TEXT</span><span class="col-desc">AES加密凭证</span></div>
+        <div class="entity-row"><span class="col-name">verified_at</span><span class="col-type">TIMESTAMP</span></div>
+      </div>
+
+      <!-- venues -->
+      <div class="entity-card">
+        <div class="entity-head green">🏟️ venues &nbsp;— 场地表</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">INT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">name</span><span class="col-type">VARCHAR(100)</span><span class="col-desc">场地名称</span></div>
+        <div class="entity-row"><span class="col-name">type</span><span class="col-type">ENUM</span><span class="col-desc">basketball/...</span></div>
+        <div class="entity-row"><span class="col-name">location</span><span class="col-type">VARCHAR(200)</span><span class="col-desc">位置描述</span></div>
+        <div class="entity-row"><span class="col-name">description</span><span class="col-type">TEXT</span></div>
+        <div class="entity-row"><span class="col-name">images</span><span class="col-type">JSON</span><span class="col-desc">图片URL数组</span></div>
+        <div class="entity-row"><span class="col-name">price_per_hour</span><span class="col-type">DECIMAL(8,2)</span></div>
+        <div class="entity-row"><span class="col-name">capacity</span><span class="col-type">INT</span><span class="col-desc">容纳人数</span></div>
+        <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span><span class="col-desc">是否上架</span></div>
+      </div>
+
+      <!-- time_slots -->
+      <div class="entity-card">
+        <div class="entity-head indigo">🕐 time_slots &nbsp;— 时间段</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">venue_id</span><span class="col-type">INT</span><span class="fk-badge">FK → venues</span></div>
+        <div class="entity-row"><span class="col-name">slot_date</span><span class="col-type">DATE</span><span class="col-desc">预约日期</span></div>
+        <div class="entity-row"><span class="col-name">start_time</span><span class="col-type">TIME</span></div>
+        <div class="entity-row"><span class="col-name">end_time</span><span class="col-type">TIME</span></div>
+        <div class="entity-row"><span class="col-name">status</span><span class="col-type">ENUM</span><span class="col-desc">available/booked/locked/closed</span></div>
+        <div class="entity-row"><span class="col-name">booked_by</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">price</span><span class="col-type">DECIMAL(8,2)</span><span class="col-desc">可浮动定价</span></div>
+      </div>
+
+      <!-- bookings -->
+      <div class="entity-card">
+        <div class="entity-head red">📋 bookings &nbsp;— 预约记录</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">slot_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → time_slots</span></div>
+        <div class="entity-row"><span class="col-name">rule_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK(nullable)</span></div>
+        <div class="entity-row"><span class="col-name">type</span><span class="col-type">ENUM</span><span class="col-desc">manual / auto</span></div>
+        <div class="entity-row"><span class="col-name">status</span><span class="col-type">ENUM</span><span class="col-desc">pending/paid/cancelled/refunded/completed</span></div>
+        <div class="entity-row"><span class="col-name">amount</span><span class="col-type">DECIMAL(8,2)</span></div>
+        <div class="entity-row"><span class="col-name">payment_method</span><span class="col-type">ENUM</span><span class="col-desc">wechat/alipay/balance</span></div>
+        <div class="entity-row"><span class="col-name">payment_no</span><span class="col-type">VARCHAR(64)</span><span class="uk-badge">UK</span></div>
+        <div class="entity-row"><span class="col-name">booked_at</span><span class="col-type">TIMESTAMP</span></div>
+      </div>
+
+      <!-- auto_booking_rules -->
+      <div class="entity-card">
+        <div class="entity-head orange">⚡ auto_booking_rules &nbsp;— 自动预约规则</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">venue_id</span><span class="col-type">INT</span><span class="fk-badge">FK → venues</span></div>
+        <div class="entity-row"><span class="col-name">target_days</span><span class="col-type">VARCHAR(20)</span><span class="col-desc">1,3,5 (周几)</span></div>
+        <div class="entity-row"><span class="col-name">target_start</span><span class="col-type">TIME</span><span class="col-desc">目标开始时间</span></div>
+        <div class="entity-row"><span class="col-name">target_end</span><span class="col-type">TIME</span></div>
+        <div class="entity-row"><span class="col-name">advance_days</span><span class="col-type">INT</span><span class="col-desc">提前N天抢</span></div>
+        <div class="entity-row"><span class="col-name">max_price</span><span class="col-type">DECIMAL(8,2)</span><span class="col-desc">最高可接受价格</span></div>
+        <div class="entity-row"><span class="col-name">is_active</span><span class="col-type">BOOLEAN</span></div>
+        <div class="entity-row"><span class="col-name">success_count</span><span class="col-type">INT</span><span class="col-desc">累计成功次数</span></div>
+      </div>
+
+      <!-- membership_orders -->
+      <div class="entity-card">
+        <div class="entity-head purple">👑 membership_orders &nbsp;— 会员订单</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">plan</span><span class="col-type">ENUM</span><span class="col-desc">monthly/quarterly/yearly</span></div>
+        <div class="entity-row"><span class="col-name">amount</span><span class="col-type">DECIMAL(8,2)</span></div>
+        <div class="entity-row"><span class="col-name">status</span><span class="col-type">ENUM</span><span class="col-desc">pending/paid/refunded</span></div>
+        <div class="entity-row"><span class="col-name">payment_method</span><span class="col-type">ENUM</span><span class="col-desc">wechat / alipay</span></div>
+        <div class="entity-row"><span class="col-name">payment_no</span><span class="col-type">VARCHAR(64)</span><span class="uk-badge">UK</span></div>
+        <div class="entity-row"><span class="col-name">expires_at</span><span class="col-type">TIMESTAMP</span><span class="col-desc">会员到期时间</span></div>
+        <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMP</span></div>
+      </div>
+
+      <!-- notifications -->
+      <div class="entity-card">
+        <div class="entity-head pink">🔔 notifications &nbsp;— 通知</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">type</span><span class="col-type">ENUM</span><span class="col-desc">booking/auto/membership/system</span></div>
+        <div class="entity-row"><span class="col-name">title</span><span class="col-type">VARCHAR(100)</span></div>
+        <div class="entity-row"><span class="col-name">content</span><span class="col-type">TEXT</span></div>
+        <div class="entity-row"><span class="col-name">is_read</span><span class="col-type">BOOLEAN</span><span class="col-desc">DEFAULT false</span></div>
+        <div class="entity-row"><span class="col-name">metadata</span><span class="col-type">JSON</span><span class="col-desc">附加数据(可选)</span></div>
+        <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMP</span></div>
+      </div>
+
+      <!-- points_logs -->
+      <div class="entity-card">
+        <div class="entity-head slate">⭐ points_logs &nbsp;— 积分记录</div>
+        <div class="entity-row"><span class="col-name">id</span><span class="col-type">BIGINT</span><span class="pk-badge">PK</span></div>
+        <div class="entity-row"><span class="col-name">user_id</span><span class="col-type">BIGINT</span><span class="fk-badge">FK → users</span></div>
+        <div class="entity-row"><span class="col-name">delta</span><span class="col-type">INT</span><span class="col-desc">正=获得 负=消耗</span></div>
+        <div class="entity-row"><span class="col-name">source</span><span class="col-type">ENUM</span><span class="col-desc">booking/review/invite/exchange/admin</span></div>
+        <div class="entity-row"><span class="col-name">ref_id</span><span class="col-type">VARCHAR(50)</span><span class="col-desc">关联业务ID</span></div>
+        <div class="entity-row"><span class="col-name">note</span><span class="col-type">VARCHAR(200)</span><span class="col-desc">备注</span></div>
+        <div class="entity-row"><span class="col-name">created_at</span><span class="col-type">TIMESTAMP</span></div>
+      </div>
+
+    </div><!-- /entity-grid -->
+
+    <!-- Relation Table -->
+    <div class="diagram-card" style="margin-top:1rem;">
+      <div class="d-tag">实体关系汇总</div>
+      <h3>外键关联关系总表</h3>
+      <table class="rel-table">
+        <thead>
+          <tr><th>从表 (Many/Child)</th><th>关系</th><th>主表 (One/Parent)</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>student_bindings.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 1对1</span></td><td>users.id</td><td>一个用户最多绑定一个学号</td></tr>
+          <tr><td>time_slots.venue_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>venues.id</td><td>一个场地有多个时间段</td></tr>
+          <tr><td>time_slots.booked_by</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>时段被哪个用户预约（可空）</td></tr>
+          <tr><td>bookings.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>用户的所有预约记录</td></tr>
+          <tr><td>bookings.slot_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>time_slots.id</td><td>一个时段对应一条有效预约</td></tr>
+          <tr><td>bookings.rule_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1(nullable)</span></td><td>auto_booking_rules.id</td><td>由哪条规则触发（手动预约为NULL）</td></tr>
+          <tr><td>auto_booking_rules.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>用户的自动预约规则列表</td></tr>
+          <tr><td>auto_booking_rules.venue_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>venues.id</td><td>规则绑定的目标场地</td></tr>
+          <tr><td>membership_orders.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>用户历史会员订单</td></tr>
+          <tr><td>notifications.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>用户的通知收件箱</td></tr>
+          <tr><td>points_logs.user_id</td><td><span class="rel-label"><span class="rel-icon">→</span> 多对1</span></td><td>users.id</td><td>积分流水账本</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab-er -->
+
+
+  <!-- ═══════════════════════════════════════════
+       TAB 4: DDL建表语句
+  ══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-ddl">
+
+    <div style="margin-bottom:1.5rem;">
+      <div class="sec-title">DDL 建表语句 · MySQL 8.0</div>
+      <div class="sec-desc">全部9张表的 CREATE TABLE 语句，包含字段类型、约束、索引与外键。字符集 utf8mb4，存储引擎 InnoDB，时区 Asia/Shanghai。</div>
+    </div>
+
+    <div class="ddl-nav">
+      <div class="ddl-chip active" onclick="showDDL('users', this)">👤 users</div>
+      <div class="ddl-chip" onclick="showDDL('student_bindings', this)">🎓 student_bindings</div>
+      <div class="ddl-chip" onclick="showDDL('venues', this)">🏟️ venues</div>
+      <div class="ddl-chip" onclick="showDDL('time_slots', this)">🕐 time_slots</div>
+      <div class="ddl-chip" onclick="showDDL('bookings', this)">📋 bookings</div>
+      <div class="ddl-chip" onclick="showDDL('auto_booking_rules', this)">⚡ auto_booking_rules</div>
+      <div class="ddl-chip" onclick="showDDL('membership_orders', this)">👑 membership_orders</div>
+      <div class="ddl-chip" onclick="showDDL('notifications', this)">🔔 notifications</div>
+      <div class="ddl-chip" onclick="showDDL('points_logs', this)">⭐ points_logs</div>
+    </div>
+
+    <div class="ddl-block active" id="ddl-users">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: users  ·  用户主表                           │
+-- │  每个注册用户一条记录，包含认证、会员、积分状态        │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">users</span> (
+  <span class="fn">id</span>                    <span class="tp">BIGINT</span>              <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">phone</span>                 <span class="tp">VARCHAR</span>(20)         <span class="kw">NOT NULL</span>              <span class="cm">-- 手机号，登录唯一标识</span>,
+  <span class="fn">password_hash</span>         <span class="tp">VARCHAR</span>(255)        <span class="kw">NOT NULL</span>              <span class="cm">-- bcrypt hash, cost=12</span>,
+  <span class="fn">nickname</span>              <span class="tp">VARCHAR</span>(50)         <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">avatar_url</span>            <span class="tp">VARCHAR</span>(500)        <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">is_student_verified</span>   <span class="tp">TINYINT</span>(1)          <span class="kw">NOT NULL DEFAULT</span> 0    <span class="cm">-- 学号已绑定并验证</span>,
+  <span class="fn">points</span>                <span class="tp">INT</span>                 <span class="kw">NOT NULL DEFAULT</span> 0    <span class="cm">-- 当前积分余额</span>,
+  <span class="fn">role</span>                  <span class="tp">ENUM</span>('user','admin') <span class="kw">NOT NULL DEFAULT</span> 'user',
+  <span class="fn">membership_plan</span>       <span class="tp">ENUM</span>('free','monthly','quarterly','yearly')
+                                             <span class="kw">NOT NULL DEFAULT</span> 'free',
+  <span class="fn">membership_expires_at</span> <span class="tp">TIMESTAMP</span>           <span class="kw">DEFAULT NULL</span>          <span class="cm">-- NULL=无会员</span>,
+  <span class="fn">trial_used</span>            <span class="tp">TINYINT</span>(1)          <span class="kw">NOT NULL DEFAULT</span> 0    <span class="cm">-- 免费体验是否已用</span>,
+  <span class="fn">referral_code</span>         <span class="tp">VARCHAR</span>(16)         <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 个人邀请码</span>,
+  <span class="fn">referred_by</span>           <span class="tp">BIGINT</span>              <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 邀请人user_id</span>,
+  <span class="fn">login_at</span>              <span class="tp">TIMESTAMP</span>           <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 最近登录时间</span>,
+  <span class="fn">created_at</span>            <span class="tp">TIMESTAMP</span>           <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  <span class="fn">updated_at</span>            <span class="tp">TIMESTAMP</span>           <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>
+                                             <span class="kw">ON UPDATE</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_phone (phone),
+  <span class="kw">UNIQUE KEY</span> uk_referral_code (referral_code),
+  <span class="kw">KEY</span> idx_membership (membership_plan, membership_expires_at),
+  <span class="kw">KEY</span> idx_created (created_at)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='用户主表';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-student_bindings">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: student_bindings  ·  深大学号绑定表           │
+-- │  存储加密的深大体育系统登录凭证，用于自动抢场          │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">student_bindings</span> (
+  <span class="fn">id</span>           <span class="tp">BIGINT</span>       <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>      <span class="tp">BIGINT</span>       <span class="kw">NOT NULL</span>              <span class="cm">-- 关联 users.id，1对1</span>,
+  <span class="fn">student_id</span>   <span class="tp">VARCHAR</span>(20)  <span class="kw">NOT NULL</span>              <span class="cm">-- 深大学号</span>,
+  <span class="fn">real_name</span>    <span class="tp">VARCHAR</span>(50)  <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 从深大系统获取的真实姓名</span>,
+  <span class="fn">college</span>      <span class="tp">VARCHAR</span>(100) <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 学院</span>,
+  <span class="fn">major</span>        <span class="tp">VARCHAR</span>(100) <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">grade</span>        <span class="tp">VARCHAR</span>(10)  <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 年级</span>,
+  <span class="fn">encrypted_pwd</span> <span class="tp">TEXT</span>        <span class="kw">NOT NULL</span>              <span class="cm">-- AES-256-GCM 加密的深大密码</span>,
+  <span class="fn">iv</span>           <span class="tp">VARCHAR</span>(64)  <span class="kw">NOT NULL</span>              <span class="cm">-- AES 初始向量</span>,
+  <span class="fn">verified_at</span>  <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_user_id (user_id),
+  <span class="kw">UNIQUE KEY</span> uk_student_id (student_id),
+  <span class="kw">CONSTRAINT</span> fk_sb_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id) <span class="kw">ON DELETE CASCADE</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='深大学号绑定与加密凭证';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-venues">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: venues  ·  场地表                            │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">venues</span> (
+  <span class="fn">id</span>             <span class="tp">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">name</span>           <span class="tp">VARCHAR</span>(100) <span class="kw">NOT NULL</span>,
+  <span class="fn">type</span>           <span class="tp">ENUM</span>('basketball','badminton','tennis',
+                      'football','swimming','gym','other')
+                              <span class="kw">NOT NULL</span>,
+  <span class="fn">location</span>       <span class="tp">VARCHAR</span>(200) <span class="kw">DEFAULT NULL</span>           <span class="cm">-- 位置描述</span>,
+  <span class="fn">description</span>    <span class="tp">TEXT</span>         <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">images</span>         <span class="tp">JSON</span>         <span class="kw">DEFAULT NULL</span>           <span class="cm">-- ["url1","url2",...]</span>,
+  <span class="fn">price_per_hour</span> <span class="tp">DECIMAL</span>(8,2) <span class="kw">NOT NULL</span>,
+  <span class="fn">capacity</span>       <span class="tp">INT</span>          <span class="kw">NOT NULL DEFAULT</span> 1,
+  <span class="fn">open_time</span>      <span class="tp">TIME</span>         <span class="kw">DEFAULT</span> '08:00:00',
+  <span class="fn">close_time</span>     <span class="tp">TIME</span>         <span class="kw">DEFAULT</span> '22:00:00',
+  <span class="fn">is_active</span>      <span class="tp">TINYINT</span>(1)   <span class="kw">NOT NULL DEFAULT</span> 1,
+  <span class="fn">sort_order</span>     <span class="tp">INT</span>          <span class="kw">NOT NULL DEFAULT</span> 0     <span class="cm">-- 展示排序</span>,
+  <span class="fn">created_at</span>     <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">KEY</span> idx_type_active (type, is_active)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='运动场地表';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-time_slots">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: time_slots  ·  时间段表                       │
+-- │  每天由定时任务生成未来N天的时间段记录                  │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">time_slots</span> (
+  <span class="fn">id</span>           <span class="tp">BIGINT</span>     <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">venue_id</span>     <span class="tp">INT</span>        <span class="kw">NOT NULL</span>,
+  <span class="fn">slot_date</span>    <span class="tp">DATE</span>       <span class="kw">NOT NULL</span>,
+  <span class="fn">start_time</span>   <span class="tp">TIME</span>       <span class="kw">NOT NULL</span>,
+  <span class="fn">end_time</span>     <span class="tp">TIME</span>       <span class="kw">NOT NULL</span>,
+  <span class="fn">status</span>       <span class="tp">ENUM</span>('available','locked','booked','closed')
+                           <span class="kw">NOT NULL DEFAULT</span> 'available',
+  <span class="fn">booked_by</span>    <span class="tp">BIGINT</span>     <span class="kw">DEFAULT NULL</span>         <span class="cm">-- 预约用户ID</span>,
+  <span class="fn">price</span>        <span class="tp">DECIMAL</span>(8,2) <span class="kw">NOT NULL</span>            <span class="cm">-- 允许浮动定价</span>,
+  <span class="fn">locked_at</span>    <span class="tp">TIMESTAMP</span>  <span class="kw">DEFAULT NULL</span>         <span class="cm">-- 加锁时间（10分钟超时自动释放）</span>,
+  <span class="fn">locked_by</span>    <span class="tp">BIGINT</span>     <span class="kw">DEFAULT NULL</span>         <span class="cm">-- 锁定用户ID</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_venue_date_start (venue_id, slot_date, start_time),
+  <span class="kw">KEY</span> idx_venue_date (venue_id, slot_date),
+  <span class="kw">KEY</span> idx_status (status),
+  <span class="kw">CONSTRAINT</span> fk_ts_venue <span class="kw">FOREIGN KEY</span> (venue_id)
+    <span class="kw">REFERENCES</span> <span class="st">venues</span>(id),
+  <span class="kw">CONSTRAINT</span> fk_ts_user <span class="kw">FOREIGN KEY</span> (booked_by)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id) <span class="kw">ON DELETE SET NULL</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='场地时间段（每日生成）';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-bookings">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: bookings  ·  预约记录主表                     │
+-- │  手动预约与自动预约统一记录，含支付状态                │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">bookings</span> (
+  <span class="fn">id</span>             <span class="tp">BIGINT</span>      <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>        <span class="tp">BIGINT</span>      <span class="kw">NOT NULL</span>,
+  <span class="fn">slot_id</span>        <span class="tp">BIGINT</span>      <span class="kw">NOT NULL</span>,
+  <span class="fn">rule_id</span>        <span class="tp">BIGINT</span>      <span class="kw">DEFAULT NULL</span>           <span class="cm">-- 由哪条自动规则触发，手动为NULL</span>,
+  <span class="fn">type</span>           <span class="tp">ENUM</span>('manual','auto')
+                             <span class="kw">NOT NULL DEFAULT</span> 'manual',
+  <span class="fn">status</span>         <span class="tp">ENUM</span>('pending','paid','cancelled','refunded','completed')
+                             <span class="kw">NOT NULL DEFAULT</span> 'pending',
+  <span class="fn">amount</span>         <span class="tp">DECIMAL</span>(8,2) <span class="kw">NOT NULL</span>,
+  <span class="fn">discount</span>       <span class="tp">DECIMAL</span>(8,2) <span class="kw">NOT NULL DEFAULT</span> 0.00   <span class="cm">-- 积分抵扣金额</span>,
+  <span class="fn">payment_method</span> <span class="tp">ENUM</span>('wechat','alipay','balance')
+                             <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">payment_no</span>     <span class="tp">VARCHAR</span>(64) <span class="kw">DEFAULT NULL</span>            <span class="cm">-- 支付流水号</span>,
+  <span class="fn">cancel_reason</span>  <span class="tp">VARCHAR</span>(200) <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">booked_at</span>      <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  <span class="fn">paid_at</span>        <span class="tp">TIMESTAMP</span>   <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">cancelled_at</span>   <span class="tp">TIMESTAMP</span>   <span class="kw">DEFAULT NULL</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_payment_no (payment_no),
+  <span class="kw">KEY</span> idx_user_status (user_id, status),
+  <span class="kw">KEY</span> idx_slot (slot_id),
+  <span class="kw">KEY</span> idx_booked_at (booked_at),
+  <span class="kw">CONSTRAINT</span> fk_bk_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id),
+  <span class="kw">CONSTRAINT</span> fk_bk_slot <span class="kw">FOREIGN KEY</span> (slot_id)
+    <span class="kw">REFERENCES</span> <span class="st">time_slots</span>(id),
+  <span class="kw">CONSTRAINT</span> fk_bk_rule <span class="kw">FOREIGN KEY</span> (rule_id)
+    <span class="kw">REFERENCES</span> <span class="st">auto_booking_rules</span>(id) <span class="kw">ON DELETE SET NULL</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='预约记录主表';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-auto_booking_rules">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: auto_booking_rules  ·  自动预约规则表         │
+-- │  会员专属，Bull Queue 每轮调度从此表读取活跃规则       │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">auto_booking_rules</span> (
+  <span class="fn">id</span>             <span class="tp">BIGINT</span>      <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>        <span class="tp">BIGINT</span>      <span class="kw">NOT NULL</span>,
+  <span class="fn">venue_id</span>       <span class="tp">INT</span>         <span class="kw">NOT NULL</span>,
+  <span class="fn">target_days</span>    <span class="tp">VARCHAR</span>(20) <span class="kw">NOT NULL DEFAULT</span> '1,2,3,4,5'
+                                              <span class="cm">-- 周一到周五，逗号分隔的 ISO weekday</span>,
+  <span class="fn">target_start</span>   <span class="tp">TIME</span>        <span class="kw">NOT NULL</span>              <span class="cm">-- 目标时段开始时间</span>,
+  <span class="fn">target_end</span>     <span class="tp">TIME</span>        <span class="kw">NOT NULL</span>,
+  <span class="fn">advance_days</span>   <span class="tp">INT</span>         <span class="kw">NOT NULL DEFAULT</span> 3     <span class="cm">-- 提前几天开始尝试</span>,
+  <span class="fn">priority</span>       <span class="tp">INT</span>         <span class="kw">NOT NULL DEFAULT</span> 1     <span class="cm">-- Bull Job 优先级（越小越优先）</span>,
+  <span class="fn">max_price</span>      <span class="tp">DECIMAL</span>(8,2) <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 最高可接受单价（NULL=不限）</span>,
+  <span class="fn">is_active</span>      <span class="tp">TINYINT</span>(1)  <span class="kw">NOT NULL DEFAULT</span> 1,
+  <span class="fn">success_count</span>  <span class="tp">INT</span>         <span class="kw">NOT NULL DEFAULT</span> 0,
+  <span class="fn">fail_count</span>     <span class="tp">INT</span>         <span class="kw">NOT NULL DEFAULT</span> 0,
+  <span class="fn">last_run_at</span>    <span class="tp">TIMESTAMP</span>   <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">last_success_at</span> <span class="tp">TIMESTAMP</span>  <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">created_at</span>     <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">KEY</span> idx_user_active (user_id, is_active),
+  <span class="kw">KEY</span> idx_venue (venue_id),
+  <span class="kw">CONSTRAINT</span> fk_abr_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="kw">CONSTRAINT</span> fk_abr_venue <span class="kw">FOREIGN KEY</span> (venue_id)
+    <span class="kw">REFERENCES</span> <span class="st">venues</span>(id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='自动预约规则（会员专属）';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-membership_orders">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: membership_orders  ·  会员订单表              │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">membership_orders</span> (
+  <span class="fn">id</span>             <span class="tp">BIGINT</span>      <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>        <span class="tp">BIGINT</span>      <span class="kw">NOT NULL</span>,
+  <span class="fn">plan</span>           <span class="tp">ENUM</span>('monthly','quarterly','yearly')
+                             <span class="kw">NOT NULL</span>,
+  <span class="fn">amount</span>         <span class="tp">DECIMAL</span>(8,2) <span class="kw">NOT NULL</span>,
+  <span class="fn">status</span>         <span class="tp">ENUM</span>('pending','paid','refunded')
+                             <span class="kw">NOT NULL DEFAULT</span> 'pending',
+  <span class="fn">payment_method</span> <span class="tp">ENUM</span>('wechat','alipay')
+                             <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">payment_no</span>     <span class="tp">VARCHAR</span>(64) <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">expires_at</span>     <span class="tp">TIMESTAMP</span>   <span class="kw">DEFAULT NULL</span>            <span class="cm">-- 支付后计算</span>,
+  <span class="fn">refund_at</span>      <span class="tp">TIMESTAMP</span>   <span class="kw">DEFAULT NULL</span>,
+  <span class="fn">created_at</span>     <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">UNIQUE KEY</span> uk_payment_no (payment_no),
+  <span class="kw">KEY</span> idx_user (user_id),
+  <span class="kw">KEY</span> idx_status (status),
+  <span class="kw">CONSTRAINT</span> fk_mo_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='会员订单表';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-notifications">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: notifications  ·  站内通知表                  │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">notifications</span> (
+  <span class="fn">id</span>          <span class="tp">BIGINT</span>       <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>     <span class="tp">BIGINT</span>       <span class="kw">NOT NULL</span>,
+  <span class="fn">type</span>        <span class="tp">ENUM</span>('booking_success','booking_fail','booking_cancelled',
+                   'auto_success','auto_fail','membership','system','invite')
+                            <span class="kw">NOT NULL</span>,
+  <span class="fn">title</span>       <span class="tp">VARCHAR</span>(100) <span class="kw">NOT NULL</span>,
+  <span class="fn">content</span>     <span class="tp">TEXT</span>         <span class="kw">NOT NULL</span>,
+  <span class="fn">is_read</span>     <span class="tp">TINYINT</span>(1)   <span class="kw">NOT NULL DEFAULT</span> 0,
+  <span class="fn">action_url</span>  <span class="tp">VARCHAR</span>(200) <span class="kw">DEFAULT NULL</span>           <span class="cm">-- 点击跳转链接</span>,
+  <span class="fn">metadata</span>    <span class="tp">JSON</span>         <span class="kw">DEFAULT NULL</span>           <span class="cm">-- 附加数据 {bookingId, amount...}</span>,
+  <span class="fn">created_at</span>  <span class="tp">TIMESTAMP</span>    <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">KEY</span> idx_user_read (user_id, is_read),
+  <span class="kw">KEY</span> idx_created (created_at),
+  <span class="kw">CONSTRAINT</span> fk_notif_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id) <span class="kw">ON DELETE CASCADE</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='站内通知表';</pre>
+    </div>
+
+    <div class="ddl-block" id="ddl-points_logs">
+      <pre><span class="cm">-- ┌─────────────────────────────────────────────────────┐
+-- │  Table: points_logs  ·  积分流水表                   │
+-- │  users.points 的所有变更都在此记录（不可删改）        │
+-- └─────────────────────────────────────────────────────┘</span>
+<span class="kw">CREATE TABLE</span> <span class="st">points_logs</span> (
+  <span class="fn">id</span>          <span class="tp">BIGINT</span>       <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  <span class="fn">user_id</span>     <span class="tp">BIGINT</span>       <span class="kw">NOT NULL</span>,
+  <span class="fn">delta</span>       <span class="tp">INT</span>          <span class="kw">NOT NULL</span>              <span class="cm">-- 正值=获得, 负值=消耗</span>,
+  <span class="fn">balance</span>     <span class="tp">INT</span>          <span class="kw">NOT NULL</span>              <span class="cm">-- 变更后的余额快照</span>,
+  <span class="fn">source</span>      <span class="tp">ENUM</span>('register','booking','review','invite',
+                   'exchange','admin_adjust','expire')
+                            <span class="kw">NOT NULL</span>,
+  <span class="fn">ref_id</span>      <span class="tp">VARCHAR</span>(50)  <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 关联业务主键ID</span>,
+  <span class="fn">note</span>        <span class="tp">VARCHAR</span>(200) <span class="kw">DEFAULT NULL</span>          <span class="cm">-- 备注说明</span>,
+  <span class="fn">created_at</span>  <span class="tp">TIMESTAMP</span>   <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">KEY</span> idx_user (user_id),
+  <span class="kw">KEY</span> idx_source (source),
+  <span class="kw">CONSTRAINT</span> fk_pl_user <span class="kw">FOREIGN KEY</span> (user_id)
+    <span class="kw">REFERENCES</span> <span class="st">users</span>(id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4 <span class="kw">COLLATE</span>=utf8mb4_unicode_ci
+  <span class="kw">COMMENT</span>='积分变更流水（只增不改）';</pre>
+    </div>
+
+  </div><!-- /tab-ddl -->
+
+</main>
+
+<footer>
+  <a href="index.html">首页</a> · <a href="venues.html">场地预约</a> · <a href="about.html">关于</a> · <a href="admin.html">管理后台</a>
+  &nbsp;|&nbsp; 深大体育预约系统 · 系统设计文档 v1.0 · © 2025
+</footer>
+
+<script>
+  // ── Mermaid Init ──
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#1A4189',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#1A4189',
+      lineColor: '#6b7280',
+      secondaryColor: '#e8eef8',
+      tertiaryColor: '#f4f6fb',
+      fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    sequence: { diagramMarginX: 30, diagramMarginY: 10, actorMargin: 60, width: 140, height: 40, boxMargin: 10, boxTextMargin: 5, noteMargin: 10, messageMargin: 30 },
+    er: { diagramPadding: 20, layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75, entityPadding: 15 }
+  });
+
+  // ── Tab Switching ──
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // ── DDL Chip Switching ──
+  function showDDL(id, el) {
+    document.querySelectorAll('.ddl-block').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.ddl-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('ddl-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>个人中心 — 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --blue-l:#2a5bb5; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --success:#16a34a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+    /* NAV */
+    nav { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-links { display:flex; gap:1.5rem; }
+    .nav-links a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.88rem; }
+    .nav-links a:hover { color:#fff; }
+    /* HERO */
+    .hero { background:linear-gradient(135deg,var(--blue),#0d2d6b); padding:2.5rem 2rem; }
+    .hero-inner { max-width:960px; margin:0 auto; display:flex; align-items:center; gap:2rem; }
+    .avatar-wrap { position:relative; }
+    .avatar { width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,var(--red),#8b1a1d); display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:#fff; font-weight:700; border:3px solid rgba(255,255,255,.3); cursor:pointer; }
+    .avatar-edit { position:absolute; bottom:0; right:0; width:26px; height:26px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+    .hero-info .name { font-size:1.5rem; font-weight:800; color:#fff; margin-bottom:6px; }
+    .hero-info .meta { color:rgba(255,255,255,.7); font-size:.85rem; display:flex; gap:16px; flex-wrap:wrap; }
+    .meta-tag { background:rgba(255,255,255,.12); border-radius:12px; padding:3px 10px; }
+    .meta-tag.gold { background:rgba(212,160,23,.25); color:#fbbf24; }
+    /* LAYOUT */
+    .page-body { max-width:960px; margin:0 auto; padding:2rem; width:100%; flex:1; display:grid; grid-template-columns:220px 1fr; gap:24px; }
+    /* SIDEBAR MENU */
+    .side-menu { background:var(--card); border-radius:12px; border:1px solid var(--border); padding:8px; height:fit-content; }
+    .menu-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; cursor:pointer; color:var(--muted); font-size:.88rem; transition:all .15s; }
+    .menu-item:hover { background:var(--bg); color:var(--text); }
+    .menu-item.active { background:#eff6ff; color:var(--blue); font-weight:600; }
+    .menu-item .icon { font-size:1rem; width:20px; text-align:center; }
+    .menu-sep { height:1px; background:var(--border); margin:6px 0; }
+    .menu-item.danger:hover { background:#fff5f5; color:var(--red); }
+    /* TAB PANELS */
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    /* CARD */
+    .c { background:var(--card); border-radius:12px; border:1px solid var(--border); margin-bottom:20px; }
+    .c-head { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .c-title { font-size:.95rem; font-weight:700; color:var(--text); }
+    .c-body { padding:20px; }
+    /* FORM ROW */
+    .form-row { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #f3f4f6; gap:12px; }
+    .form-row:last-child { border-bottom:none; }
+    .form-label { min-width:90px; font-size:.82rem; font-weight:600; color:#374151; }
+    .form-val { flex:1; font-size:.88rem; color:var(--text); }
+    .form-val.muted { color:var(--muted); }
+    .form-edit { font-size:.78rem; color:var(--blue); cursor:pointer; white-space:nowrap; }
+    .form-edit:hover { text-decoration:underline; }
+    input.inline { border:1.5px solid var(--border); border-radius:7px; padding:7px 12px; font-size:.88rem; outline:none; background:#fafbfc; }
+    input.inline:focus { border-color:var(--blue); }
+    /* STAT ROW */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+    .stat-box { background:var(--card); border-radius:10px; border:1px solid var(--border); padding:16px; text-align:center; }
+    .stat-box .sv { font-size:1.6rem; font-weight:800; color:var(--text); }
+    .stat-box .sl { font-size:.75rem; color:var(--muted); margin-top:4px; }
+    /* BADGE */
+    .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:.72rem; font-weight:600; }
+    .bg-green { background:#dcfce7; color:#15803d; }
+    .bg-blue { background:#dbeafe; color:#1d4ed8; }
+    .bg-orange { background:#ffedd5; color:#c2410c; }
+    .bg-purple { background:#f3e8ff; color:#7e22ce; }
+    .bg-gray { background:#f3f4f6; color:#6b7280; }
+    /* DEVICE LIST */
+    .device-item { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f3f4f6; }
+    .device-item:last-child { border-bottom:none; }
+    .device-icon { font-size:1.5rem; }
+    .device-info { flex:1; }
+    .device-info .dn { font-size:.88rem; font-weight:600; color:var(--text); }
+    .device-info .dt { font-size:.75rem; color:var(--muted); margin-top:2px; }
+    .device-cur { font-size:.72rem; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:8px; }
+    .btn-sm { padding:5px 12px; border:1px solid var(--border); background:#fff; border-radius:7px; font-size:.78rem; cursor:pointer; color:var(--text); transition:background .15s; }
+    .btn-sm:hover { background:var(--bg); }
+    .btn-sm.danger { color:var(--red); border-color:#fecaca; }
+    .btn-sm.danger:hover { background:#fff5f5; }
+    /* DELETE ZONE */
+    .danger-zone { border:1.5px solid #fca5a5; border-radius:12px; padding:20px; background:#fff5f5; }
+    .danger-title { font-size:.95rem; font-weight:700; color:var(--red); margin-bottom:8px; }
+    .danger-desc { font-size:.83rem; color:#6b7280; margin-bottom:14px; line-height:1.6; }
+    .btn-danger { padding:10px 24px; background:var(--red); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:.88rem; cursor:pointer; }
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal.show { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; padding:2rem; width:100%; max-width:420px; }
+    .modal-title { font-size:1.1rem; font-weight:700; margin-bottom:1rem; }
+    .modal-actions { display:flex; gap:10px; margin-top:1.4rem; }
+    .btn-cancel { flex:1; padding:11px; border:1px solid var(--border); background:#fff; border-radius:8px; font-size:.9rem; cursor:pointer; }
+    .btn-confirm { flex:1; padding:11px; background:var(--red); color:#fff; border:none; border-radius:8px; font-size:.9rem; font-weight:700; cursor:pointer; }
+    footer { text-align:center; padding:1.5rem; font-size:.78rem; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-em">🏟️</div>
+    <div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html">场地预约</a>
+    <a href="auto-booking.html">⚡ 自动抢票</a>
+    <a href="records.html">预约记录</a>
+    <a href="membership.html">👑 会员中心</a>
+    <a href="notifications.html">🔔 通知</a>
+    <a href="rewards.html">积分</a>
+    <a href="about.html">关于</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="avatar-wrap">
+      <div class="avatar" onclick="toast('上传头像功能待开发')">王</div>
+      <div class="avatar-edit" onclick="toast('上传头像功能待开发')">✏️</div>
+    </div>
+    <div class="hero-info">
+      <div class="name">王晓宇</div>
+      <div class="meta">
+        <span class="meta-tag">📱 138****6634</span>
+        <span class="meta-tag">🎓 深大 · 计算机学院</span>
+        <span class="meta-tag">学号 2021456789</span>
+        <span class="meta-tag gold">👑 年度超级会员（有效至 2026-04-20）</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <!-- SIDE MENU -->
+  <div class="side-menu">
+    <div class="menu-item active" onclick="showTab('overview',this)"><span class="icon">📊</span>账号概览</div>
+    <div class="menu-item" onclick="showTab('info',this)"><span class="icon">👤</span>基本信息</div>
+    <div class="menu-item" onclick="showTab('security',this)"><span class="icon">🔒</span>账号安全</div>
+    <div class="menu-item" onclick="showTab('binding',this)"><span class="icon">🎓</span>学号绑定</div>
+    <div class="menu-item" onclick="showTab('devices',this)"><span class="icon">📱</span>登录设备</div>
+    <div class="menu-sep"></div>
+    <div class="menu-item" onclick="showTab('notifications-pref',this)"><span class="icon">🔔</span>通知偏好</div>
+    <div class="menu-sep"></div>
+    <div class="menu-item danger" onclick="showTab('danger',this)"><span class="icon">⚠️</span>账号注销</div>
+  </div>
+
+  <!-- PANELS -->
+  <div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="stat-row">
+        <div class="stat-box"><div class="sv">23</div><div class="sl">累计预约</div></div>
+        <div class="stat-box"><div class="sv">18</div><div class="sl">自动抢票成功</div></div>
+        <div class="stat-box"><div class="sv">34h</div><div class="sl">累计运动时长</div></div>
+        <div class="stat-box"><div class="sv">¥248</div><div class="sl">累计消费</div></div>
+      </div>
+      <div class="c">
+        <div class="c-head"><span class="c-title">账号状态</span></div>
+        <div class="c-body">
+          <div class="form-row"><div class="form-label">账号状态</div><div class="form-val"><span class="badge bg-green">✅ 正常</span></div></div>
+          <div class="form-row"><div class="form-label">手机号验证</div><div class="form-val"><span class="badge bg-green">已验证</span></div></div>
+          <div class="form-row"><div class="form-label">学号绑定</div><div class="form-val"><span class="badge bg-blue">已绑定</span></div></div>
+          <div class="form-row"><div class="form-label">会员等级</div><div class="form-val"><span class="badge bg-purple">👑 年度超级会员</span></div></div>
+          <div class="form-row"><div class="form-label">注册时间</div><div class="form-val muted">2024-09-03</div></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="c-head"><span class="c-title">快速入口</span></div>
+        <div class="c-body" style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn-sm" onclick="window.location.href='records.html'">📋 我的预约</button>
+          <button class="btn-sm" onclick="window.location.href='auto-booking.html'">⚡ 抢票规则</button>
+          <button class="btn-sm" onclick="window.location.href='membership.html'">👑 会员中心</button>
+          <button class="btn-sm" onclick="window.location.href='notifications.html'">🔔 通知中心</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BASIC INFO -->
+    <div class="tab-panel" id="tab-info">
+      <div class="c">
+        <div class="c-head"><span class="c-title">基本信息</span><button class="btn-sm" onclick="toast('保存成功')">保存修改</button></div>
+        <div class="c-body">
+          <div class="form-row">
+            <div class="form-label">头像</div>
+            <div class="form-val"><div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--red),#8b1a1d);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;font-weight:700;cursor:pointer;" onclick="toast('上传头像功能待开发')">王</div></div>
+            <div class="form-edit" onclick="toast('上传头像功能待开发')">更换</div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">昵称</div>
+            <div class="form-val"><input class="inline" value="王晓宇" style="width:200px;" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">性别</div>
+            <div class="form-val">
+              <select style="border:1.5px solid var(--border);border-radius:7px;padding:7px 12px;font-size:.88rem;background:#fafbfc;outline:none;">
+                <option>男</option><option>女</option><option>不公开</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">个人简介</div>
+            <div class="form-val"><textarea style="border:1.5px solid var(--border);border-radius:7px;padding:8px 12px;font-size:.88rem;width:100%;resize:none;outline:none;" rows="2" placeholder="介绍一下自己...">爱好篮球和羽毛球，每周运动3次</textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="tab-panel" id="tab-security">
+      <div class="c">
+        <div class="c-head"><span class="c-title">账号安全</span></div>
+        <div class="c-body">
+          <div class="form-row">
+            <div class="form-label">登录密码</div>
+            <div class="form-val muted">上次修改：2024-09-03</div>
+            <div class="form-edit" onclick="document.getElementById('changePwdModal').classList.add('show')">修改密码</div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">手机号</div>
+            <div class="form-val">138****6634</div>
+            <div class="form-edit" onclick="toast('换绑手机号功能待后端实现')">换绑手机号</div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">账号安全等级</div>
+            <div class="form-val"><span class="badge bg-orange">中等</span> <span style="font-size:.78rem;color:var(--muted);">建议绑定学号提升等级</span></div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">两步验证</div>
+            <div class="form-val muted">未开启</div>
+            <div class="form-edit" onclick="toast('两步验证功能待开发')">开启</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BINDING -->
+    <div class="tab-panel" id="tab-binding">
+      <div class="c">
+        <div class="c-head"><span class="c-title">深大学号绑定</span><span class="badge bg-blue">已绑定</span></div>
+        <div class="c-body">
+          <div class="form-row"><div class="form-label">学号</div><div class="form-val">2021456789</div></div>
+          <div class="form-row"><div class="form-label">姓名</div><div class="form-val">王晓宇</div></div>
+          <div class="form-row"><div class="form-label">院系</div><div class="form-val">计算机与软件学院</div></div>
+          <div class="form-row"><div class="form-label">验证状态</div><div class="form-val"><span class="badge bg-green">✅ 已通过</span></div></div>
+          <div class="form-row"><div class="form-label">绑定时间</div><div class="form-val muted">2024-09-03</div></div>
+        </div>
+      </div>
+      <div class="c" style="border:1.5px solid #fca5a5;background:#fff5f5;">
+        <div class="c-body">
+          <div style="font-size:.88rem;color:var(--red);font-weight:700;margin-bottom:6px;">⚠️ 学号解绑说明</div>
+          <div style="font-size:.82rem;color:#6b7280;margin-bottom:12px;line-height:1.6;">解绑学号后，您的账号将失去预约权限，会员资格不受影响。解绑后可重新绑定其他学号。</div>
+          <button class="btn-sm danger" onclick="toast('解绑学号功能待后端实现')">申请解绑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEVICES -->
+    <div class="tab-panel" id="tab-devices">
+      <div class="c">
+        <div class="c-head"><span class="c-title">登录设备管理</span><button class="btn-sm danger" onclick="toast('已退出所有其他设备')">退出其他设备</button></div>
+        <div class="c-body">
+          <div class="device-item">
+            <div class="device-icon">💻</div>
+            <div class="device-info"><div class="dn">Chrome / Windows 11</div><div class="dt">IP：113.87.xx.xx · 深圳 · 5分钟前活跃</div></div>
+            <span class="device-cur">当前设备</span>
+          </div>
+          <div class="device-item">
+            <div class="device-icon">📱</div>
+            <div class="device-info"><div class="dn">Safari / iPhone 15 Pro</div><div class="dt">IP：113.87.xx.xx · 深圳 · 2小时前活跃</div></div>
+            <button class="btn-sm danger" onclick="this.closest('.device-item').remove();toast('已退出该设备')">退出</button>
+          </div>
+          <div class="device-item">
+            <div class="device-icon">💻</div>
+            <div class="device-info"><div class="dn">Chrome / macOS</div><div class="dt">IP：36.112.xx.xx · 北京 · 3天前活跃</div></div>
+            <button class="btn-sm danger" onclick="this.closest('.device-item').remove();toast('已退出该设备')">退出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS PREF -->
+    <div class="tab-panel" id="tab-notifications-pref">
+      <div class="c">
+        <div class="c-head"><span class="c-title">通知偏好设置</span><button class="btn-sm" onclick="toast('设置已保存')">保存</button></div>
+        <div class="c-body">
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">选择您希望接收的通知类型和方式</div>
+          <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+            <thead><tr><th style="text-align:left;padding:8px 0;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">通知类型</th><th style="padding:8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">站内消息</th><th style="padding:8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">短信</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">预约成功通知</td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td></tr>
+              <tr><td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">自动抢票结果</td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td></tr>
+              <tr><td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">预约即将开始提醒</td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" style="accent-color:var(--blue);" /></td></tr>
+              <tr><td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">会员到期提醒</td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td><td style="text-align:center;border-bottom:1px solid #f3f4f6;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td></tr>
+              <tr><td style="padding:12px 0;">系统公告</td><td style="text-align:center;"><input type="checkbox" checked style="accent-color:var(--blue);" /></td><td style="text-align:center;"><input type="checkbox" style="accent-color:var(--blue);" /></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DANGER -->
+    <div class="tab-panel" id="tab-danger">
+      <div class="danger-zone">
+        <div class="danger-title">⚠️ 注销账号</div>
+        <div class="danger-desc">
+          注销账号是<strong>不可逆</strong>操作，注销后：<br/>
+          · 您的所有预约记录、自动规则将被永久删除<br/>
+          · 未使用的会员权益将自动失效，不予退款<br/>
+          · 绑定的深大学号解除，可在新账号重新绑定<br/>
+          · 根据相关法规，部分数据将保留6个月后删除
+        </div>
+        <button class="btn-danger" onclick="document.getElementById('deleteModal').classList.add('show')">申请注销账号</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CHANGE PWD MODAL -->
+<div class="modal" id="changePwdModal">
+  <div class="modal-box">
+    <div class="modal-title">修改登录密码</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:5px;">当前密码</label><input type="password" placeholder="请输入当前密码" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;" /></div>
+      <div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:5px;">新密码</label><input type="password" placeholder="8-20位，含字母和数字" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;" /></div>
+      <div><label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:5px;">确认新密码</label><input type="password" placeholder="再次输入新密码" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;" /></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('changePwdModal').classList.remove('show')">取消</button>
+      <button class="btn-confirm" style="background:var(--blue);" onclick="document.getElementById('changePwdModal').classList.remove('show');toast('密码修改成功')">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--red);">⚠️ 确认注销账号</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">此操作不可逆，请输入您的手机号确认注销意图：</p>
+    <input type="tel" placeholder="请输入注册手机号" style="width:100%;padding:10px 14px;border:1.5px solid #fca5a5;border-radius:8px;font-size:.9rem;outline:none;margin-bottom:8px;" />
+    <p style="font-size:.78rem;color:#9ca3af;">注销申请将在 7 个工作日内处理</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('deleteModal').classList.remove('show')">我再想想</button>
+      <button class="btn-confirm" onclick="document.getElementById('deleteModal').classList.remove('show');toast('注销申请已提交，7个工作日内处理')">确认注销</button>
+    </div>
+  </div>
+</div>
+
+<footer>深圳大学体育预约系统 · Demo · © 2025 SZU Sports</footer>
+
+<script>
+  function showTab(id, el){
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
+    document.getElementById('tab-'+id).classList.add('active');
+    if(el) el.classList.add('active');
+  }
+  function toast(m){const t=document.createElement('div');t.textContent=m;Object.assign(t.style,{position:'fixed',bottom:'32px',left:'50%',transform:'translateX(-50%)',background:'#1f2937',color:'#fff',padding:'10px 20px',borderRadius:'8px',fontSize:'.85rem',zIndex:'9999'});document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
+</script>
+</body>
+</html>

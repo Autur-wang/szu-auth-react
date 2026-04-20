@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自动预约设置 · 深大体育预约</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --red: #C1272D;
+      --blue: #1A4189;
+      --blue-light: #2a5ab8;
+      --blue-pale: #e8eef8;
+      --gray: #f4f5f8;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #dde3ef;
+      --white: #ffffff;
+      --green: #10b981;
+    }
+    body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: var(--gray); color: var(--text); }
+
+    .top-bar { background: var(--red); color: white; text-align: center; font-size: 12px; padding: 5px 0; }
+
+    nav {
+      background: var(--blue);
+      padding: 0 40px;
+      display: flex; align-items: center; height: 64px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; margin-right: 48px; }
+    .logo-box { width: 38px; height: 38px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: var(--red); }
+    .nav-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-link { color: rgba(255,255,255,0.75); text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; transition: all .2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { font-weight: 600; }
+    .nav-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+    .avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid rgba(255,255,255,0.35); }
+    .user-name { color: rgba(255,255,255,0.9); font-size: 13px; }
+
+    .page-header {
+      background: linear-gradient(135deg, var(--blue) 0%, #0d2a5c 100%);
+      color: white; padding: 36px 60px 28px;
+    }
+    .page-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+    .page-header p { font-size: 14px; color: rgba(255,255,255,0.65); }
+
+    /* ── LAYOUT ── */
+    .main { max-width: 1000px; margin: 32px auto; padding: 0 40px; display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+
+    /* ── CARD ── */
+    .card {
+      background: white; border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .card-head {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-head .icon { font-size: 18px; }
+    .card-head h2 { font-size: 15px; font-weight: 700; color: var(--text); }
+    .card-head .subtitle { font-size: 12px; color: var(--sub); margin-top: 1px; }
+    .card-body { padding: 20px 24px; }
+
+    /* form elements */
+    .form-row { margin-bottom: 20px; }
+    .form-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .form-row .hint { font-size: 11px; color: var(--sub); margin-top: 4px; }
+
+    /* sport type pills */
+    .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 7px 14px; border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: white; font-size: 13px; color: var(--sub);
+      cursor: pointer; transition: all .18s;
+      user-select: none;
+    }
+    .pill.selected {
+      border-color: var(--blue); color: var(--blue);
+      background: var(--blue-pale); font-weight: 600;
+    }
+    .pill input[type=checkbox] { display: none; }
+
+    /* time grid */
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    .time-cell {
+      padding: 8px 4px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+    }
+    .time-cell:hover { border-color: var(--blue); color: var(--blue); }
+    .time-cell.selected {
+      background: var(--blue); border-color: var(--blue);
+      color: white; font-weight: 600;
+    }
+
+    /* weekday */
+    .weekday-row { display: flex; gap: 8px; }
+    .wday {
+      flex: 1; padding: 10px 0;
+      border-radius: 8px; text-align: center;
+      border: 1.5px solid var(--border);
+      font-size: 13px; color: var(--sub);
+      cursor: pointer; transition: all .15s;
+      user-select: none;
+    }
+    .wday:hover { border-color: var(--blue); color: var(--blue); }
+    .wday.selected { background: var(--blue); border-color: var(--blue); color: white; font-weight: 600; }
+
+    /* priority slider */
+    .slider-wrap { display: flex; align-items: center; gap: 14px; }
+    .slider-wrap input[type=range] {
+      flex: 1; accent-color: var(--blue);
+    }
+    .slider-val {
+      width: 48px; text-align: center;
+      font-size: 14px; font-weight: 700;
+      color: var(--blue);
+    }
+
+    /* campus radio */
+    .radio-group { display: flex; flex-direction: column; gap: 10px; }
+    .radio-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border-radius: 8px;
+      border: 1.5px solid var(--border);
+      cursor: pointer; transition: all .18s;
+    }
+    .radio-item:hover, .radio-item.selected {
+      border-color: var(--blue); background: var(--blue-pale);
+    }
+    .radio-item input { accent-color: var(--blue); margin-top: 2px; }
+    .radio-item .rl { font-size: 13px; font-weight: 600; color: var(--text); }
+    .radio-item .rs { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    /* select */
+    select {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit; color: var(--text);
+      outline: none; appearance: none;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center;
+    }
+    select:focus { border-color: var(--blue); }
+
+    /* toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-info .tl { font-size: 14px; font-weight: 500; color: var(--text); }
+    .toggle-info .ts { font-size: 12px; color: var(--sub); margin-top: 2px; }
+    .toggle {
+      width: 44px; height: 24px; border-radius: 12px;
+      background: var(--border); cursor: pointer;
+      position: relative; transition: background .2s; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--blue); }
+    .toggle::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: white; transition: left .2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.on::after { left: 23px; }
+
+    /* ── SIDEBAR ── */
+    .sidebar-sticky { position: sticky; top: 80px; }
+
+    .summary-card {
+      background: white; border-radius: 14px;
+      border: 1px solid var(--border); overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .summary-head {
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      color: white; padding: 16px 20px;
+    }
+    .summary-head h3 { font-size: 15px; font-weight: 700; }
+    .summary-head p { font-size: 12px; opacity: .75; margin-top: 2px; }
+    .summary-body { padding: 16px 20px; }
+    .summary-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-item .s-key { color: var(--sub); width: 80px; flex-shrink: 0; }
+    .summary-item .s-val { color: var(--text); font-weight: 500; }
+    .s-tag {
+      display: inline-block; padding: 1px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; margin: 1px;
+    }
+    .s-tag.blue { background: var(--blue-pale); color: var(--blue); }
+    .s-tag.green { background: #d1fae5; color: #065f46; }
+
+    .btn-save {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--red), #e53e3e);
+      color: white; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: opacity .2s, transform .1s;
+      margin-bottom: 10px;
+    }
+    .btn-save:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-preview {
+      width: 100%; padding: 12px;
+      background: white; border: 1.5px solid var(--blue);
+      color: var(--blue); border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all .18s;
+    }
+    .btn-preview:hover { background: var(--blue-pale); }
+
+    .tip-card {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .tip-card h4 { font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px; }
+    .tip-card ul { padding-left: 16px; }
+    .tip-card li { font-size: 12px; color: #92400e; margin-bottom: 4px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">深圳大学体育场地自动预约系统</div>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-box">SZU</div>
+    <span>体育预约</span>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html" class="nav-link">🏟️ 场地浏览</a>
+    <a href="auto-booking.html" class="nav-link active">⚡ 自动预约</a>
+    <a href="records.html" class="nav-link">📋 预约记录</a>
+    <a href="membership.html" class="nav-link">👑 会员中心</a>
+  </div>
+  <div class="nav-right">
+    <a href="notifications.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:20px;line-height:1;">🔔</a>
+    <a href="rewards.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">积分</a>
+    <a href="about.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">关于</a>
+    <a href="profile.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+      <span class="user-name">王同学</span>
+      <div class="avatar">👤</div>
+    </a>
+  </div>
+</nav>
+
+<!-- Trial / Member Banner -->
+<div id="trialBanner" style="background: linear-gradient(135deg,#fffbeb,#fef3c7); border-bottom: 2px solid #fde68a; padding: 12px 60px; display:flex; align-items:center; justify-content:space-between; gap:20px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="font-size:22px;">🎯</span>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#92400e;">你正在使用免费体验次数（剩余 1 次）</div>
+      <div style="font-size:12px;color:#b45309;margin-top:2px;">体验次数用完后，自动预约功能将锁定。开通会员可无限使用。</div>
+    </div>
+  </div>
+  <a href="membership.html" style="flex-shrink:0;padding:9px 20px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;">👑 升级会员</a>
+</div>
+
+<div id="memberBanner" style="display:none; background: linear-gradient(135deg,#1a1a2e,#0f3460); border-bottom: 2px solid #d97706; padding: 12px 60px; display:none; align-items:center; justify-content:space-between; gap:20px;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="font-size:22px;">👑</span>
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fbbf24;">运动会员 · 有效期至 2024年7月20日</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;">自动预约无限次，所有高级功能已解锁</div>
+    </div>
+  </div>
+  <span style="flex-shrink:0;padding:6px 16px;background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.4);border-radius:20px;font-size:13px;font-weight:700;">✓ 会员已激活</span>
+</div>
+
+<div class="page-header">
+  <h1>⚡ 自动预约设置</h1>
+  <p>配置你的抢场规则，系统将在放号瞬间自动帮你预约心仪时段</p>
+</div>
+
+<div class="main">
+  <!-- Left form -->
+  <div>
+
+    <!-- 场地类型 -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">🏟️</span>
+        <div>
+          <h2>选择运动类型</h2>
+          <div class="subtitle">可多选，系统将按优先级匹配</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="pill-group">
+            <label class="pill selected"><input type="checkbox" checked/>🏀 篮球</label>
+            <label class="pill"><input type="checkbox"/>🎾 网球</label>
+            <label class="pill selected"><input type="checkbox" checked/>🏸 羽毛球</label>
+            <label class="pill"><input type="checkbox"/>🏊 游泳</label>
+            <label class="pill"><input type="checkbox"/>⚽ 足球</label>
+            <label class="pill"><input type="checkbox"/>🏓 乒乓球</label>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label>校区偏好</label>
+          <div class="radio-group">
+            <label class="radio-item selected">
+              <input type="radio" name="campus" checked />
+              <div>
+                <div class="rl">粤海校区</div>
+                <div class="rs">主校区，场地最多，交通便利</div>
+              </div>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="campus"/>
+              <div>
+                <div class="rl">丽湖校区</div>
+                <div class="rs">新校区，环境优美，部分场地更新</div>
+              </div>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="campus"/>
+              <div>
+                <div class="rl">不限校区</div>
+                <div class="rs">全校区范围内优先级最高可用场地</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 时间偏好 -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">⏰</span>
+        <div>
+          <h2>时间偏好设置</h2>
+          <div class="subtitle">选择你期望的运动时段（可多选）</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <label>偏好时段</label>
+          <div class="time-grid">
+            <div class="time-cell">07:00</div>
+            <div class="time-cell">08:00</div>
+            <div class="time-cell selected">09:00</div>
+            <div class="time-cell selected">10:00</div>
+            <div class="time-cell">11:00</div>
+            <div class="time-cell">12:00</div>
+            <div class="time-cell">13:00</div>
+            <div class="time-cell">14:00</div>
+            <div class="time-cell selected">15:00</div>
+            <div class="time-cell selected">16:00</div>
+            <div class="time-cell">17:00</div>
+            <div class="time-cell">18:00</div>
+            <div class="time-cell selected">19:00</div>
+            <div class="time-cell">20:00</div>
+            <div class="time-cell">21:00</div>
+            <div class="time-cell"></div>
+            <div class="time-cell"></div>
+            <div class="time-cell"></div>
+          </div>
+          <div class="hint">绿色=已选，系统将优先抢该时段场地</div>
+        </div>
+        <div class="form-row">
+          <label>预约周期</label>
+          <div class="weekday-row">
+            <div class="wday">一</div>
+            <div class="wday selected">二</div>
+            <div class="wday selected">三</div>
+            <div class="wday">四</div>
+            <div class="wday selected">五</div>
+            <div class="wday selected">六</div>
+            <div class="wday">日</div>
+          </div>
+          <div class="hint">选择希望每周哪几天自动抢场</div>
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label>预约时长</label>
+          <select>
+            <option>1 小时</option>
+            <option selected>1.5 小时</option>
+            <option>2 小时</option>
+            <option>2.5 小时</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 高级设置 -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">⚙️</span>
+        <div>
+          <h2>高级选项</h2>
+          <div class="subtitle">精细控制自动抢场行为</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <label>抢场优先级策略</label>
+          <div class="slider-wrap">
+            <span style="font-size:12px;color:var(--sub);">省钱优先</span>
+            <input type="range" min="1" max="5" value="3" id="prioritySlider" />
+            <span style="font-size:12px;color:var(--sub);">时段优先</span>
+            <div class="slider-val" id="sliderVal">3</div>
+          </div>
+          <div class="hint">向右滑动代表更注重抢到偏好时段，即使价格略高</div>
+        </div>
+
+        <div class="form-row" style="margin-bottom:0">
+          <label>通知与限制</label>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="tl">抢场成功推送通知</div>
+              <div class="ts">微信/系统通知：预约成功后立即推送</div>
+            </div>
+            <div class="toggle on" id="t1"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="tl">无空位时自动排队</div>
+              <div class="ts">场地满员时加入候补，有人取消立刻预约</div>
+            </div>
+            <div class="toggle on" id="t2"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="tl">自动付款（校园卡）</div>
+              <div class="ts">抢到付费场地时自动从校园卡扣费</div>
+            </div>
+            <div class="toggle" id="t3"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="tl">每周最多预约次数限制</div>
+              <div class="ts">防止超量预约，触发系统封禁风险</div>
+            </div>
+            <div class="toggle on" id="t4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="sidebar-sticky">
+    <div class="summary-card">
+      <div class="summary-head">
+        <h3>📋 规则预览</h3>
+        <p>当前设置摘要</p>
+      </div>
+      <div class="summary-body">
+        <div class="summary-item">
+          <span class="s-key">运动类型</span>
+          <span class="s-val">
+            <span class="s-tag blue">🏀 篮球</span>
+            <span class="s-tag blue">🏸 羽毛球</span>
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="s-key">偏好时段</span>
+          <span class="s-val">
+            <span class="s-tag green">09:00</span>
+            <span class="s-tag green">10:00</span>
+            <span class="s-tag green">15:00-16:00</span>
+            <span class="s-tag green">19:00</span>
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="s-key">运动日</span>
+          <span class="s-val">周二 / 周三 / 周五 / 周六</span>
+        </div>
+        <div class="summary-item">
+          <span class="s-key">每次时长</span>
+          <span class="s-val">1.5 小时</span>
+        </div>
+        <div class="summary-item">
+          <span class="s-key">校区</span>
+          <span class="s-val">粤海校区</span>
+        </div>
+        <div class="summary-item">
+          <span class="s-key">预计抢场</span>
+          <span class="s-val" style="color:var(--green);font-weight:700;">每周 4 次</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trial state: show save + upgrade hint -->
+    <div id="save-trial">
+      <button class="btn-save" id="saveBtn" onclick="triggerSave()">🚀 保存并启动（体验1次）</button>
+      <button class="btn-preview">👁️ 预览下次执行时间</button>
+      <div style="margin-top:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;text-align:center;">
+        ⚠️ 体验次数有限，<a href="membership.html" style="color:var(--red);font-weight:700;">开通会员</a>解锁无限自动预约
+      </div>
+    </div>
+    <!-- Locked state: shown after trial used -->
+    <div id="save-locked" style="display:none;">
+      <div style="background:#f3f4f6;border-radius:10px;padding:20px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">🔒</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">免费体验次数已用完</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:14px;">继续使用自动预约功能需要开通会员</div>
+        <a href="membership.html" style="display:block;padding:12px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;">👑 立即开通会员</a>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="tip-card">
+        <h4>💡 提高成功率的技巧</h4>
+        <ul>
+          <li>多选时段：系统可在多个时段同时竞抢</li>
+          <li>开启候补：无缝衔接他人取消的场地</li>
+          <li>避开热门：19:00-21:00 竞争最激烈</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lock Paywall Modal -->
+<div id="lockModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:20px;width:400px;overflow:hidden;animation:pop .3s cubic-bezier(.34,1.56,.64,1);">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;color:white;">
+      <div style="font-size:52px;margin-bottom:10px;">🔒</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px;">免费体验已使用完毕</div>
+      <div style="font-size:13px;opacity:.75;">你已成功体验了1次自动抢场功能</div>
+    </div>
+    <div style="padding:24px 28px;">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:13px;color:#92400e;font-weight:600;margin-bottom:8px;">🎯 你的体验记录</div>
+        <div style="font-size:12px;color:#b45309;line-height:1.8;">
+          ✅ 自动预约规则已执行 1 次<br/>
+          ✅ 成功体验智能抢场功能<br/>
+          🔒 后续自动预约需开通会员
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="membership.html" style="display:block;padding:14px;background:linear-gradient(135deg,#d97706,#f59e0b);color:white;border-radius:10px;font-size:15px;font-weight:700;text-decoration:none;text-align:center;">
+          👑 立即开通会员 · 最低 ¥12/月
+        </a>
+        <button onclick="document.getElementById('lockModal').style.display='none';location.href='records.html';" style="padding:12px;background:white;border:1.5px solid #dde3ef;color:#6b7280;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;">
+          查看本次预约记录
+        </button>
+        <button onclick="document.getElementById('lockModal').style.display='none'" style="padding:10px;background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;font-family:inherit;">
+          暂不升级，继续浏览
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pills
+  document.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => p.classList.toggle('selected'));
+  });
+  // Time cells
+  document.querySelectorAll('.time-cell').forEach(c => {
+    if (c.textContent.trim()) c.addEventListener('click', () => c.classList.toggle('selected'));
+  });
+  // Weekdays
+  document.querySelectorAll('.wday').forEach(w => {
+    w.addEventListener('click', () => w.classList.toggle('selected'));
+  });
+  // Slider
+  const slider = document.getElementById('prioritySlider');
+  const sliderVal = document.getElementById('sliderVal');
+  slider.addEventListener('input', () => sliderVal.textContent = slider.value);
+  // Toggles
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+  // Radio campus
+  document.querySelectorAll('.radio-item').forEach(r => {
+    r.addEventListener('click', () => {
+      document.querySelectorAll('.radio-item').forEach(x => x.classList.remove('selected'));
+      r.classList.add('selected');
+    });
+  });
+
+  // ── TRIAL LOGIC ──
+  // trialUsed: false = 未使用, true = 已用完
+  let trialUsed = false;
+
+  function triggerSave() {
+    if (!trialUsed) {
+      // 第一次：执行成功，标记为已用，显示锁定弹窗
+      trialUsed = true;
+      // 更新 banner：剩余 0 次
+      document.getElementById('trialBanner').querySelector('div div').innerHTML =
+        '<div style="font-size:14px;font-weight:700;color:#92400e;">免费体验次数已用完（剩余 0 次）</div>' +
+        '<div style="font-size:12px;color:#b45309;margin-top:2px;">开通会员可无限使用定时自动抢场</div>';
+      // 隐藏保存按钮，显示锁定区域
+      document.getElementById('save-trial').style.display = 'none';
+      document.getElementById('save-locked').style.display = 'block';
+      // 弹出提示
+      setTimeout(() => {
+        document.getElementById('lockModal').style.display = 'flex';
+      }, 800);
+    }
+  }
+
+  @keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+</script>
+</body>
+</html>

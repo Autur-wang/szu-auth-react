@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>深圳大学 · 体育场地自动预约系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red: #C1272D;
+      --red-dark: #9e1f24;
+      --blue: #1A4189;
+      --blue-light: #2a5ab8;
+      --blue-pale: #e8eef8;
+      --gray: #f4f5f8;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #dde3ef;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--gray);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BANNER ── */
+    .top-banner {
+      background: var(--red);
+      color: white;
+      text-align: center;
+      font-size: 12px;
+      padding: 6px 0;
+      letter-spacing: 1px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--blue);
+      padding: 0 60px;
+      display: flex;
+      align-items: center;
+      height: 72px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 46px;
+      height: 46px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--red);
+      letter-spacing: -1px;
+      flex-shrink: 0;
+    }
+    .logo-text { color: white; }
+    .logo-text .en { font-size: 11px; opacity: .75; letter-spacing: 1px; margin-top: 2px; }
+    .logo-text .zh { font-size: 17px; font-weight: 700; letter-spacing: 1px; }
+
+    /* ── HERO ── */
+    .hero {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, #1A4189 0%, #0d2a5c 45%, #6b1218 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      gap: 80px;
+      max-width: 960px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* left slogan */
+    .hero-left { flex: 1; color: white; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      margin-bottom: 24px;
+      color: rgba(255,255,255,0.9);
+    }
+    .badge .dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .hero-left h1 {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 14px;
+    }
+    .hero-left h1 span { color: #fbbf24; }
+    .hero-left p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .stats { display: flex; gap: 32px; }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 28px; font-weight: 800; color: #fbbf24; }
+    .stat-item .lbl { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+
+    /* card */
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 380px;
+      flex-shrink: 0;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-sub { font-size: 13px; color: var(--sub); margin-bottom: 28px; }
+
+    .tab-switcher {
+      display: flex;
+      background: var(--gray);
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+    }
+    .tab-btn.active {
+      background: white;
+      color: var(--blue);
+      font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: var(--sub);
+    }
+    .form-group input {
+      width: 100%;
+      padding: 11px 12px 11px 38px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border .2s;
+      font-family: inherit;
+    }
+    .form-group input:focus { border-color: var(--blue); }
+
+    .form-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--sub);
+      cursor: pointer;
+    }
+    .remember input { width: auto; }
+    .forgot { font-size: 13px; color: var(--blue); text-decoration: none; }
+    .forgot:hover { text-decoration: underline; }
+
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-light) 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      font-family: inherit;
+    }
+    .btn-login:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .sso-btn {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      border: 1.5px solid var(--red);
+      color: var(--red);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .sso-btn:hover { background: #fff0f0; }
+
+    .card-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0d1e42;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      padding: 18px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-banner">🏟️ 深圳大学体育场地自动预约系统 — 智能抢场，省时省力</div>
+
+<header>
+  <a class="logo-wrap" href="index.html">
+    <div class="logo-icon">SZU</div>
+    <div class="logo-text">
+      <div class="zh">深圳大学</div>
+      <div class="en">SHENZHEN UNIVERSITY · 体育场地预约平台</div>
+    </div>
+  </a>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+
+    <!-- Slogan -->
+    <div class="hero-left">
+      <div class="badge"><span class="dot"></span> 系统运行中</div>
+      <h1>智能抢场<br /><span>不再错过</span>心仪时段</h1>
+      <p>设置一次规则，系统自动在放号瞬间抢占场地。<br />支持篮球、网球、羽毛球、游泳等全部场馆。</p>
+      <div class="stats">
+        <div class="stat-item">
+          <div class="num">12+</div>
+          <div class="lbl">运动场馆</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">98%</div>
+          <div class="lbl">抢场成功率</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">5000+</div>
+          <div class="lbl">在校用户</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-card">
+      <div class="card-title">欢迎登录</div>
+      <div class="card-sub">使用深大学号 / 工号登录</div>
+
+      <div class="tab-switcher">
+        <button class="tab-btn active">学生登录</button>
+        <button class="tab-btn">教职工登录</button>
+      </div>
+
+      <form action="venues.html">
+        <div class="form-group">
+          <label>学号</label>
+          <div class="input-wrap">
+            <span class="input-icon">🎓</span>
+            <input type="text" placeholder="请输入学号（如 2023XXXXXXXX）" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" placeholder="请输入登录密码" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="remember">
+            <input type="checkbox" checked /> 记住登录状态
+          </label>
+          <a href="forgot-password.html" class="forgot">忘记密码？</a>
+        </div>
+        <button type="submit" class="btn-login">登 录</button>
+      </form>
+
+      <div class="divider">或</div>
+
+      <button class="sso-btn" onclick="location.href='venues.html'">
+        🏫 使用深大统一身份认证登录
+      </button>
+
+      <div class="card-footer">
+        登录即代表同意《用户使用协议》与《隐私政策》
+      </div>
+      <div style="text-align:center;margin-top:1rem;font-size:0.85rem;color:#6b7280;">
+        还没有账号？<a href="register.html" style="color:#1A4189;font-weight:700;text-decoration:none;">立即注册 →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer style="text-align:center;padding:1.5rem;font-size:.78rem;color:#6b7280;border-top:1px solid #dde3ef;line-height:2.2;">
+  <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">
+    <a href="venues.html" style="color:#1A4189;text-decoration:none;">场地浏览</a>
+    <a href="membership.html" style="color:#1A4189;text-decoration:none;">会员中心</a>
+    <a href="terms.html" style="color:#1A4189;text-decoration:none;">用户协议</a>
+    <a href="terms.html" style="color:#1A4189;text-decoration:none;">隐私政策</a>
+    <a href="about.html" style="color:#1A4189;text-decoration:none;">关于我们</a>
+    <a href="admin.html" style="color:#1A4189;text-decoration:none;">管理后台</a>
+  </div>
+  © 2025 深圳大学体育场地预约平台 · 联系我们：sports@szu-booking.com · 与深圳大学官方无关
+</footer>
+
+<script>
+  // tab switcher
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

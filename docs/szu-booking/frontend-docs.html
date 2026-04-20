@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>前端工程文档 · 深大体育预约</title>
+  <style>
+    :root { --red:#C1272D; --blue:#1A4189; --blue-d:#0d2d6b; --bg:#f4f6fb; --card:#fff; --border:#e0e5f0; --text:#1a1a2e; --muted:#6b7280; --green:#065F46; --orange:#92400E; --code:#0f172a; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:linear-gradient(135deg,var(--blue),var(--blue-d)); padding:0 2rem; height:64px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.2); position:sticky; top:0; z-index:100; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-em { width:36px; height:36px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .logo-t .m { font-size:.9rem; font-weight:700; color:#fff; } .logo-t .s { font-size:.65rem; color:rgba(255,255,255,.7); }
+    .nav-r { display:flex; gap:1.2rem; } .nav-r a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.85rem; }
+    .hero { background:linear-gradient(135deg,var(--blue-d),var(--blue)); padding:2rem 2rem; text-align:center; }
+    .hero h1 { font-size:1.7rem; font-weight:900; color:#fff; margin-bottom:.4rem; }
+    .hero p { color:rgba(255,255,255,.7); font-size:.88rem; margin-bottom:1rem; }
+    .hero-badges { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .h-badge { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:20px; padding:4px 12px; font-size:.75rem; }
+    .tab-bar { background:#fff; border-bottom:2px solid var(--border); display:flex; overflow-x:auto; padding:0 1rem; }
+    .tab { padding:12px 18px; font-size:.82rem; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:all .2s; }
+    .tab:hover { color:var(--blue); }
+    .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+    main { flex:1; max-width:1100px; margin:0 auto; padding:1.8rem 1.5rem; width:100%; }
+    .tab-panel { display:none; } .tab-panel.active { display:block; }
+    .sec { margin-bottom:2rem; }
+    .sec-title { font-size:1rem; font-weight:800; color:var(--text); margin-bottom:.35rem; display:flex; align-items:center; gap:8px; }
+    .sec-title::after { content:''; flex:1; height:2px; background:linear-gradient(90deg,var(--border),transparent); }
+    .sec-desc { font-size:.83rem; color:var(--muted); margin-bottom:1rem; line-height:1.7; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; margin-bottom:1.2rem; }
+    .card h4 { font-size:.88rem; font-weight:700; color:var(--blue); margin-bottom:.5rem; }
+    .card p { font-size:.82rem; color:#374151; line-height:1.7; }
+    table { width:100%; border-collapse:collapse; font-size:.8rem; margin-bottom:1rem; }
+    th { background:var(--blue); color:#fff; padding:9px 12px; text-align:left; font-weight:600; }
+    td { padding:8px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+    tr:hover td { background:#f8fafc; }
+    tr:nth-child(even) td { background:#fafbff; }
+    .tag { display:inline-block; border-radius:4px; padding:2px 7px; font-size:.7rem; font-weight:600; margin-right:4px; }
+    .tag-get { background:#dbeafe; color:#1e40af; }
+    .tag-post { background:#dcfce7; color:#14532d; }
+    .tag-put { background:#fef9c3; color:#854d0e; }
+    .tag-del { background:#fee2e2; color:#991b1b; }
+    .tag-auth { background:#f3e8ff; color:#5b21b6; }
+    .tag-pub { background:#f0fdf4; color:#14532d; border:1px solid #86efac; }
+    .tag-ok { background:#dcfce7; color:#14532d; }
+    .tag-warn { background:#fef9c3; color:#854d0e; }
+    .tag-err { background:#fee2e2; color:#991b1b; }
+    .tag-info { background:#dbeafe; color:#1e40af; }
+    .check-list { list-style:none; }
+    .check-list li { display:flex; align-items:flex-start; gap:10px; padding:6px 0; border-bottom:1px solid #f3f4f6; font-size:.82rem; }
+    .check-list li:last-child { border-bottom:none; }
+    .chk { width:18px; height:18px; border:2px solid var(--border); border-radius:4px; flex-shrink:0; margin-top:1px; }
+    .chk.ok { background:var(--blue); border-color:var(--blue); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.65rem; }
+    pre { background:var(--code); color:#cbd5e1; border-radius:10px; padding:1.2rem; font-size:.78rem; font-family:'SF Mono','Fira Code',monospace; overflow-x:auto; margin-bottom:1rem; line-height:1.65; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .three-col { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .stat-mini { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+    .stat-mini .sv { font-size:1.5rem; font-weight:800; color:var(--blue); }
+    .stat-mini .sl { font-size:.75rem; color:var(--muted); margin-top:4px; }
+    .flow-step { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
+    .step-num { width:24px; height:24px; background:var(--blue); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex-shrink:0; }
+    .step-body { font-size:.82rem; color:#374151; line-height:1.6; flex:1; }
+    .step-body strong { color:var(--text); }
+    .badge-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:.8rem; }
+    .pill { background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:.75rem; color:var(--text); }
+    .pill.blue { background:#eff6ff; color:var(--blue); border-color:#bfdbfe; }
+    .pill.red { background:#fff5f5; color:var(--red); border-color:#fecaca; }
+    .pill.green { background:#f0fdf4; color:#14532d; border-color:#86efac; }
+    .pill.orange { background:#fffbeb; color:#92400e; border-color:#fde68a; }
+    .hl { background:#eff6ff; border-left:3px solid var(--blue); padding:.7rem 1rem; border-radius:0 8px 8px 0; font-size:.82rem; color:#1e40af; margin-bottom:.8rem; line-height:1.6; }
+    .hl.warn { background:#fffbeb; border-left-color:#d97706; color:#92400e; }
+    .hl.ok { background:#f0fdf4; border-left-color:#16a34a; color:#14532d; }
+    footer { text-align:center; padding:1.5rem; font-size:.75rem; color:var(--muted); border-top:1px solid var(--border); }
+    footer a { color:var(--blue); text-decoration:none; }
+    @media(max-width:700px) { .two-col,.three-col { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo"><div class="logo-em">🏟️</div><div class="logo-t"><div class="m">深大体育预约</div><div class="s">SZU Sports Booking</div></div></a>
+  <div class="nav-r">
+    <a href="design-spec.html">系统设计</a>
+    <a href="venues.html">场地预约</a>
+    <a href="about.html">关于</a>
+    <a href="admin.html">管理后台</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>📂 前端工程文档</h1>
+  <p>Frontend Engineering Documentation · 深大体育场地自动预约系统</p>
+  <div class="hero-badges">
+    <span class="h-badge">需求与方案</span><span class="h-badge">页面与交互</span>
+    <span class="h-badge">接口与数据</span><span class="h-badge">工程实现</span>
+    <span class="h-badge">质量保障</span><span class="h-badge">运行维护</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="sw('req',this)">① 需求与方案</div>
+  <div class="tab" onclick="sw('ux',this)">② 页面与交互</div>
+  <div class="tab" onclick="sw('api',this)">③ 接口与数据</div>
+  <div class="tab" onclick="sw('eng',this)">④ 工程实现</div>
+  <div class="tab" onclick="sw('qa',this)">⑤ 质量保障</div>
+  <div class="tab" onclick="sw('ops',this)">⑥ 运行维护</div>
+</div>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 1: 需求与方案
+══════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-req">
+
+  <div class="sec">
+    <div class="sec-title">1.1 PRD 对应前端实现方案</div>
+    <div class="sec-desc">以下汇总 PRD v3 全部 16 个页面需求点与前端实现方式的对照关系，标注 Demo 完成状态与实现复杂度。</div>
+    <table>
+      <thead><tr><th>页面</th><th>对应文件</th><th>核心 PRD 需求</th><th>前端实现方案</th><th>复杂度</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>登录页</td><td>index.html</td><td>手机号+密码登录、深大SSO、记住状态</td><td>表单验证 + localStorage token、SSO跳转 OAuth 链接</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>注册页</td><td>register.html</td><td>3步注册、短信验证、学号绑定、协议勾选</td><td>步骤状态机 + 倒计时 + 学号卡片预览动画</td><td><span class="tag tag-err">高</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>找回密码</td><td>forgot-password.html</td><td>手机验证 → 重置密码 → 成功跳转</td><td>与注册共享验证码逻辑组件</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>场地浏览</td><td>venues.html</td><td>类型筛选、搜索、收藏、场地卡片</td><td>前端筛选 + 防抖搜索 + localStorage 收藏列表</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>场地详情</td><td>venue-detail.html</td><td>图库、时段网格、预约弹窗、相似推荐</td><td>动态时段渲染 + 悲观锁倒计时 + 支付方式选择</td><td><span class="tag tag-err">高</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>自动预约</td><td>auto-booking.html</td><td>规则配置、会员拦截、队列状态展示</td><td>表单配置 + 会员状态门控 + 实时队列轮询</td><td><span class="tag tag-err">高</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>预约记录</td><td>records.html</td><td>状态筛选、列表、取消/退款操作</td><td>分页列表 + 操作确认弹窗 + 状态色标</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>支付页</td><td>payment.html</td><td>步骤条、二维码轮询、超时处理</td><td>WebSocket 或轮询支付结果 + 超时自动跳转</td><td><span class="tag tag-err">高</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>会员中心</td><td>membership.html</td><td>套餐对比、购买、权益展示、续费</td><td>套餐卡片 + 购买流程 → payment.html</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>积分与奖励</td><td>rewards.html</td><td>积分余额、兑换、邀请、优惠券</td><td>4 标签切换 + 兑换二次确认弹窗 + 邀请链接复制</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>写评价</td><td>review.html</td><td>星级评分、关键词标签、上传图片</td><td>交互星评组件 + 多选 Tag + 图片预览模拟</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>通知中心</td><td>notifications.html</td><td>消息列表、已读/未读、筛选分类</td><td>Tab 筛选 + 批量已读 + 单条删除</td><td><span class="tag tag-get">低</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>个人中心</td><td>profile.html</td><td>基本信息、安全设置、设备管理、注销</td><td>侧边栏导航 + 多模态表单 + 危险操作二次确认</td><td><span class="tag tag-warn">中</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>用户协议</td><td>terms.html</td><td>协议正文、隐私政策双标签</td><td>静态文本 + Tab 切换</td><td><span class="tag tag-get">低</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>关于我们</td><td>about.html</td><td>项目介绍、团队、时间线、联系方式</td><td>纯静态内容页</td><td><span class="tag tag-get">低</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+        <tr><td>管理后台</td><td>admin.html</td><td>用户/场地/订单/自动预约监控/日志</td><td>单页 App + 暗色侧边栏 + 实时数据图表</td><td><span class="tag tag-err">高</span></td><td><span class="tag tag-ok">✅ Demo</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">1.2 技术选型与设计决策</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>🔧 技术栈选型</h4>
+        <p><strong>纯 HTML5 + CSS3 + Vanilla JavaScript</strong>，无任何框架或构建工具依赖。原因：① Demo 阶段快速交付，避免框架学习曲线；② 与深大体育系统集成时无需 SPA 路由冲突处理；③ 便于非工程师团队成员阅读和修改静态 Demo。</p>
+        <p style="margin-top:8px;font-size:.78rem;color:var(--muted);">生产环境升级方向：Vue 3 + Vite + Pinia（可逐步迁移，已有完整设计文档作为依据）</p>
+      </div>
+      <div class="card">
+        <h4>🎨 设计系统</h4>
+        <p>使用 CSS 自定义属性（Custom Properties）统一管理设计令牌：主色 <code>#1A4189</code>（深大蓝）、警示色 <code>#C1272D</code>（深大红）、背景 <code>#f4f6fb</code>、边框 <code>#e0e5f0</code>。字体：PingFang SC / Microsoft YaHei 中文优先，-apple-system 回退。</p>
+      </div>
+      <div class="card">
+        <h4>📱 响应式策略</h4>
+        <p>移动优先设计。断点：<code>700px</code> 以下切换为单列布局，导航折叠。关键交互（选时段、支付弹窗）在移动端使用底部 Sheet 而非居中 Modal。</p>
+      </div>
+      <div class="card">
+        <h4>⚡ 状态管理</h4>
+        <p>Demo 阶段：所有状态存放于 JS 模块级变量 + <code>localStorage</code>。生产环境：迁移至 Pinia Store，分 authStore / bookingStore / memberStore / notifStore 四个领域 Store。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">1.3 关键交互实现说明</div>
+    <div class="card">
+      <h4>① 时段悲观锁 UI（venue-detail.html）</h4>
+      <p>用户点击可用时段 → 前端立即将时段 UI 变为 "锁定中" 状态（防止二次点击），同时调用 <code>POST /slots/{id}/lock</code> 加锁 → 弹出订单确认弹窗并启动 10 分钟倒计时 → 倒计时归零时自动调用 <code>DELETE /slots/{id}/lock</code> 释放锁并关闭弹窗，时段恢复可选。整个倒计时使用 <code>setInterval</code> + 弹窗内显示剩余时间（mm:ss 格式）。</p>
+    </div>
+    <div class="card">
+      <h4>② 短信验证码 60s 倒计时（register.html / forgot-password.html）</h4>
+      <p>点击「获取验证码」→ 调用 <code>POST /sms/send</code> → 成功后按钮禁用，启动 60s <code>setInterval</code> 倒计时显示「重新发送(58s)」→ 归零后恢复可点击。同一组件逻辑复用于注册与找回密码两个页面（提取为独立函数 <code>startCountdown(btnEl)</code>）。</p>
+    </div>
+    <div class="card">
+      <h4>③ 支付结果轮询（payment.html）</h4>
+      <p>展示支付二维码后，前端每隔 3s 轮询 <code>GET /orders/{id}/status</code> → status=paid 时停止轮询并跳转成功页；status=expired（15分钟）时停止轮询并显示超时页；网络错误时最多重试 3 次后提示用户手动刷新。生产环境替换为 WebSocket 推送以降低服务器压力。</p>
+    </div>
+    <div class="card">
+      <h4>④ 学号卡片实时预览（register.html Step 2）</h4>
+      <p>用户输入学号时，通过 <code>oninput</code> 事件实时将学号同步到右侧卡片预览图中（通过 DOM 操作更新 <code>#card-id</code> 文本）。未输入时显示占位符。验证期间卡片显示「验证中」动画（CSS 脉冲效果），验证成功/失败分别切换卡片状态颜色。</p>
+    </div>
+    <div class="card">
+      <h4>⑤ 自动预约队列实时状态（auto-booking.html）</h4>
+      <p>规则列表中每条规则的「状态」字段通过轮询 <code>GET /auto-rules/{id}/status</code> 每 10s 刷新一次（Demo 中使用 <code>setInterval</code> 模拟随机状态切换）。生产环境替换为 WebSocket / SSE，Worker 执行完成后主动推送状态变更。</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">1.4 页面方案要点</div>
+    <div class="hl">所有页面均采用"先展示骨架 → 异步加载内容"策略，避免白屏。实际联调时在 CSS 中补充 <code>.skeleton</code> 骨架屏样式类，通过 JS 在数据就绪后移除。</div>
+    <div class="hl warn">⚠️ Demo 页面中所有数据均为静态 Mock，生产环境需逐一替换为真实 API 调用，并补充 Loading / Empty / Error 三种兜底状态。</div>
+  </div>
+
+</div><!-- /tab-req -->
+
+
+<!-- ══════════════════════════════════════════════════
+     TAB 2: 页面与交互
+══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-ux">
+
+  <div class="sec">
+    <div class="sec-title">2.1 页面跳转关系</div>
+    <div class="sec-desc">描述各页面之间的导航关系，包括主动跳转（用户操作触发）与自动跳转（系统触发）。</div>
+    <table>
+      <thead><tr><th>来源页面</th><th>触发操作</th><th>目标页面</th><th>跳转方式</th></tr></thead>
+      <tbody>
+        <tr><td>index.html（登录）</td><td>登录成功</td><td>venues.html</td><td>主动跳转（form submit → redirect）</td></tr>
+        <tr><td>index.html</td><td>点击「立即注册」</td><td>register.html</td><td>主动跳转</td></tr>
+        <tr><td>index.html</td><td>点击「忘记密码」</td><td>forgot-password.html</td><td>主动跳转</td></tr>
+        <tr><td>register.html Step 3</td><td>注册成功倒计时结束</td><td>venues.html</td><td>自动跳转（3s 倒计时后）</td></tr>
+        <tr><td>forgot-password.html Step 3</td><td>重置成功倒计时结束</td><td>index.html</td><td>自动跳转（3s）</td></tr>
+        <tr><td>venues.html</td><td>点击场地卡片</td><td>venue-detail.html?id={n}</td><td>主动跳转，携带场地 ID 参数</td></tr>
+        <tr><td>venue-detail.html</td><td>预约成功弹窗「查看记录」</td><td>records.html</td><td>主动跳转</td></tr>
+        <tr><td>venue-detail.html</td><td>点击「⚡ 自动抢票」</td><td>auto-booking.html</td><td>主动跳转</td></tr>
+        <tr><td>auto-booking.html（非会员）</td><td>点击「升级会员」</td><td>membership.html</td><td>主动跳转</td></tr>
+        <tr><td>membership.html</td><td>点击「立即购买」</td><td>payment.html?type=membership&plan={n}</td><td>主动跳转，携带套餐参数</td></tr>
+        <tr><td>payment.html</td><td>支付成功轮询结果</td><td>records.html 或 membership.html</td><td>自动跳转（按来源类型区分）</td></tr>
+        <tr><td>records.html</td><td>点击「写评价」</td><td>review.html?bookingId={n}</td><td>主动跳转</td></tr>
+        <tr><td>review.html</td><td>提交成功</td><td>records.html</td><td>自动跳转（2s）</td></tr>
+        <tr><td>profile.html</td><td>点击「我的积分」</td><td>rewards.html</td><td>主动跳转</td></tr>
+        <tr><td>任意页面</td><td>未登录状态访问受保护页面</td><td>index.html?redirect={url}</td><td>自动跳转（鉴权中间件）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">2.2 核心页面状态流转</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>🕐 时间段状态机（time_slots.status）</h4>
+        <div class="flow-step"><div class="step-num">1</div><div class="step-body"><strong>available（蓝色）</strong>— 默认状态，可点击选择</div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-body"><strong>locked（橙色+动画）</strong>— 用户点击后10分钟内，显示倒计时，其他用户不可选</div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-body"><strong>booked（灰色/条纹）</strong>— 已有用户预约完成，不可选</div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-body"><strong>closed（深灰）</strong>— 管理员关闭或已过期，不可选</div></div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:8px;">locked → available：超时10分钟自动释放 | locked → booked：支付成功</p>
+      </div>
+      <div class="card">
+        <h4>📋 预约记录状态机（bookings.status）</h4>
+        <div class="flow-step"><div class="step-num">1</div><div class="step-body"><strong>pending（黄色）</strong>— 已选时段，待支付</div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-body"><strong>paid（绿色）</strong>— 支付成功，预约确认</div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-body"><strong>completed（蓝色）</strong>— 场地使用完毕，可写评价</div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-body"><strong>cancelled（灰色）</strong>— 用户主动取消</div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-body"><strong>refunded（紫色）</strong>— 退款处理完成</div></div>
+      </div>
+      <div class="card">
+        <h4>👑 会员状态机</h4>
+        <div class="flow-step"><div class="step-num">1</div><div class="step-body"><strong>free（无会员）</strong>— 仅可使用一次自动预约体验</div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-body"><strong>trial_used（体验已用）</strong>— 触发购买引导 Banner</div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-body"><strong>active（会员有效）</strong>— 解锁所有自动预约功能</div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-body"><strong>expiring（7天内到期）</strong>— 展示续费提醒条</div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-body"><strong>expired（已到期）</strong>— 规则暂停，提示续费</div></div>
+      </div>
+      <div class="card">
+        <h4>🔔 通知状态</h4>
+        <div class="flow-step"><div class="step-num">1</div><div class="step-body"><strong>unread（蓝点）</strong>— 导航栏铃铛显示红点，列表项加粗</div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-body"><strong>read（普通）</strong>— 点击单条或「全部已读」后变更</div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-body"><strong>dismissed（删除）</strong>— 点击「×」后从列表移除</div></div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:8px;">未读数量实时同步：通过 WebSocket / 轮询更新导航铃铛角标</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">2.3 核心交互行为规范</div>
+    <table>
+      <thead><tr><th>交互场景</th><th>用户操作</th><th>系统响应</th><th>失败处理</th></tr></thead>
+      <tbody>
+        <tr><td>表单提交</td><td>点击提交按钮</td><td>按钮变 Loading 态（禁用+旋转图标），避免重复提交</td><td>API 失败：按钮恢复，Toast 提示错误原因</td></tr>
+        <tr><td>危险操作</td><td>点击取消预约 / 账号注销</td><td>弹出二次确认 Modal（有明确后果描述），需输入确认文字</td><td>取消确认：Modal 关闭，不执行操作</td></tr>
+        <tr><td>图片上传</td><td>选择或拖拽图片</td><td>前端校验（<4MB，仅jpg/png/webp），展示预览，显示上传进度条</td><td>格式/大小不符：Toast 提示，不进入上传</td></tr>
+        <tr><td>搜索输入</td><td>在场地搜索框输入</td><td>300ms 防抖后触发搜索（前端筛选或 API）</td><td>无结果：展示「未找到相关场地」Empty State</td></tr>
+        <tr><td>下拉刷新</td><td>列表页下拉（移动端）</td><td>触发数据重新加载，显示刷新动画</td><td>网络错误：Toast 提示，保留旧数据</td></tr>
+        <tr><td>复制文本</td><td>点击邀请链接「复制」</td><td>调用 Clipboard API，按钮短暂变「已复制 ✓」</td><td>浏览器不支持：降级为选中文本</td></tr>
+        <tr><td>页面离开</td><td>表单有未保存改动时离开</td><td><code>beforeunload</code> 提示「改动未保存」</td><td>用户确认离开则不保存</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">2.4 埋点方案</div>
+    <div class="sec-desc">以下为前端行为埋点规范，生产环境接入自建埋点 SDK 或第三方分析工具（如 GrowingIO / Sensors）。</div>
+    <table>
+      <thead><tr><th>事件名</th><th>触发时机</th><th>携带参数</th><th>业务目的</th></tr></thead>
+      <tbody>
+        <tr><td>page_view</td><td>每个页面加载完成</td><td>page_name, user_id, referrer</td><td>PV/UV 统计</td></tr>
+        <tr><td>register_start</td><td>进入注册页</td><td>source（来源页）</td><td>注册漏斗分析</td></tr>
+        <tr><td>register_step</td><td>完成注册每一步</td><td>step（1/2/3）, duration_ms</td><td>各步完成率</td></tr>
+        <tr><td>student_bind_fail</td><td>学号验证失败</td><td>reason（wrong_pwd/system_error）</td><td>优化绑定流程</td></tr>
+        <tr><td>venue_click</td><td>点击场地卡片</td><td>venue_id, venue_type, position</td><td>场地热度分析</td></tr>
+        <tr><td>slot_select</td><td>选择可用时段</td><td>venue_id, date, start_time, price</td><td>时段受欢迎程度</td></tr>
+        <tr><td>booking_start</td><td>打开预约确认弹窗</td><td>venue_id, amount</td><td>预约漏斗入口</td></tr>
+        <tr><td>payment_method_select</td><td>选择支付方式</td><td>method（wechat/alipay/balance）</td><td>支付偏好分析</td></tr>
+        <tr><td>booking_success</td><td>支付成功回调</td><td>booking_id, venue_id, amount, method</td><td>核心转化指标</td></tr>
+        <tr><td>booking_abandon</td><td>支付弹窗关闭但未支付</td><td>venue_id, amount, time_elapsed</td><td>流失分析</td></tr>
+        <tr><td>auto_rule_create</td><td>保存自动预约规则</td><td>venue_id, days, time_range</td><td>自动预约使用率</td></tr>
+        <tr><td>membership_view</td><td>进入会员中心</td><td>current_plan, source</td><td>会员转化漏斗</td></tr>
+        <tr><td>membership_purchase</td><td>会员支付成功</td><td>plan, amount</td><td>收入归因</td></tr>
+        <tr><td>points_exchange</td><td>兑换积分商品</td><td>item_id, points_spent</td><td>积分活跃度</td></tr>
+        <tr><td>review_submit</td><td>提交评价</td><td>booking_id, rating, tag_count, has_photo</td><td>内容运营指标</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /tab-ux -->
+
+
+<!-- ══════════════════════════════════════════════════
+     TAB 3: 接口与数据
+══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-api">
+
+  <div class="sec">
+    <div class="sec-title">3.1 前端 API 对接总览</div>
+    <div class="sec-desc">按业务域划分，列出前端实际调用的全部接口。Base URL：<code>https://api.szu-booking.com/v1</code>。所有需要鉴权的接口在 Header 携带 <code>Authorization: Bearer {jwt_token}</code>。</div>
+    <table>
+      <thead><tr><th>业务域</th><th>方法</th><th>路径</th><th>前端使用页面</th><th>鉴权</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="4">账号</td><td><span class="tag tag-post">POST</span></td><td>/auth/login</td><td>index.html</td><td><span class="tag tag-pub">公开</span></td></tr>
+        <tr><td><span class="tag tag-post">POST</span></td><td>/auth/register</td><td>register.html Step1</td><td><span class="tag tag-pub">公开</span></td></tr>
+        <tr><td><span class="tag tag-post">POST</span></td><td>/auth/sms/send</td><td>register.html / forgot-password.html</td><td><span class="tag tag-pub">公开</span></td></tr>
+        <tr><td><span class="tag tag-post">POST</span></td><td>/auth/reset-password</td><td>forgot-password.html</td><td><span class="tag tag-pub">公开</span></td></tr>
+        <tr><td rowspan="3">学号绑定</td><td><span class="tag tag-post">POST</span></td><td>/students/verify</td><td>register.html Step2</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/students/me</td><td>profile.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-del">DELETE</span></td><td>/students/me</td><td>profile.html 解除绑定</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="3">场地</td><td><span class="tag tag-get">GET</span></td><td>/venues?type=&keyword=</td><td>venues.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/venues/{id}</td><td>venue-detail.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/venues/{id}/slots?date=</td><td>venue-detail.html 时段网格</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="2">时段锁</td><td><span class="tag tag-post">POST</span></td><td>/slots/{id}/lock</td><td>venue-detail.html 选时段后</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-del">DELETE</span></td><td>/slots/{id}/lock</td><td>venue-detail.html 超时/取消</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="4">预约</td><td><span class="tag tag-post">POST</span></td><td>/bookings</td><td>venue-detail.html 提交预约</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/bookings?status=&page=</td><td>records.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-put">PUT</span></td><td>/bookings/{id}/cancel</td><td>records.html 取消</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/orders/{id}/status</td><td>payment.html 轮询</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="3">自动预约</td><td><span class="tag tag-get">GET</span></td><td>/auto-rules</td><td>auto-booking.html 列表</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-post">POST</span></td><td>/auto-rules</td><td>auto-booking.html 创建规则</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-put">PUT</span></td><td>/auto-rules/{id}</td><td>auto-booking.html 启停规则</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="2">会员</td><td><span class="tag tag-post">POST</span></td><td>/membership/orders</td><td>membership.html 购买</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-get">GET</span></td><td>/membership/me</td><td>profile.html / membership.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="2">通知</td><td><span class="tag tag-get">GET</span></td><td>/notifications?page=</td><td>notifications.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-put">PUT</span></td><td>/notifications/read-all</td><td>notifications.html 全部已读</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td rowspan="2">积分</td><td><span class="tag tag-get">GET</span></td><td>/points/logs?page=</td><td>rewards.html 积分历史</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td><span class="tag tag-post">POST</span></td><td>/points/exchange</td><td>rewards.html 兑换</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td>评价</td><td><span class="tag tag-post">POST</span></td><td>/reviews</td><td>review.html</td><td><span class="tag tag-auth">需登录</span></td></tr>
+        <tr><td>用户</td><td><span class="tag tag-put">PUT</span></td><td>/users/me</td><td>profile.html 修改信息</td><td><span class="tag tag-auth">需登录</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">3.2 核心字段映射表</div>
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h4>时段状态 → UI 映射</h4>
+          <table style="margin:0;">
+            <tr><th>API status</th><th>UI 颜色</th><th>文字</th><th>可点击</th></tr>
+            <tr><td>available</td><td>蓝色 #1A4189</td><td>可预约</td><td>✅</td></tr>
+            <tr><td>locked</td><td>橙色 #d97706</td><td>预约中</td><td>❌</td></tr>
+            <tr><td>booked</td><td>灰色 #9ca3af</td><td>已预约</td><td>❌</td></tr>
+            <tr><td>closed</td><td>深灰 #374151</td><td>已关闭</td><td>❌</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h4>会员 plan → 权益映射</h4>
+          <table style="margin:0;">
+            <tr><th>plan</th><th>自动预约次数</th><th>角标文字</th></tr>
+            <tr><td>free</td><td>体验1次</td><td>无</td></tr>
+            <tr><td>monthly</td><td>无限</td><td>月度会员</td></tr>
+            <tr><td>quarterly</td><td>无限 +优先级↑</td><td>季度会员</td></tr>
+            <tr><td>yearly</td><td>无限 +最高优先级</td><td>年度会员 👑</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h4>预约状态 → UI 映射</h4>
+          <table style="margin:0;">
+            <tr><th>API status</th><th>显示颜色</th><th>可操作</th></tr>
+            <tr><td>pending</td><td>黄色 badge</td><td>继续支付 / 取消</td></tr>
+            <tr><td>paid</td><td>绿色 badge</td><td>取消（提前24h）</td></tr>
+            <tr><td>completed</td><td>蓝色 badge</td><td>写评价</td></tr>
+            <tr><td>cancelled</td><td>灰色 badge</td><td>—</td></tr>
+            <tr><td>refunded</td><td>紫色 badge</td><td>—</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h4>积分 source → 中文描述</h4>
+          <table style="margin:0;">
+            <tr><th>source</th><th>前端显示文案</th></tr>
+            <tr><td>register</td><td>🎉 注册欢迎奖励</td></tr>
+            <tr><td>booking</td><td>🏟️ 预约场地获得</td></tr>
+            <tr><td>review</td><td>✍️ 写评价奖励</td></tr>
+            <tr><td>invite</td><td>👥 邀请好友奖励</td></tr>
+            <tr><td>exchange</td><td>🎁 积分兑换消耗</td></tr>
+            <tr><td>admin_adjust</td><td>🔧 管理员调整</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">3.3 前端状态管理设计</div>
+    <div class="hl">Demo 阶段使用 localStorage + JS 模块变量。生产环境迁移至 Pinia Store，下表描述各 Store 职责与持久化策略。</div>
+    <table>
+      <thead><tr><th>Store 名称</th><th>持久化</th><th>核心数据</th><th>何时清除</th></tr></thead>
+      <tbody>
+        <tr><td><strong>authStore</strong></td><td>localStorage</td><td>jwt_token, user_id, nickname, role, is_verified</td><td>登出 / Token 过期</td></tr>
+        <tr><td><strong>memberStore</strong></td><td>sessionStorage（10min TTL）</td><td>membership_plan, expires_at, trial_used</td><td>会员状态变更后失效，重新拉取</td></tr>
+        <tr><td><strong>bookingStore</strong></td><td>不持久化（内存）</td><td>当前选中时段、订单草稿、倒计时剩余秒数</td><td>弹窗关闭 / 页面跳转</td></tr>
+        <tr><td><strong>notifStore</strong></td><td>不持久化</td><td>未读通知数量（角标）</td><td>每次进入通知页刷新</td></tr>
+        <tr><td><strong>venueStore</strong></td><td>内存 + 5min TTL</td><td>场地列表缓存、当前场地详情</td><td>5分钟后重新拉取</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">3.4 数据缓存策略</div>
+    <table>
+      <thead><tr><th>数据类型</th><th>缓存位置</th><th>TTL</th><th>失效触发</th></tr></thead>
+      <tbody>
+        <tr><td>场地列表</td><td>内存（venueStore）</td><td>5 分钟</td><td>管理员更新场地后 SSE 推送失效</td></tr>
+        <tr><td>时间段网格</td><td>不缓存（实时性要求高）</td><td>—</td><td>每次切换日期重新请求</td></tr>
+        <tr><td>用户基本信息</td><td>localStorage（authStore）</td><td>Token 有效期内</td><td>登出 / Token 刷新</td></tr>
+        <tr><td>会员状态</td><td>sessionStorage</td><td>10 分钟</td><td>购买会员后立即失效重拉</td></tr>
+        <tr><td>通知列表</td><td>不缓存</td><td>—</td><td>实时性要求，每次进入页面拉取</td></tr>
+        <tr><td>积分余额</td><td>authStore（随用户信息）</td><td>同 Token</td><td>兑换 / 获得积分后 +delta 本地更新</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /tab-api -->
+
+
+<!-- ══════════════════════════════════════════════════
+     TAB 4: 工程实现
+══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-eng">
+
+  <div class="sec">
+    <div class="sec-title">4.1 目录结构设计</div>
+    <pre>/szu-sports-booking/
+├── public/                       # 静态资源（不经构建工具处理）
+│   ├── favicon.ico
+│   └── og-image.png
+├── src/
+│   ├── pages/                    # 页面文件（对应各 HTML Demo）
+│   │   ├── index.html            # 登录
+│   │   ├── register.html
+│   │   ├── venues.html
+│   │   ├── venue-detail.html
+│   │   ├── auto-booking.html
+│   │   ├── records.html
+│   │   ├── payment.html
+│   │   ├── membership.html
+│   │   ├── rewards.html
+│   │   ├── review.html
+│   │   ├── notifications.html
+│   │   ├── profile.html
+│   │   ├── terms.html
+│   │   ├── about.html
+│   │   └── admin.html
+│   ├── components/               # 可复用 UI 组件（生产阶段抽取）
+│   │   ├── nav.js                # 顶部导航栏
+│   │   ├── modal.js              # 通用 Modal 组件
+│   │   ├── toast.js              # Toast 提示
+│   │   ├── countdown.js          # 倒计时组件（验证码/时段锁）
+│   │   ├── star-rating.js        # 星级评分组件
+│   │   └── skeleton.js           # 骨架屏
+│   ├── services/                 # API 调用层
+│   │   ├── auth.js
+│   │   ├── venue.js
+│   │   ├── booking.js
+│   │   ├── membership.js
+│   │   └── notification.js
+│   ├── store/                    # 状态管理（生产用 Pinia）
+│   │   ├── auth.js
+│   │   ├── member.js
+│   │   └── notif.js
+│   ├── utils/
+│   │   ├── request.js            # Axios/fetch 封装（统一 token/错误处理）
+│   │   ├── validator.js          # 表单校验规则
+│   │   ├── formatter.js          # 日期、金额、状态文字格式化
+│   │   └── tracker.js            # 埋点上报
+│   └── styles/
+│       ├── variables.css         # CSS 自定义属性（设计令牌）
+│       ├── base.css              # Reset + 全局基础样式
+│       └── components.css        # 通用组件样式
+├── docs/                         # 工程文档
+│   ├── frontend-docs.html        # 本文档
+│   ├── design-spec.html          # 系统设计文档
+│   └── design-doc.docx           # SDD Word 版
+└── package.json</pre>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">4.2 路由设计</div>
+    <div class="hl">Demo 阶段：多 HTML 文件，通过 &lt;a href&gt; 跳转，URL 参数传递页面数据。生产阶段：迁移至 Vue Router，使用 History 模式。</div>
+    <table>
+      <thead><tr><th>路由路径</th><th>对应页面</th><th>鉴权</th><th>URL 参数</th></tr></thead>
+      <tbody>
+        <tr><td>/</td><td>登录页 index.html</td><td>公开（已登录重定向至 /venues）</td><td>?redirect= 登录后跳转目标</td></tr>
+        <tr><td>/register</td><td>register.html</td><td>公开（已登录重定向）</td><td>—</td></tr>
+        <tr><td>/forgot-password</td><td>forgot-password.html</td><td>公开</td><td>—</td></tr>
+        <tr><td>/venues</td><td>venues.html</td><td>需登录</td><td>?type= ?keyword=</td></tr>
+        <tr><td>/venues/:id</td><td>venue-detail.html</td><td>需登录</td><td>?date= 默认日期</td></tr>
+        <tr><td>/bookings</td><td>records.html</td><td>需登录</td><td>?status= ?page=</td></tr>
+        <tr><td>/payment</td><td>payment.html</td><td>需登录</td><td>?orderId= ?type=</td></tr>
+        <tr><td>/auto-booking</td><td>auto-booking.html</td><td>需登录</td><td>—</td></tr>
+        <tr><td>/membership</td><td>membership.html</td><td>需登录</td><td>—</td></tr>
+        <tr><td>/rewards</td><td>rewards.html</td><td>需登录</td><td>?tab=（coupon/points/exchange/invite）</td></tr>
+        <tr><td>/review</td><td>review.html</td><td>需登录</td><td>?bookingId= 必传</td></tr>
+        <tr><td>/notifications</td><td>notifications.html</td><td>需登录</td><td>—</td></tr>
+        <tr><td>/profile</td><td>profile.html</td><td>需登录</td><td>?tab= 默认 overview</td></tr>
+        <tr><td>/terms</td><td>terms.html</td><td>公开</td><td>?tab=（terms/privacy）</td></tr>
+        <tr><td>/about</td><td>about.html</td><td>公开</td><td>—</td></tr>
+        <tr><td>/admin</td><td>admin.html</td><td>需 admin 角色</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">4.3 权限控制方案</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>前端鉴权守卫</h4>
+        <p>每个受保护页面顶部执行 <code>checkAuth()</code>：读取 localStorage 中的 jwt_token → 解析 payload 检查 exp（过期时间）→ 若已过期则清除 token 并跳转 <code>/?redirect=当前URL</code>。</p>
+        <p style="margin-top:8px;font-size:.78rem;color:var(--muted);">注意：前端鉴权仅为 UX 层保护，所有权限最终由后端 API 验证。</p>
+      </div>
+      <div class="card">
+        <h4>权限分级</h4>
+        <div class="badge-row">
+          <span class="pill">公开页面</span>
+          <span class="pill blue">需登录（普通用户）</span>
+          <span class="pill orange">需学号绑定</span>
+          <span class="pill red">需会员（自动预约）</span>
+          <span class="pill" style="background:#f3e8ff;color:#5b21b6;border-color:#c4b5fd;">管理员专属</span>
+        </div>
+        <table style="margin-top:.5rem;">
+          <tr><th>级别</th><th>页面</th></tr>
+          <tr><td>公开</td><td>登录、注册、找回密码、条款、关于</td></tr>
+          <tr><td>需登录</td><td>场地浏览、记录、通知、个人中心</td></tr>
+          <tr><td>需绑定学号</td><td>预约时段（提交时后端校验）</td></tr>
+          <tr><td>需会员</td><td>无限次自动预约功能</td></tr>
+          <tr><td>Admin</td><td>/admin 所有功能</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">4.4 错误处理方案</div>
+    <table>
+      <thead><tr><th>错误类型</th><th>触发场景</th><th>前端处理方式</th></tr></thead>
+      <tbody>
+        <tr><td>网络超时（timeout）</td><td>API 请求 10s 未响应</td><td>Toast「网络请求超时，请检查网络后重试」，请求取消，按钮恢复可点击</td></tr>
+        <tr><td>401 Unauthorized</td><td>Token 过期或无效</td><td>清除本地 Token，自动跳转登录页，保留当前 URL 作为 redirect 参数</td></tr>
+        <tr><td>403 Forbidden</td><td>权限不足（如非会员访问自动预约接口）</td><td>Toast 提示「该功能需要开通会员」，弹出会员引导弹窗</td></tr>
+        <tr><td>409 Conflict</td><td>时段在提交瞬间被他人抢占</td><td>Modal 提示「该时段已被预约，请重新选择」，刷新时段网格</td></tr>
+        <tr><td>422 Validation</td><td>表单数据不合规</td><td>在对应字段下方显示红色错误文案（来自 API response.errors）</td></tr>
+        <tr><td>429 Too Many Requests</td><td>学号验证频率超限</td><td>Toast「尝试次数过多，请 X 分钟后重试」，禁用提交按钮至解锁</td></tr>
+        <tr><td>5xx Server Error</td><td>后端服务异常</td><td>Toast「服务暂时不可用，请稍后重试」；关键页面展示错误 Empty State</td></tr>
+        <tr><td>JS 运行时错误</td><td>前端代码异常</td><td>全局 <code>window.onerror</code> 捕获，上报至 Sentry，展示友好错误页</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">4.5 性能优化方案</div>
+    <div class="two-col">
+      <div class="card"><h4>🖼️ 图片优化</h4><p>场地图片使用 WebP 格式（降低 ~30% 体积）；列表页使用 Intersection Observer 实现懒加载（<code>loading="lazy"</code>）；缩略图服务端压缩至 400px 宽，详情页按需加载原图。</p></div>
+      <div class="card"><h4>📦 资源加载</h4><p>CSS/JS 文件启用 Gzip/Brotli 压缩；CDN 加速静态资源；关键路径 CSS 内联（首屏样式），非关键 CSS 异步加载；图标使用 CSS emoji 或 SVG，避免图标字体请求。</p></div>
+      <div class="card"><h4>⚡ 渲染优化</h4><p>时段网格 16 个格子使用 <code>DocumentFragment</code> 批量插入，避免多次 reflow；滚动监听使用 <code>passive: true</code>；防抖搜索（300ms）避免频繁 API 请求；长列表（预约记录）使用分页而非虚拟滚动（数据量不大）。</p></div>
+      <div class="card"><h4>🔌 离线体验</h4><p>生产环境添加 Service Worker：缓存静态资源（HTML/CSS/JS）实现秒开；网络断开时展示离线提示而非白屏；场地列表在 Cache-first 策略下展示旧数据 + 刷新提示。</p></div>
+    </div>
+  </div>
+
+</div><!-- /tab-eng -->
+
+
+<!-- ══════════════════════════════════════════════════
+     TAB 5: 质量保障
+══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-qa">
+
+  <div class="sec">
+    <div class="sec-title">5.1 核心流程测试用例</div>
+    <table>
+      <thead><tr><th>#</th><th>用例名称</th><th>前置条件</th><th>操作步骤</th><th>预期结果</th><th>优先级</th></tr></thead>
+      <tbody>
+        <tr><td>TC-01</td><td>正常注册流程</td><td>新手机号未注册</td><td>填写手机号 → 获取验证码(888888) → 设密码 → 绑学号 → 提交</td><td>跳转成功页，3s 后至场地浏览，积分+50</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-02</td><td>学号验证失败</td><td>已注册用户</td><td>Step 2 输入错误密码</td><td>提示「学号或密码错误」，计数+1，连续3次后锁定15分钟，按钮不可点</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-03</td><td>手动预约完整流程</td><td>已登录+学号已绑定</td><td>选场地 → 选时段 → 确认 → 选择微信支付 → 完成支付</td><td>跳转支付成功页，records.html 出现新记录(paid)</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-04</td><td>支付超时时段释放</td><td>已锁定时段</td><td>打开支付弹窗后不操作，等待10分钟倒计时归零</td><td>弹窗关闭，时段状态恢复 available</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-05</td><td>时段并发抢占</td><td>两个用户同时选同一时段</td><td>用户A先完成支付，用户B提交订单</td><td>用户B收到 409 提示「时段已被预约，请重新选择」，时段变 booked</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-06</td><td>非会员自动预约拦截</td><td>普通用户（trial_used=false）</td><td>进入自动预约页，创建规则</td><td>规则创建成功，提示「仅限体验1次」，banner 显示升级引导</td><td><span class="tag tag-warn">P1</span></td></tr>
+        <tr><td>TC-07</td><td>会员购买支付</td><td>非会员用户</td><td>选月度套餐 → 支付宝支付 → 完成</td><td>membership.html 显示会员状态有效，auto-booking.html 解除限制</td><td><span class="tag tag-err">P0</span></td></tr>
+        <tr><td>TC-08</td><td>积分兑换优惠券</td><td>积分 ≥ 100</td><td>进入 rewards → 兑换标签 → 选择优惠券 → 确认兑换</td><td>优惠券出现在「我的优惠券」，积分余额扣减</td><td><span class="tag tag-warn">P1</span></td></tr>
+        <tr><td>TC-09</td><td>取消已支付预约</td><td>预约状态 paid，距活动 >24h</td><td>records.html → 点击取消 → 确认</td><td>状态变 cancelled，发起退款流程</td><td><span class="tag tag-warn">P1</span></td></tr>
+        <tr><td>TC-10</td><td>未登录访问保护页</td><td>未登录状态</td><td>直接访问 /venues</td><td>自动跳转 /?redirect=/venues，登录后跳回</td><td><span class="tag tag-err">P0</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">5.2 冒烟测试清单（上线前必过）</div>
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h4>账号流程</h4>
+          <ul class="check-list">
+            <li><div class="chk"></div><span>手机号注册全流程可完成</span></li>
+            <li><div class="chk"></div><span>深大学号绑定成功路径</span></li>
+            <li><div class="chk"></div><span>登录后跳转场地浏览页</span></li>
+            <li><div class="chk"></div><span>找回密码全流程可完成</span></li>
+            <li><div class="chk"></div><span>未登录访问保护页面被拦截并跳转登录</span></li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h4>核心预约</h4>
+          <ul class="check-list">
+            <li><div class="chk"></div><span>场地列表正常加载</span></li>
+            <li><div class="chk"></div><span>时段网格按状态正确渲染</span></li>
+            <li><div class="chk"></div><span>选时段后弹出预约弹窗</span></li>
+            <li><div class="chk"></div><span>倒计时显示且归零自动释放</span></li>
+            <li><div class="chk"></div><span>支付成功后记录出现</span></li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <h4>会员与积分</h4>
+          <ul class="check-list">
+            <li><div class="chk"></div><span>非会员自动预约显示体验限制</span></li>
+            <li><div class="chk"></div><span>会员购买支付流程可走通</span></li>
+            <li><div class="chk"></div><span>会员开通后自动预约解锁</span></li>
+            <li><div class="chk"></div><span>积分余额在操作后实时更新</span></li>
+            <li><div class="chk"></div><span>优惠券兑换弹窗确认流程</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>页面基础</h4>
+          <ul class="check-list">
+            <li><div class="chk"></div><span>所有导航链接可正常跳转</span></li>
+            <li><div class="chk"></div><span>通知铃铛显示未读数量</span></li>
+            <li><div class="chk"></div><span>个人中心信息正确显示</span></li>
+            <li><div class="chk"></div><span>管理后台仅 admin 角色可访问</span></li>
+            <li><div class="chk"></div><span>移动端（375px）布局无错乱</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">5.3 浏览器兼容性矩阵</div>
+    <table>
+      <thead><tr><th>浏览器</th><th>版本</th><th>支持级别</th><th>注意事项</th></tr></thead>
+      <tbody>
+        <tr><td>Chrome</td><td>90+</td><td><span class="tag tag-ok">完全支持</span></td><td>主要测试环境</td></tr>
+        <tr><td>微信内置浏览器</td><td>最新</td><td><span class="tag tag-ok">完全支持</span></td><td>支付宝/微信支付跳转需特殊处理</td></tr>
+        <tr><td>Safari (iOS)</td><td>14+</td><td><span class="tag tag-ok">完全支持</span></td><td>Clipboard API 需用户权限；<code>position:sticky</code> 需 -webkit- 前缀</td></tr>
+        <tr><td>Firefox</td><td>88+</td><td><span class="tag tag-ok">完全支持</span></td><td>——</td></tr>
+        <tr><td>Chrome Android</td><td>90+</td><td><span class="tag tag-ok">完全支持</span></td><td>主要移动端测试环境</td></tr>
+        <tr><td>Safari (macOS)</td><td>14+</td><td><span class="tag tag-warn">基本支持</span></td><td>部分 CSS Grid 子网格属性需降级</td></tr>
+        <tr><td>IE 11</td><td>—</td><td><span class="tag tag-err">不支持</span></td><td>目标用户为在校大学生，IE占比忽略</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">5.4 上线检查清单</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>🚀 上线前必查</h4>
+        <ul class="check-list">
+          <li><div class="chk"></div><span>所有 API BaseURL 已切换为生产环境</span></li>
+          <li><div class="chk"></div><span>支付回调 notifyUrl 已配置为生产域名</span></li>
+          <li><div class="chk"></div><span>Sentry DSN 已配置生产项目</span></li>
+          <li><div class="chk"></div><span>埋点 SDK 已切换生产 AppKey</span></li>
+          <li><div class="chk"></div><span>console.log / debugger 已全部清除</span></li>
+          <li><div class="chk"></div><span>Demo 模拟数据无残留（如固定 userId=1）</span></li>
+          <li><div class="chk"></div><span>HTTPS 证书有效，HTTP 强制跳转 HTTPS</span></li>
+          <li><div class="chk"></div><span>CSP 头部配置正确，无内联 Script 告警</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>✅ 功能验收</h4>
+        <ul class="check-list">
+          <li><div class="chk"></div><span>冒烟测试 20 条全部通过</span></li>
+          <li><div class="chk"></div><span>P0 测试用例（TC-01~05, TC-07, TC-10）全通过</span></li>
+          <li><div class="chk"></div><span>首屏加载时间 ≤ 2s（LCP ≤ 2.5s）</span></li>
+          <li><div class="chk"></div><span>Lighthouse 性能分 ≥ 85</span></li>
+          <li><div class="chk"></div><span>移动端 375px 布局验收通过</span></li>
+          <li><div class="chk"></div><span>微信内置浏览器支付链路验收通过</span></li>
+          <li><div class="chk"></div><span>Admin 权限隔离验收通过</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">5.5 回滚预案</div>
+    <div class="card">
+      <h4>触发条件</h4>
+      <p>上线后 30 分钟内：核心转化（支付成功率）下降 &gt;20%；JS 报错率 &gt;5%；P0 功能（登录/预约/支付）不可用；服务器错误率 &gt;1%。</p>
+    </div>
+    <div class="card" style="margin-top:.8rem;">
+      <h4>回滚步骤</h4>
+      <div class="flow-step"><div class="step-num">1</div><div class="step-body">通知 Nginx/CDN 将前端流量切回上一个静态版本目录（<code>v{n-1}/</code>），无需重启服务</div></div>
+      <div class="flow-step"><div class="step-num">2</div><div class="step-body">检查回滚版本是否正常（冒烟测试通过确认），并在群内通知团队</div></div>
+      <div class="flow-step"><div class="step-num">3</div><div class="step-body">保留故障版本文件用于排查，不要删除</div></div>
+      <div class="flow-step"><div class="step-num">4</div><div class="step-body">Sentry 查看具体错误 stack trace，定位根因后修复并重新灰度上线</div></div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem;">目标回滚时间：≤ 5 分钟（纯静态前端，无需重新构建）</p>
+    </div>
+  </div>
+
+</div><!-- /tab-qa -->
+
+
+<!-- ══════════════════════════════════════════════════
+     TAB 6: 运行维护
+══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-ops">
+
+  <div class="sec">
+    <div class="sec-title">6.1 发布流程说明</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>📦 发布流程（静态文件）</h4>
+        <div class="flow-step"><div class="step-num">1</div><div class="step-body"><strong>构建：</strong>本地执行 <code>npm run build</code>，输出至 <code>dist/</code></div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-body"><strong>测试：</strong>在 staging 环境运行冒烟测试清单</div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-body"><strong>上传：</strong>将 <code>dist/</code> 上传至 OSS 对应版本目录 <code>v{version}/</code></div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-body"><strong>切流：</strong>更新 CDN 源站指向新版本路径</div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-body"><strong>验证：</strong>访问生产域名确认版本号，查看 Sentry 错误率</div></div>
+        <div class="flow-step"><div class="step-num">6</div><div class="step-body"><strong>保留：</strong>旧版本文件保留 30 天备用回滚</div></div>
+      </div>
+      <div class="card">
+        <h4>🌊 灰度策略</h4>
+        <p>首次大版本上线采用灰度：</p>
+        <p style="margin-top:8px;">第一阶段（10%）→ 观察 2h 无异常 → 第二阶段（50%）→ 观察 4h → 全量上线（100%）</p>
+        <p style="margin-top:8px;font-size:.78rem;color:var(--muted);">灰度实现：Nginx 按 Cookie hash 或 IP 段分流；CDN 层 A/B 测试</p>
+        <div style="margin-top:12px;">
+          <h4>📋 发布时间窗口</h4>
+          <p>选择流量低谷期：<strong>每周三 23:00~01:00</strong>（深大学生使用峰值为早7~晚10点）。紧急修复不限时间窗口，但需值班人员在线监控30分钟。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">6.2 前端监控告警</div>
+    <table>
+      <thead><tr><th>监控项</th><th>工具</th><th>告警阈值</th><th>告警渠道</th></tr></thead>
+      <tbody>
+        <tr><td>JS 报错率</td><td>Sentry</td><td>&gt;1% 触发 warning；&gt;5% 触发 critical</td><td>企业微信群 + 短信</td></tr>
+        <tr><td>页面白屏（LCP &gt; 4s）</td><td>Sentry Performance</td><td>&gt;2% 用户触发</td><td>企业微信群</td></tr>
+        <tr><td>API 请求失败率</td><td>自建日志 / 后端 APM</td><td>&gt;2% 触发告警</td><td>企业微信群</td></tr>
+        <tr><td>支付成功率下降</td><td>埋点看板自动巡检</td><td>低于过去7日均值 20% 触发</td><td>短信 + 电话</td></tr>
+        <tr><td>用户注册转化率</td><td>埋点看板</td><td>日看板人工巡检</td><td>每日推送运营群</td></tr>
+        <tr><td>CDN 可用性</td><td>云服务商自带监控</td><td>可用率 &lt;99.9%</td><td>短信 + 电话</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">6.3 埋点看板口径</div>
+    <table>
+      <thead><tr><th>指标名称</th><th>计算口径</th><th>刷新频率</th></tr></thead>
+      <tbody>
+        <tr><td>DAU（日活用户）</td><td>当日触发过 page_view 事件的唯一 user_id 数</td><td>实时</td></tr>
+        <tr><td>注册转化率</td><td>register_step(step=3) ÷ register_start × 100%</td><td>每小时</td></tr>
+        <tr><td>学号绑定率</td><td>student_bind_success ÷ register_start × 100%</td><td>每日</td></tr>
+        <tr><td>预约漏斗转化</td><td>slot_select → booking_start → booking_success 三层漏斗</td><td>每小时</td></tr>
+        <tr><td>支付成功率</td><td>booking_success ÷ booking_start × 100%</td><td>实时</td></tr>
+        <tr><td>支付方式分布</td><td>payment_method_select 按 method 分组占比</td><td>每日</td></tr>
+        <tr><td>会员购买转化率</td><td>membership_purchase ÷ membership_view × 100%</td><td>每日</td></tr>
+        <tr><td>自动预约开通率</td><td>auto_rule_create ÷ DAU × 100%</td><td>每日</td></tr>
+        <tr><td>场地热度排行</td><td>venue_click 按 venue_id 排序，取 Top 10</td><td>每日</td></tr>
+        <tr><td>用户平均停留时长</td><td>page_leave.timestamp - page_view.timestamp 均值</td><td>每日</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">6.4 前端故障排查手册</div>
+    <div class="card" style="margin-bottom:.8rem;">
+      <h4>🔴 故障：页面白屏 / 无内容</h4>
+      <div class="flow-step"><div class="step-num">1</div><div class="step-body">打开浏览器开发者工具 Console，查看是否有 JS 报错（通常是 <code>TypeError</code> 或 <code>SyntaxError</code>）</div></div>
+      <div class="flow-step"><div class="step-num">2</div><div class="step-body">Network 标签查看 HTML/JS/CSS 文件是否 200 返回（若 404 说明 CDN 版本切换异常）</div></div>
+      <div class="flow-step"><div class="step-num">3</div><div class="step-body">确认 API 请求是否返回正常（查看 XHR/Fetch 请求，重点看 /auth/me 用户信息接口）</div></div>
+      <div class="flow-step"><div class="step-num">4</div><div class="step-body">若 JS 文件加载失败：检查 CDN 配置，刷新 CDN 缓存；若 API 异常：查看后端 Nginx 日志</div></div>
+    </div>
+    <div class="card" style="margin-bottom:.8rem;">
+      <h4>🔴 故障：支付页面无响应（二维码展示但无回调）</h4>
+      <div class="flow-step"><div class="step-num">1</div><div class="step-body">查看轮询接口 <code>GET /orders/{id}/status</code> 是否正常返回（Network 面板）</div></div>
+      <div class="flow-step"><div class="step-num">2</div><div class="step-body">确认支付网关 Webhook 是否配置了正确的 notifyUrl（需后端确认）</div></div>
+      <div class="flow-step"><div class="step-num">3</div><div class="step-body">检查后端 Webhook 接收日志，确认支付网关是否已发送回调</div></div>
+      <div class="flow-step"><div class="step-num">4</div><div class="step-body">临时应对：引导用户等待轮询超时（15分钟），或联系客服手动核对订单状态</div></div>
+    </div>
+    <div class="card">
+      <h4>🔴 故障：学号绑定大量失败（用户反馈）</h4>
+      <div class="flow-step"><div class="step-num">1</div><div class="step-body">查看 Sentry <code>student_bind_fail</code> 错误日志，按 reason 分类</div></div>
+      <div class="flow-step"><div class="step-num">2</div><div class="step-body">若 reason=system_error：深大体育系统可能有维护或变更（检查是否可访问），发布系统公告</div></div>
+      <div class="flow-step"><div class="step-num">3</div><div class="step-body">若 reason=wrong_pwd：用户密码问题，排查是否深大统一密码修改导致</div></div>
+      <div class="flow-step"><div class="step-num">4</div><div class="step-body">临时方案：管理后台手动标记用户学号已验证（需人工审核学生证）</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">6.5 值班与应急处理</div>
+    <div class="two-col">
+      <div class="card">
+        <h4>📅 值班安排</h4>
+        <p>上线前两周实行双人值班（前端 + 后端各一人）。值班时间：早 8:00 — 晚 23:00，确保活跃使用时段有人响应。夜间 23:00 后仅响应 critical 级别告警（支付/登录不可用）。</p>
+      </div>
+      <div class="card">
+        <h4>⏱️ 响应 SLA</h4>
+        <table style="margin:0;">
+          <tr><th>级别</th><th>定义</th><th>响应时间</th></tr>
+          <tr><td><span class="tag tag-err">P0</span></td><td>核心功能不可用</td><td>15分钟内响应，1h内修复</td></tr>
+          <tr><td><span class="tag tag-warn">P1</span></td><td>功能降级影响体验</td><td>1h内响应，4h内修复</td></tr>
+          <tr><td><span class="tag tag-info">P2</span></td><td>UI问题/小功能异常</td><td>下个工作日处理</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-ops -->
+
+</main>
+
+<footer>
+  <a href="index.html">首页</a> · <a href="design-spec.html">系统设计文档</a> · <a href="about.html">关于</a> · <a href="admin.html">管理后台</a>
+  &nbsp;|&nbsp; 深大体育预约系统 · 前端工程文档 · © 2025
+</footer>
+
+<script>
+  function sw(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>

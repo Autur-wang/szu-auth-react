@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>支付确认 · 深大体育预约</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --red: #C1272D;
+      --blue: #1A4189;
+      --blue-light: #2a5ab8;
+      --blue-pale: #e8eef8;
+      --gray: #f4f5f8;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #dde3ef;
+      --white: #ffffff;
+      --green: #10b981;
+      --green-pale: #d1fae5;
+    }
+    body { font-family: 'PingFang SC','Microsoft YaHei',sans-serif; background: var(--gray); color: var(--text); }
+
+    .top-bar { background: var(--red); color: white; text-align: center; font-size: 12px; padding: 5px 0; }
+
+    nav {
+      background: var(--blue); padding: 0 40px;
+      display: flex; align-items: center; height: 64px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; margin-right: 48px; }
+    .logo-box { width: 38px; height: 38px; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: var(--red); }
+    .nav-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .nav-links { display: flex; gap: 4px; flex: 1; }
+    .nav-link { color: rgba(255,255,255,0.75); text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; transition: all .2s; }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-right { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+    .avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid rgba(255,255,255,0.35); }
+    .user-name { color: rgba(255,255,255,0.9); font-size: 13px; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      background: white; border-bottom: 1px solid var(--border);
+      padding: 16px 60px;
+    }
+    .progress-steps {
+      display: flex; align-items: center;
+      max-width: 500px; margin: 0 auto;
+    }
+    .step {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px; flex: 1;
+    }
+    .step-circle {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .step-circle.done { background: var(--green); color: white; }
+    .step-circle.active { background: var(--blue); color: white; }
+    .step-circle.pending { background: var(--border); color: var(--sub); }
+    .step-label { font-size: 11px; color: var(--sub); }
+    .step-label.active { color: var(--blue); font-weight: 600; }
+    .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 6px; margin-bottom: 18px; }
+    .step-line.done { background: var(--green); }
+
+    /* ── LAYOUT ── */
+    .main {
+      max-width: 900px; margin: 32px auto 60px;
+      padding: 0 40px;
+      display: grid; grid-template-columns: 1fr 300px; gap: 24px;
+    }
+
+    /* ── ORDER CARD ── */
+    .card {
+      background: white; border-radius: 14px;
+      border: 1px solid var(--border); overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .card-head {
+      padding: 16px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-head h2 { font-size: 15px; font-weight: 700; }
+    .card-head .icon { font-size: 18px; }
+    .card-body { padding: 20px 22px; }
+
+    /* venue summary */
+    .venue-summary {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px; background: var(--blue-pale);
+      border-radius: 10px; margin-bottom: 20px;
+    }
+    .venue-emoji { font-size: 40px; }
+    .venue-detail { flex: 1; }
+    .venue-detail .vname { font-size: 16px; font-weight: 700; color: var(--text); }
+    .venue-detail .vmeta { font-size: 13px; color: var(--sub); margin-top: 4px; display: flex; gap: 16px; }
+
+    .detail-table { width: 100%; border-collapse: collapse; }
+    .detail-table tr { border-bottom: 1px solid var(--border); }
+    .detail-table tr:last-child { border-bottom: none; }
+    .detail-table td { padding: 11px 0; font-size: 13px; }
+    .detail-table td:first-child { color: var(--sub); width: 120px; }
+    .detail-table td:last-child { font-weight: 500; color: var(--text); }
+    .detail-table .total-row td { font-size: 15px; font-weight: 700; padding-top: 14px; }
+    .detail-table .total-row td:last-child { color: var(--red); font-size: 18px; }
+
+    /* payment methods */
+    .pay-methods { display: flex; flex-direction: column; gap: 10px; }
+    .pay-method {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 10px;
+      border: 2px solid var(--border); cursor: pointer;
+      transition: all .18s;
+    }
+    .pay-method:hover { border-color: var(--blue); }
+    .pay-method.selected { border-color: var(--blue); background: var(--blue-pale); }
+    .pay-method input { accent-color: var(--blue); }
+    .pay-logo { font-size: 28px; }
+    .pay-info { flex: 1; }
+    .pay-info .pname { font-size: 14px; font-weight: 600; color: var(--text); }
+    .pay-info .psub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+    .pay-bal { font-size: 13px; color: var(--green); font-weight: 600; }
+
+    /* campus card selector */
+    .campus-card-detail {
+      background: linear-gradient(135deg, #1a4189 0%, #2a5ab8 100%);
+      border-radius: 12px; padding: 20px;
+      color: white; margin-top: 16px; display: none;
+    }
+    .campus-card-detail.show { display: block; }
+    .cc-num { font-size: 18px; font-weight: 700; letter-spacing: 2px; margin-bottom: 10px; }
+    .cc-row { display: flex; justify-content: space-between; font-size: 13px; opacity: .8; }
+    .cc-bal { font-size: 22px; font-weight: 800; color: #fbbf24; margin-top: 6px; }
+
+    /* ── RIGHT SIDEBAR ── */
+    .pay-sidebar { }
+    .sidebar-sticky { position: sticky; top: 80px; }
+
+    .total-card {
+      background: white; border-radius: 14px;
+      border: 1px solid var(--border); overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .total-head {
+      background: linear-gradient(135deg, var(--red), #e53e3e);
+      color: white; padding: 16px 20px;
+    }
+    .total-head h3 { font-size: 15px; font-weight: 700; }
+    .total-head p { font-size: 12px; opacity: .75; margin-top: 2px; }
+    .total-body { padding: 16px 20px; }
+    .total-line {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--sub);
+    }
+    .total-line:last-of-type { border-bottom: none; }
+    .total-line.main-total {
+      font-size: 16px; font-weight: 800;
+      color: var(--red); padding-top: 12px;
+    }
+    .total-line .val { color: var(--text); font-weight: 500; }
+    .total-line.main-total .val { color: var(--red); }
+
+    .btn-pay {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, var(--red), #e53e3e);
+      color: white; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: opacity .2s, transform .1s;
+      margin-bottom: 10px;
+    }
+    .btn-pay:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-cancel {
+      width: 100%; padding: 12px;
+      background: white; border: 1.5px solid var(--border);
+      color: var(--sub); border-radius: 10px;
+      font-size: 14px; cursor: pointer;
+      font-family: inherit; transition: all .18s;
+    }
+    .btn-cancel:hover { border-color: var(--sub); }
+
+    .security-note {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--sub);
+      text-align: center; justify-content: center;
+      margin-top: 12px;
+    }
+
+    .timer-note {
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 12px; color: #9a3412;
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 14px;
+    }
+    .timer-num { font-weight: 700; color: var(--red); }
+
+    /* ── SUCCESS MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white; border-radius: 20px;
+      padding: 40px 36px; text-align: center;
+      max-width: 380px; width: 90%;
+      animation: pop .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes pop { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    .modal-icon { font-size: 60px; margin-bottom: 16px; }
+    .modal h2 { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: var(--sub); line-height: 1.6; }
+    .modal-detail {
+      background: var(--green-pale); border-radius: 10px;
+      padding: 14px; margin: 20px 0; text-align: left;
+      font-size: 13px; color: #065f46;
+    }
+    .modal-detail div { margin-bottom: 6px; }
+    .modal-detail div:last-child { margin-bottom: 0; }
+    .modal-btn {
+      display: block; width: 100%; padding: 13px;
+      background: var(--blue); color: white; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-bottom: 10px;
+    }
+    .modal-btn.ghost {
+      background: white; border: 1.5px solid var(--border);
+      color: var(--sub);
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">深圳大学体育场地自动预约系统</div>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-box">SZU</div>
+    <span>体育预约</span>
+  </a>
+  <div class="nav-links">
+    <a href="venues.html" class="nav-link">🏟️ 场地浏览</a>
+    <a href="auto-booking.html" class="nav-link">⚡ 自动预约</a>
+    <a href="records.html" class="nav-link">📋 预约记录</a>
+    <a href="membership.html" class="nav-link">👑 会员中心</a>
+  </div>
+  <div class="nav-right">
+    <a href="notifications.html" style="color:rgba(255,255,255,.8);text-decoration:none;font-size:20px;line-height:1;">🔔</a>
+    <a href="rewards.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">积分</a>
+    <a href="about.html" style="color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;">关于</a>
+    <a href="profile.html" style="text-decoration:none;display:flex;align-items:center;gap:10px;">
+      <span class="user-name">王同学</span>
+      <div class="avatar">👤</div>
+    </a>
+  </div>
+</nav>
+
+<!-- Progress steps -->
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="step">
+      <div class="step-circle done">✓</div>
+      <div class="step-label">选择场地</div>
+    </div>
+    <div class="step-line done"></div>
+    <div class="step">
+      <div class="step-circle done">✓</div>
+      <div class="step-label">确认时段</div>
+    </div>
+    <div class="step-line done"></div>
+    <div class="step">
+      <div class="step-circle active">3</div>
+      <div class="step-label active">支付</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-circle pending">4</div>
+      <div class="step-label">完成</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div>
+
+    <!-- Order detail -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">📄</span>
+        <h2>订单详情</h2>
+      </div>
+      <div class="card-body">
+        <div class="venue-summary">
+          <div class="venue-emoji">🎾</div>
+          <div class="venue-detail">
+            <div class="vname">网球场 2号</div>
+            <div class="vmeta">
+              <span>📍 粤海校区</span>
+              <span>🏢 室外场地</span>
+            </div>
+          </div>
+        </div>
+        <table class="detail-table">
+          <tr><td>预约日期</td><td>2024年4月23日（周二）</td></tr>
+          <tr><td>预约时段</td><td>16:00 – 17:30（1.5小时）</td></tr>
+          <tr><td>场地编号</td><td>网球场 2号场</td></tr>
+          <tr><td>预约人</td><td>王同学（2023120001）</td></tr>
+          <tr><td>预约方式</td><td>手动预约</td></tr>
+          <tr><td>订单编号</td><td style="color:var(--sub);font-size:12px">#ORD-20240423-0047</td></tr>
+          <tr><td>场地单价</td><td>¥10.00 / 小时</td></tr>
+          <tr><td>使用时长</td><td>1.5 小时</td></tr>
+          <tr class="total-row"><td>应付总额</td><td>¥15.00</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payment method -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">💳</span>
+        <h2>选择支付方式</h2>
+      </div>
+      <div class="card-body">
+        <div class="pay-methods">
+
+          <label class="pay-method selected" id="pm-campus">
+            <input type="radio" name="pay" value="campus" checked />
+            <div class="pay-logo">🏫</div>
+            <div class="pay-info">
+              <div class="pname">深大校园卡</div>
+              <div class="psub">余额支付，实时到账，无手续费</div>
+            </div>
+            <div class="pay-bal">余额 ¥142.50</div>
+          </label>
+
+          <label class="pay-method" id="pm-wechat">
+            <input type="radio" name="pay" value="wechat" />
+            <div class="pay-logo">💬</div>
+            <div class="pay-info">
+              <div class="pname">微信支付</div>
+              <div class="psub">扫码支付，安全快捷</div>
+            </div>
+          </label>
+
+          <label class="pay-method" id="pm-alipay">
+            <input type="radio" name="pay" value="alipay" />
+            <div class="pay-logo">🔵</div>
+            <div class="pay-info">
+              <div class="pname">支付宝</div>
+              <div class="psub">扫码或账户余额支付</div>
+            </div>
+          </label>
+
+        </div>
+
+        <!-- Campus card preview -->
+        <div class="campus-card-detail show" id="campusCardDetail">
+          <div class="cc-num">6225 **** **** 1234</div>
+          <div class="cc-row">
+            <span>深圳大学校园卡</span>
+            <span>王同学</span>
+          </div>
+          <div style="margin-top:10px;font-size:12px;opacity:.8">可用余额</div>
+          <div class="cc-bal">¥142.50</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <div class="card-head">
+        <span class="icon">📝</span>
+        <h2>预约须知</h2>
+      </div>
+      <div class="card-body" style="font-size:13px;color:var(--sub);line-height:1.9">
+        <p>· 支付完成后，预约即生效，请准时到场使用</p>
+        <p>· 如需取消，请在开始时间 <strong style="color:var(--text)">2小时前</strong> 操作，否则不予退款</p>
+        <p>· 进入场地需在小程序或本平台出示预约二维码</p>
+        <p>· 请爱护场地设施，违规行为将影响预约资格</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="pay-sidebar">
+    <div class="sidebar-sticky">
+      <div class="total-card">
+        <div class="total-head">
+          <h3>💰 支付金额</h3>
+          <p>确认无误后点击支付</p>
+        </div>
+        <div class="total-body">
+          <div class="total-line"><span>场地费用</span><span class="val">¥15.00</span></div>
+          <div class="total-line"><span>平台服务费</span><span class="val">¥0.00</span></div>
+          <div class="total-line"><span>优惠折扣</span><span class="val" style="color:var(--green)">-¥0.00</span></div>
+          <div class="total-line main-total"><span>实付金额</span><span class="val">¥15.00</span></div>
+        </div>
+      </div>
+
+      <button class="btn-pay" id="payBtn">立即支付 ¥15.00</button>
+      <button class="btn-cancel" onclick="location.href='venues.html'">取消预约</button>
+
+      <div class="security-note">🔒 支付过程全程加密，信息安全有保障</div>
+
+      <div class="timer-note">
+        ⏱️ 请在 <span class="timer-num" id="payTimer">14:32</span> 内完成支付，否则预约将自动释放
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">🎉</div>
+    <h2>支付成功！</h2>
+    <p>你的场地已预约成功，记得准时到场哦</p>
+    <div class="modal-detail">
+      <div>📍 <strong>网球场 2号</strong> · 粤海校区</div>
+      <div>📅 2024年4月23日 16:00–17:30</div>
+      <div>💳 校园卡扣款 ¥15.00</div>
+      <div>✅ 余额剩余 ¥127.50</div>
+    </div>
+    <button class="modal-btn" onclick="location.href='records.html'">查看预约记录</button>
+    <button class="modal-btn ghost" onclick="location.href='venues.html'">继续预约场地</button>
+  </div>
+</div>
+
+<script>
+  // Payment method selection
+  document.querySelectorAll('.pay-method').forEach(pm => {
+    pm.addEventListener('click', () => {
+      document.querySelectorAll('.pay-method').forEach(x => x.classList.remove('selected'));
+      pm.classList.add('selected');
+      const val = pm.querySelector('input').value;
+      document.getElementById('campusCardDetail').classList.toggle('show', val === 'campus');
+    });
+  });
+
+  // Pay button
+  document.getElementById('payBtn').addEventListener('click', () => {
+    document.getElementById('modal').classList.add('show');
+  });
+
+  // Countdown timer
+  let seconds = 14 * 60 + 32;
+  function updateTimer() {
+    seconds--;
+    if (seconds < 0) { seconds = 0; }
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    document.getElementById('payTimer').textContent = `${m}:${s}`;
+  }
+  setInterval(updateTimer, 1000);
+</script>
+</body>
+</html>
