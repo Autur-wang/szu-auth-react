@@ -1,326 +1,1076 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>深大体育馆自动预约</title>
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg: #06080d;
+        --bg-soft: #111621;
+        --card: rgba(245, 247, 252, 0.92);
+        --card-muted: rgba(245, 247, 252, 0.72);
+        --ink: #111318;
+        --ink-soft: #5f6776;
+        --line: rgba(17, 19, 24, 0.1);
+        --glass: rgba(232, 239, 250, 0.18);
+        --glass-line: rgba(255, 255, 255, 0.33);
+        --apple-blue: #0071e3;
+        --apple-blue-deep: #005ec3;
+        --ok: #1e8449;
+        --warn: #b9770e;
+        --err: #b03a2e;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
-        font-family: -apple-system, "PingFang SC", sans-serif;
-        background: #f0f2f5; color: #333;
+        font-family: "SF Pro Text", "PingFang SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+        background: radial-gradient(1200px 700px at -10% -20%, #1f2e4e 0%, transparent 62%),
+          radial-gradient(900px 600px at 110% 0%, #1f2440 0%, transparent 65%),
+          linear-gradient(180deg, #07090f 0%, #0e1320 40%, #11172a 100%);
+        color: #fff;
+        min-height: 100vh;
+        padding: 20px 16px;
       }
 
-      /* ─── Tab Bar ─── */
-      .tab-bar {
-        display: flex; background: #fff;
-        border-bottom: 1px solid #e8e8e8;
+      .shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .topbar {
         -webkit-app-region: drag;
+        background: var(--glass);
+        backdrop-filter: saturate(180%) blur(24px);
+        border: 1px solid var(--glass-line);
+        border-radius: 18px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.32);
       }
-      .tab-bar button {
-        -webkit-app-region: no-drag;
-        flex: 1; padding: 14px 0; font-size: 14px; font-weight: 500;
-        border: none; background: none; cursor: pointer;
-        color: #666; border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-      }
-      .tab-bar button.active { color: #1890ff; border-bottom-color: #1890ff; }
-      .tab-bar button:hover { color: #1890ff; }
 
-      /* ─── Content ─── */
-      .tab-content { display: none; padding: 20px; }
-      .tab-content.active { display: block; }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(140deg, #f7f9ff 0%, #dbe5f7 100%);
+        color: #0f1d3e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .brand-text h1 {
+        font-size: 14px;
+        line-height: 1.1;
+        letter-spacing: -0.2px;
+        font-weight: 600;
+      }
+
+      .brand-text p {
+        font-size: 11px;
+        line-height: 1.2;
+        color: rgba(255, 255, 255, 0.65);
+        margin-top: 2px;
+      }
+
+      .top-chip {
+        -webkit-app-region: no-drag;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.86);
+        background: rgba(6, 8, 13, 0.26);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        padding: 6px 10px;
+      }
+
+      .hero {
+        margin-top: 14px;
+        background: linear-gradient(145deg, rgba(8, 11, 19, 0.7), rgba(19, 24, 41, 0.62));
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+      }
+
+      .hero h2 {
+        font-family: "SF Pro Display", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: clamp(24px, 3.1vw, 38px);
+        line-height: 1.1;
+        letter-spacing: -0.4px;
+        font-weight: 600;
+      }
+
+      .hero p {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 13px;
+        margin-top: 8px;
+        line-height: 1.6;
+        max-width: 720px;
+      }
+
+      .hero-badges {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .hero-badge {
+        font-size: 11px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        background: rgba(255, 255, 255, 0.11);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 5px 10px;
+      }
+
+      .tabs {
+        margin-top: 16px;
+        padding: 6px;
+        background: var(--glass);
+        border: 1px solid var(--glass-line);
+        backdrop-filter: blur(20px) saturate(170%);
+        border-radius: 15px;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .tabs button {
+        -webkit-app-region: no-drag;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px 8px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .tabs button:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+      }
+
+      .tabs button.active {
+        background: rgba(247, 251, 255, 0.95);
+        color: #0b1224;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .panel {
+        display: none;
+        margin-top: 14px;
+        animation: rise 220ms ease;
+      }
+
+      .panel.active {
+        display: block;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .section-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 12px;
+      }
 
       .card {
-        background: #fff; border-radius: 10px; padding: 18px;
-        margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
       }
-      .card h3 { font-size: 14px; color: #999; margin-bottom: 12px; }
 
-      /* ─── Status Badge ─── */
+      .card-glass {
+        background: rgba(245, 247, 252, 0.42);
+        backdrop-filter: blur(16px) saturate(130%);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.26);
+      }
+
+      .span-4 {
+        grid-column: span 4;
+      }
+
+      .span-5 {
+        grid-column: span 5;
+      }
+
+      .span-6 {
+        grid-column: span 6;
+      }
+
+      .span-7 {
+        grid-column: span 7;
+      }
+
+      .span-8 {
+        grid-column: span 8;
+      }
+
+      .span-12 {
+        grid-column: span 12;
+      }
+
+      .title {
+        font-size: 12px;
+        color: var(--ink-soft);
+        letter-spacing: 0.2px;
+        margin-bottom: 10px;
+      }
+
+      .title-light {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .metric {
+        font-family: "SF Pro Display", "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 22px;
+        line-height: 1.15;
+        letter-spacing: -0.3px;
+      }
+
+      .metric-sub {
+        font-size: 12px;
+        margin-top: 6px;
+        color: var(--ink-soft);
+      }
+
+      .metric-sub.light {
+        color: rgba(255, 255, 255, 0.75);
+      }
+
       .badge {
-        display: inline-block; padding: 5px 14px; border-radius: 20px;
-        font-size: 13px; font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 11px;
+        border: 1px solid transparent;
       }
-      .badge-ok { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
-      .badge-warn { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
-      .badge-err { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
 
-      /* ─── Form ─── */
-      .form-row { margin-bottom: 12px; }
-      .form-row label {
-        display: block; font-size: 12px; color: #999; margin-bottom: 3px;
+      .badge-ok {
+        color: var(--ok);
+        background: rgba(30, 132, 73, 0.12);
+        border-color: rgba(30, 132, 73, 0.35);
       }
-      .form-row input, .form-row select {
-        width: 100%; padding: 8px 10px; border: 1px solid #d9d9d9;
-        border-radius: 6px; font-size: 14px;
-      }
-      .form-row input:focus, .form-row select:focus {
-        border-color: #1890ff; outline: none;
-      }
-      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .form-check {
-        display: flex; align-items: center; gap: 6px; margin-top: 4px;
-      }
-      .form-check input { width: auto; }
 
-      /* ─── Buttons ─── */
+      .badge-warn {
+        color: var(--warn);
+        background: rgba(185, 119, 14, 0.12);
+        border-color: rgba(185, 119, 14, 0.35);
+      }
+
+      .badge-err {
+        color: var(--err);
+        background: rgba(176, 58, 46, 0.13);
+        border-color: rgba(176, 58, 46, 0.35);
+      }
+
+      .hint {
+        color: var(--ink-soft);
+        margin-top: 8px;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .hint.light {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .kv {
+        font-size: 13px;
+        line-height: 1.75;
+        color: #252b35;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .form-row {
+        margin-bottom: 10px;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin-bottom: 4px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 9px 11px;
+        font-size: 13px;
+        outline: none;
+        transition: 0.15s ease;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: rgba(0, 113, 227, 0.48);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.14);
+      }
+
+      .check {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #2a303b;
+        font-size: 13px;
+      }
+
+      .check input {
+        width: auto;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       .btn {
-        padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px;
-        cursor: pointer; font-weight: 500; transition: all 0.15s;
+        border: none;
+        border-radius: 10px;
+        padding: 9px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.15s ease;
       }
-      .btn:active { transform: scale(0.97); }
-      .btn-block { width: 100%; }
-      .btn-blue { background: #1890ff; color: #fff; }
-      .btn-blue:hover { background: #096dd9; }
-      .btn-green { background: #52c41a; color: #fff; }
-      .btn-green:hover { background: #389e0d; }
-      .btn-orange { background: #fa8c16; color: #fff; }
-      .btn-orange:hover { background: #d46b08; }
-      .btn-red { background: #ff4d4f; color: #fff; }
-      .btn-red:hover { background: #cf1322; }
-      .btn-gray { background: #f0f0f0; color: #666; }
-      .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
-      .btn-row .btn { flex: 1; }
 
-      /* ─── Log Panel ─── */
-      #log {
-        height: 380px; overflow-y: auto; background: #1a1a2e; color: #ccc;
-        font-family: "SF Mono", "Fira Code", monospace; font-size: 12px;
-        padding: 12px; border-radius: 8px; line-height: 1.5;
-        white-space: pre-wrap; word-break: break-all;
+      .btn:hover {
+        transform: translateY(-1px);
       }
-      #log .err { color: #ff6b6b; }
-      #log .ok { color: #51cf66; }
 
-      /* ─── Msg ─── */
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-primary {
+        background: var(--apple-blue);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: var(--apple-blue-deep);
+      }
+
+      .btn-soft {
+        background: rgba(17, 19, 24, 0.08);
+        color: #1b2332;
+      }
+
+      .btn-good {
+        background: #16884b;
+        color: #fff;
+      }
+
+      .btn-warn {
+        background: #c67b05;
+        color: #fff;
+      }
+
+      .btn-danger {
+        background: #b03a2e;
+        color: #fff;
+      }
+
+      .btn.block {
+        width: 100%;
+      }
+
+      .log {
+        min-height: 290px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: #0f1424;
+        color: #d6dcea;
+        font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .log .err {
+        color: #ff8b8b;
+      }
+
+      .log .ok {
+        color: #8be6a2;
+      }
+
       .msg {
-        padding: 8px 12px; border-radius: 6px; font-size: 13px;
-        margin-top: 10px; display: none;
+        display: none;
+        margin-top: 10px;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
       }
-      .msg.show { display: block; }
-      .msg-ok { background: #f6ffed; color: #389e0d; }
-      .msg-err { background: #fff1f0; color: #cf1322; }
-      .msg-info { background: #e6f7ff; color: #0050b3; }
 
-      .hint { font-size: 12px; color: #bbb; margin-top: 6px; }
+      .msg.show {
+        display: block;
+      }
+
+      .msg-ok {
+        background: rgba(30, 132, 73, 0.16);
+        color: #146438;
+      }
+
+      .msg-err {
+        background: rgba(176, 58, 46, 0.17);
+        color: #922b21;
+      }
+
+      .msg-info {
+        background: rgba(0, 113, 227, 0.14);
+        color: #0a4c91;
+      }
+
+      .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .kpi {
+        background: var(--card-muted);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.62);
+        padding: 10px;
+      }
+
+      .kpi .label {
+        font-size: 11px;
+        color: #576071;
+      }
+
+      .kpi .value {
+        margin-top: 6px;
+        font-size: 17px;
+        line-height: 1.2;
+        color: #141a24;
+        font-weight: 600;
+      }
+
+      .demo-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .demo-btn {
+        border: 1px solid rgba(17, 19, 24, 0.14);
+        background: rgba(255, 255, 255, 0.9);
+        color: #1a2437;
+        border-radius: 999px;
+        padding: 7px 11px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.15s ease;
+      }
+
+      .demo-btn:hover {
+        border-color: rgba(0, 113, 227, 0.45);
+        color: #0058b5;
+      }
+
+      .demo-btn.active {
+        background: #0071e3;
+        border-color: #0071e3;
+        color: #fff;
+      }
+
+      .demo-frame-wrap {
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: 14px;
+        overflow: hidden;
+        min-height: 640px;
+        background: #fff;
+      }
+
+      .demo-frame {
+        width: 100%;
+        height: 78vh;
+        min-height: 640px;
+        border: 0;
+        background: #fff;
+      }
+
+      .product-layout {
+        display: grid;
+        grid-template-columns: 1.25fr 3fr 1.35fr;
+        gap: 12px;
+      }
+
+      .product-left .demo-toolbar {
+        max-height: 72vh;
+        overflow: auto;
+      }
+
+      .product-right .card + .card {
+        margin-top: 10px;
+      }
+
+      .mini-stat {
+        font-size: 12px;
+        color: #4f5a6d;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 980px) {
+        .span-4,
+        .span-5,
+        .span-6,
+        .span-7,
+        .span-8 {
+          grid-column: span 12;
+        }
+
+        .product-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 14px 10px;
+        }
+
+        .form-grid,
+        .kpi-row {
+          grid-template-columns: 1fr;
+        }
+
+        .tabs {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
     </style>
   </head>
   <body>
-    <!-- Tab Bar -->
-    <div class="tab-bar">
-      <button class="active" data-tab="status">状态</button>
-      <button data-tab="config">配置</button>
-      <button data-tab="booking">抢票</button>
-      <button data-tab="agent">Agent</button>
-      <button data-tab="login">登录</button>
-    </div>
-
-    <!-- ═══ 状态 ═══ -->
-    <div id="tab-status" class="tab-content active">
-      <div class="card">
-        <h3>Cookie 状态</h3>
-        <div id="s-badge" class="badge badge-err">检查中...</div>
-        <div id="s-detail" class="hint"></div>
-      </div>
-      <div class="card">
-        <h3>当前配置</h3>
-        <div id="s-config" style="font-size:13px; line-height:1.8; color:#666;">加载中...</div>
-      </div>
-    </div>
-
-    <!-- ═══ 配置 ═══ -->
-    <div id="tab-config" class="tab-content">
-      <div class="card">
-        <h3>账号信息</h3>
-        <div class="form-grid">
-          <div class="form-row"><label>学号</label><input id="c-username" /></div>
-          <div class="form-row"><label>密码</label><input id="c-password" type="password" /></div>
-          <div class="form-row"><label>姓名</label><input id="c-realname" /></div>
-          <div class="form-row"><label>手机号</label><input id="c-phone" /></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>预约设置</h3>
-        <div class="form-grid">
-          <div class="form-row">
-            <label>校区</label>
-            <select id="c-campus">
-              <option value="1">粤海校区</option>
-              <option value="2">丽湖校区</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>运动项目</label>
-            <select id="c-sport">
-              <option value="001">羽毛球</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>放票时间</label>
-            <input id="c-opentime" value="12:30:00" />
-          </div>
-          <div class="form-row">
-            <label>目标日期</label>
-            <input id="c-date" value="auto" placeholder="auto = 明天" />
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">SZU</div>
+          <div class="brand-text">
+            <h1>深大体育自动预约控制台</h1>
+            <p>Apple Structure + Liquid Glass Interaction Layer</p>
           </div>
         </div>
-        <div class="form-row">
-          <label>偏好时段（逗号分隔，如 18-19, 19-20）</label>
-          <input id="c-hours" placeholder="18-19, 19-20, 20-21" />
-        </div>
-        <div class="form-row">
-          <label>偏好场馆（逗号分隔，空=不限）</label>
-          <input id="c-venues" placeholder="运动广场东馆羽毛球场" />
-        </div>
-        <div class="form-grid">
-          <div class="form-row"><label>最大重试</label><input id="c-retries" type="number" value="20" /></div>
-          <div class="form-row"><label>并发线程</label><input id="c-concurrent" type="number" value="5" /></div>
-        </div>
-      </div>
+        <div class="top-chip">Electron Agent Console</div>
+      </header>
 
-      <div class="card">
-        <h3>可选功能</h3>
-        <div class="form-row">
-          <label>同行人学号（逗号分隔）</label>
-          <input id="c-companions" placeholder="2023150001, 2023150002" />
+      <section class="hero">
+        <h2>稳定登录、准点抢票、全链路可观测</h2>
+        <p>依据 docs 页面 Demo 与风格约束重构为统一前端。顶部为轻玻璃交互层，主内容保持高可读实体卡片，覆盖状态、配置、抢票、Agent 与登录推送工作流。</p>
+        <div class="hero-badges">
+          <span class="hero-badge">12:30 精准触发</span>
+          <span class="hero-badge">Agent 定时执行</span>
+          <span class="hero-badge">Cookie 三层策略</span>
+          <span class="hero-badge">日志可回放</span>
         </div>
-        <div class="form-grid">
-          <div class="form-row"><label>支付密码</label><input id="c-paypwd" type="password" /></div>
-          <div class="form-row">
-            <label>自动支付</label>
-            <div class="form-check"><input type="checkbox" id="c-autopay" /><span>启用</span></div>
+      </section>
+
+      <nav class="tabs">
+        <button class="active" data-tab="status">状态</button>
+        <button data-tab="config">配置</button>
+        <button data-tab="booking">抢票</button>
+        <button data-tab="agent">Agent</button>
+        <button data-tab="login">登录</button>
+        <button data-tab="product">产品模式</button>
+      </nav>
+
+      <section id="tab-status" class="panel active">
+        <div class="section-grid">
+          <div class="card card-glass span-12">
+            <div class="title title-light">系统总览</div>
+            <div class="kpi-row">
+              <div class="kpi">
+                <div class="label">Cookie</div>
+                <div class="value" id="kpi-cookie">检查中</div>
+              </div>
+              <div class="kpi">
+                <div class="label">目标日期</div>
+                <div class="value" id="kpi-date">-</div>
+              </div>
+              <div class="kpi">
+                <div class="label">放票时间</div>
+                <div class="value" id="kpi-time">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card span-5">
+            <div class="title">认证状态</div>
+            <div id="s-badge" class="badge badge-err">检查中...</div>
+            <div id="s-detail" class="hint">读取 Cookie 状态</div>
+            <div class="btn-row" style="margin-top: 12px">
+              <button class="btn btn-primary" onclick="doLogin()">打开登录窗口</button>
+              <button class="btn btn-soft" onclick="refreshStatus()">刷新状态</button>
+            </div>
+          </div>
+
+          <div class="card span-7">
+            <div class="title">当前配置摘要</div>
+            <div id="s-config" class="kv">加载中...</div>
           </div>
         </div>
-        <div class="form-row">
-          <label>通知 Webhook</label>
-          <input id="c-webhook" placeholder="飞书/企微 Webhook URL" />
+      </section>
+
+      <section id="tab-config" class="panel">
+        <div class="section-grid">
+          <div class="card span-6">
+            <div class="title">账号信息</div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label>学号</label>
+                <input id="c-username" />
+              </div>
+              <div class="form-row">
+                <label>密码</label>
+                <input id="c-password" type="password" />
+              </div>
+              <div class="form-row">
+                <label>姓名</label>
+                <input id="c-realname" />
+              </div>
+              <div class="form-row">
+                <label>手机号</label>
+                <input id="c-phone" />
+              </div>
+            </div>
+          </div>
+
+          <div class="card span-6">
+            <div class="title">预约策略</div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label>校区</label>
+                <select id="c-campus">
+                  <option value="1">粤海校区</option>
+                  <option value="2">丽湖校区</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>项目</label>
+                <select id="c-sport">
+                  <option value="001">羽毛球</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>放票时间</label>
+                <input id="c-opentime" value="12:30:00" />
+              </div>
+              <div class="form-row">
+                <label>目标日期</label>
+                <input id="c-date" value="auto" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>偏好时段（逗号分隔）</label>
+              <input id="c-hours" placeholder="18-19, 19-20, 20-21" />
+            </div>
+            <div class="form-row">
+              <label>偏好场馆（逗号分隔）</label>
+              <input id="c-venues" placeholder="运动广场东馆羽毛球场" />
+            </div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label>最大重试次数</label>
+                <input id="c-retries" type="number" value="20" />
+              </div>
+              <div class="form-row">
+                <label>并发线程</label>
+                <input id="c-concurrent" type="number" value="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="card span-12">
+            <div class="title">扩展能力</div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label>同行人学号（逗号分隔）</label>
+                <input id="c-companions" placeholder="2023150001, 2023150002" />
+              </div>
+              <div class="form-row">
+                <label>通知 Webhook</label>
+                <input id="c-webhook" placeholder="https://open.feishu.cn/..." />
+              </div>
+              <div class="form-row">
+                <label>支付密码</label>
+                <input id="c-paypwd" type="password" />
+              </div>
+              <div class="form-row">
+                <label>自动支付</label>
+                <div class="check">
+                  <input type="checkbox" id="c-autopay" />
+                  <span>启用自动支付流程</span>
+                </div>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top: 4px">
+              <button class="btn btn-primary block" onclick="saveConfig()">保存配置</button>
+            </div>
+            <div id="config-msg" class="msg"></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <button class="btn btn-blue btn-block" onclick="saveConfig()">保存配置</button>
-      <div id="config-msg" class="msg"></div>
-    </div>
+      <section id="tab-booking" class="panel">
+        <div class="section-grid">
+          <div class="card span-12">
+            <div class="title">执行控制</div>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="run([])">等待 12:30 抢票</button>
+              <button class="btn btn-good" onclick="run(['--now'])">立即抢票</button>
+              <button class="btn btn-warn" onclick="run(['--debug'])">只查询可用场地</button>
+              <button class="btn btn-danger" onclick="stop()">停止任务</button>
+              <button class="btn btn-soft" onclick="clearLog()">清空日志</button>
+            </div>
+            <div class="hint">日志内容来自 Python 主进程 stdout / stderr，可用于回放预约链路。</div>
+          </div>
 
-    <!-- ═══ 抢票 ═══ -->
-    <div id="tab-booking" class="tab-content">
-      <div class="btn-row">
-        <button class="btn btn-blue" onclick="run([])">🕐 等 12:30 抢</button>
-        <button class="btn btn-green" onclick="run(['--now'])">⚡ 立即抢</button>
-        <button class="btn btn-orange" onclick="run(['--debug'])">🔍 查询</button>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-red" onclick="stop()">⏹ 停止</button>
-        <button class="btn btn-gray" onclick="clearLog()">清空日志</button>
-      </div>
-      <div id="log"></div>
-    </div>
-
-    <!-- ═══ Agent ═══ -->
-    <div id="tab-agent" class="tab-content">
-      <div class="card">
-        <h3>Agent 模式</h3>
-        <p style="font-size:13px; color:#666; margin-bottom:12px;">
-          全自动每日预约：11:00 刷新 Cookie → 12:15 复查 → 12:30 抢票 → 通知结果
-        </p>
-        <div class="btn-row">
-          <button class="btn btn-green" id="agent-start-btn" onclick="agentStart()">▶ 启动 Agent</button>
-          <button class="btn btn-red" onclick="agentStop()">⏹ 停止</button>
+          <div class="card span-12">
+            <div class="title">任务日志</div>
+            <div id="log" class="log"></div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <h3>Agent 状态</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
-          <div><span style="color:#999;">运行状态：</span><span id="ag-running">-</span></div>
-          <div><span style="color:#999;">当前阶段：</span><span id="ag-phase">-</span></div>
-          <div><span style="color:#999;">今日状态：</span><span id="ag-today">-</span></div>
-          <div><span style="color:#999;">上次预约：</span><span id="ag-last">-</span></div>
+      <section id="tab-agent" class="panel">
+        <div class="section-grid">
+          <div class="card span-5">
+            <div class="title">Agent 控制</div>
+            <div class="hint">周期：11:00 刷新 Cookie → 12:15 复查 → 12:30 抢票。</div>
+            <div class="btn-row" style="margin-top: 12px">
+              <button class="btn btn-good" id="agent-start-btn" onclick="agentStart()">启动 Agent</button>
+              <button class="btn btn-danger" onclick="agentStop()">停止 Agent</button>
+            </div>
+          </div>
+
+          <div class="card span-7">
+            <div class="title">Agent 状态</div>
+            <div class="kv">
+              <div>运行状态：<span id="ag-running">-</span></div>
+              <div>当前阶段：<span id="ag-phase">-</span></div>
+              <div>今日状态：<span id="ag-today">-</span></div>
+              <div>上次预约：<span id="ag-last">-</span></div>
+            </div>
+            <div id="ag-errors" class="hint" style="white-space: pre-line"></div>
+          </div>
+
+          <div class="card span-12">
+            <div class="title">Agent 日志</div>
+            <div id="agent-log" class="log"></div>
+          </div>
         </div>
-        <div id="ag-errors" style="margin-top:10px; font-size:12px; color:#cf1322;"></div>
-      </div>
+      </section>
 
-      <div class="card">
-        <h3>Agent 日志</h3>
-        <div id="agent-log" style="
-          height:280px; overflow-y:auto; background:#1a1a2e; color:#ccc;
-          font-family:'SF Mono',monospace; font-size:12px;
-          padding:10px; border-radius:8px; line-height:1.5;
-          white-space:pre-wrap; word-break:break-all;
-        "></div>
-      </div>
-    </div>
+      <section id="tab-login" class="panel">
+        <div class="section-grid">
+          <div class="card span-6">
+            <div class="title">浏览器登录</div>
+            <div class="hint">会打开深大统一认证页，完成验证码或扫码后自动写入 Cookie 缓存。</div>
+            <div class="btn-row" style="margin-top: 12px">
+              <button class="btn btn-primary block" onclick="doLogin()">打开登录页</button>
+            </div>
+            <div id="login-msg" class="msg"></div>
+          </div>
 
-    <!-- ═══ 登录 ═══ -->
-    <div id="tab-login" class="tab-content">
-      <div class="card">
-        <h3>浏览器登录</h3>
-        <button class="btn btn-blue btn-block" onclick="doLogin()">打开登录页面</button>
-        <div id="login-msg" class="msg"></div>
-        <p class="hint" style="margin-top:10px;">
-          会打开深大统一认证页面，正常登录即可<br>
-          验证码、二维码都可以处理，登录成功后 Cookie 自动保存
-        </p>
-      </div>
-      <div class="card">
-        <h3>推送到云端（可选）</h3>
-        <div class="form-row"><label>云端地址</label><input id="cloud-url" placeholder="http://your-server:9898" /></div>
-        <div class="form-row"><label>Token</label><input id="cloud-token" value="gym_bot_secret" /></div>
-        <button class="btn btn-green btn-block" onclick="doPush()">推送 Cookie</button>
-        <div id="push-msg" class="msg"></div>
-      </div>
+          <div class="card span-6">
+            <div class="title">Cookie 推送到云端（可选）</div>
+            <div class="form-row">
+              <label>云端地址</label>
+              <input id="cloud-url" placeholder="http://your-server:9898" />
+            </div>
+            <div class="form-row">
+              <label>Token</label>
+              <input id="cloud-token" value="gym_bot_secret" />
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-good block" onclick="doPush()">推送 Cookie</button>
+            </div>
+            <div id="push-msg" class="msg"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-product" class="panel">
+        <div class="product-layout">
+          <div class="product-left">
+            <div class="card">
+              <div class="title">自动预约规则（CRUD）</div>
+              <div class="hint">可新增、修改、删除并激活规则，激活后会同步到真实 config.yaml。</div>
+              <div class="form-row" style="margin-top: 8px">
+                <label>规则名称</label>
+                <input id="p-rule-name" placeholder="例如：工作日夜场优先" />
+              </div>
+              <div class="form-row" style="margin-top: 8px">
+                <label>目标日期</label>
+                <input id="p-target-date" placeholder="auto 或 YYYY-MM-DD" />
+              </div>
+              <div class="form-row">
+                <label>偏好时段（逗号分隔）</label>
+                <input id="p-hours" placeholder="18-19, 19-20" />
+              </div>
+              <div class="form-row">
+                <label>偏好场馆（逗号分隔）</label>
+                <input id="p-venues" placeholder="运动广场东馆羽毛球场" />
+              </div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <label>最大重试</label>
+                  <input id="p-retries" type="number" value="20" />
+                </div>
+                <div class="form-row">
+                  <label>并发线程</label>
+                  <input id="p-concurrent" type="number" value="5" />
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" onclick="saveProductRule()">保存规则</button>
+                <button class="btn btn-soft" onclick="newProductRule()">新建</button>
+                <button class="btn btn-danger" onclick="deleteProductRule()">删除</button>
+                <button class="btn btn-good" onclick="activateProductRule()">激活</button>
+              </div>
+              <div class="log" id="p-rule-list" style="margin-top: 10px; min-height: 180px; max-height: 260px"></div>
+              <div id="p-rule-msg" class="msg"></div>
+            </div>
+          </div>
+
+          <div class="product-center">
+            <div class="card">
+              <div class="title">预约记录列表（真实数据）</div>
+              <div class="hint">来自任务执行记录中 `booking.run`，用于快速定位预约结果。</div>
+              <div class="log" id="p-record-list" style="margin-top: 10px"></div>
+            </div>
+            <div class="card" style="margin-top: 10px">
+              <div class="title">观测事件（真实数据）</div>
+              <div class="hint">来自 runtime/logs/events-*.jsonl，便于排障定位。</div>
+              <div class="log" id="p-event-list" style="margin-top: 10px"></div>
+            </div>
+            <div class="card" style="margin-top: 10px">
+              <div class="title">原型参考页面入口</div>
+              <div class="hint">保留原型入口用于对照，但运行数据以本页真实面板为准。</div>
+              <div class="demo-toolbar" id="demo-toolbar" style="margin-top: 10px"></div>
+              <div id="demo-current" class="hint" style="margin-top:8px"></div>
+              <div class="hint">点击后会在默认浏览器打开文档页。</div>
+              <div class="btn-row" style="margin-top:8px">
+                <button class="btn btn-soft" onclick="openDocPage()">打开当前原型</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="product-right">
+            <div class="card">
+              <div class="title">运行状态</div>
+              <div id="p-status-badge" class="badge badge-err">检查中...</div>
+              <div id="p-status-detail" class="hint">读取运行状态</div>
+              <div class="mini-stat" id="p-agent-mini" style="margin-top: 8px">Agent: -</div>
+            </div>
+
+            <div class="card">
+              <div class="title">快捷操作</div>
+              <div class="btn-row">
+                <button class="btn btn-primary block" onclick="doLogin()">登录并写入 Cookie</button>
+                <button class="btn btn-good block" onclick="run(['--now'])">立即抢票</button>
+                <button class="btn btn-warn block" onclick="run(['--debug'])">查询可用场地</button>
+                <button class="btn btn-good block" onclick="agentStart()">启动 Agent</button>
+                <button class="btn btn-danger block" onclick="agentStop()">停止 Agent</button>
+              </div>
+            </div>
+
+              <div class="card">
+              <div class="title">云端同步</div>
+              <div class="form-row">
+                <label>云端地址</label>
+                <input id="p-cloud-url" placeholder="http://your-server:9898" />
+              </div>
+              <div class="form-row">
+                <label>Token</label>
+                <input id="p-cloud-token" value="gym_bot_secret" />
+              </div>
+              <button class="btn btn-primary block" onclick="doPushFromProduct()">推送 Cookie</button>
+              <div id="p-push-msg" class="msg"></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <script>
-      // ─── Tab 切换 ─────────────────────────────────
-      document.querySelectorAll(".tab-bar button").forEach((btn) => {
+      const DEMO_BASE = "../../docs/szu-booking/";
+      const DEMO_PAGES = [
+        { label: "首页", file: "index.html" },
+        { label: "自动预约", file: "auto-booking.html" },
+        { label: "场地列表", file: "venues.html" },
+        { label: "场地详情", file: "venue-detail.html" },
+        { label: "预约记录", file: "records.html" },
+        { label: "会员中心", file: "membership.html" },
+        { label: "积分奖励", file: "rewards.html" },
+        { label: "通知中心", file: "notifications.html" },
+        { label: "支付页", file: "payment.html" },
+        { label: "个人中心", file: "profile.html" },
+        { label: "管理后台", file: "admin.html" },
+        { label: "运营大盘", file: "ops-dashboard.html" },
+        { label: "分析大盘", file: "analytics-dashboard.html" },
+        { label: "设计文档", file: "design-spec.html" },
+        { label: "前端文档", file: "frontend-docs.html" }
+      ];
+
+      let demoInited = false;
+      let selectedDocFile = DEMO_PAGES[0].file;
+      let selectedRuleId = "";
+
+      document.querySelectorAll(".tabs button").forEach((btn) => {
         btn.onclick = () => {
-          document.querySelectorAll(".tab-bar button").forEach((b) => b.classList.remove("active"));
-          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+          document.querySelectorAll(".tabs button").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
           btn.classList.add("active");
           document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
           if (btn.dataset.tab === "status") refreshStatus();
           if (btn.dataset.tab === "config") loadConfig();
+          if (btn.dataset.tab === "product") {
+            initDemoPanel();
+            loadProductRule();
+            refreshProductData();
+          }
         };
       });
 
-      // ─── 状态 ─────────────────────────────────────
+      function initDemoPanel() {
+        if (demoInited) return;
+        const toolbar = document.getElementById("demo-toolbar");
+        toolbar.innerHTML = "";
+        DEMO_PAGES.forEach((page, idx) => {
+          const btn = document.createElement("button");
+          btn.className = "demo-btn" + (idx === 0 ? " active" : "");
+          btn.textContent = page.label;
+          btn.onclick = () => selectDoc(page.file, page.label);
+          toolbar.appendChild(btn);
+        });
+        selectDoc(DEMO_PAGES[0].file, DEMO_PAGES[0].label);
+        demoInited = true;
+      }
+
+      function selectDoc(file, label) {
+        selectedDocFile = file;
+        document.getElementById("demo-current").textContent = `当前原型：${label} (${file})`;
+        document.querySelectorAll(".demo-btn").forEach((b) => {
+          b.classList.toggle("active", b.textContent === label);
+        });
+      }
+
+      function openDocPage() {
+        window.open(DEMO_BASE + selectedDocFile, "_blank");
+      }
+
       async function refreshStatus() {
         const s = await window.api.getStatus();
         const badge = document.getElementById("s-badge");
         const detail = document.getElementById("s-detail");
+        const kpiCookie = document.getElementById("kpi-cookie");
+
         if (s.has_cookie && !s.expired) {
           badge.className = "badge badge-ok";
-          badge.textContent = `✅ 有效（${s.count} 个 Cookie）`;
-          detail.textContent = `${s.age_minutes} 分钟前保存`;
+          badge.textContent = "有效 Cookie";
+          detail.textContent = `${s.count} 个 Cookie，${s.age_minutes} 分钟前保存`;
+          kpiCookie.textContent = "有效";
         } else if (s.has_cookie) {
           badge.className = "badge badge-warn";
-          badge.textContent = "⚠️ 已过期";
+          badge.textContent = "Cookie 已过期";
           detail.textContent = `${s.age_minutes} 分钟前保存，请重新登录`;
+          kpiCookie.textContent = "过期";
         } else {
           badge.className = "badge badge-err";
-          badge.textContent = "❌ 无 Cookie";
-          detail.textContent = "请先到「登录」页登录";
+          badge.textContent = "未登录";
+          detail.textContent = "请先到登录页完成认证";
+          kpiCookie.textContent = "缺失";
         }
-        // 配置摘要
+
+        const pBadge = document.getElementById("p-status-badge");
+        const pDetail = document.getElementById("p-status-detail");
+        if (pBadge && pDetail) {
+          pBadge.className = badge.className;
+          pBadge.textContent = badge.textContent;
+          pDetail.textContent = detail.textContent;
+        }
+
         const cfg = await window.api.loadConfig();
         const u = cfg.user || {};
         const b = cfg.booking || {};
         document.getElementById("s-config").innerHTML =
           `<b>用户:</b> ${u.username || "未设置"}<br>` +
           `<b>校区:</b> ${b.campus_code === "2" ? "丽湖" : "粤海"}<br>` +
-          `<b>时段:</b> ${(b.preferred_hours || []).join(", ")}<br>` +
-          `<b>放票:</b> ${b.open_time || "12:30:00"}<br>` +
-          `<b>日期:</b> ${b.target_date || "auto"}`;
+          `<b>项目:</b> ${b.sport_code || "001"}<br>` +
+          `<b>时段:</b> ${(b.preferred_hours || []).join(", ") || "未设置"}<br>` +
+          `<b>目标日期:</b> ${b.target_date || "auto"}<br>` +
+          `<b>放票时间:</b> ${b.open_time || "12:30:00"}`;
+
+        document.getElementById("kpi-date").textContent = b.target_date || "auto";
+        document.getElementById("kpi-time").textContent = b.open_time || "12:30:00";
       }
       refreshStatus();
       setInterval(refreshStatus, 5000);
 
-      // ─── 配置 ─────────────────────────────────────
       async function loadConfig() {
         const c = await window.api.loadConfig();
-        const u = c.user || {}, b = c.booking || {}, comp = c.companions || {};
-        const pay = c.payment || {}, n = c.notify || {};
+        const u = c.user || {};
+        const b = c.booking || {};
+        const comp = c.companions || {};
+        const pay = c.payment || {};
+        const n = c.notify || {};
 
         document.getElementById("c-username").value = u.username || "";
         document.getElementById("c-password").value = u.password || "";
@@ -341,8 +1091,117 @@
       }
       loadConfig();
 
+      async function loadProductRule() {
+        const c = await window.api.loadConfig();
+        const b = c.booking || {};
+        selectedRuleId = "";
+        document.getElementById("p-rule-name").value = "默认规则";
+        document.getElementById("p-target-date").value = b.target_date || "auto";
+        document.getElementById("p-hours").value = (b.preferred_hours || []).join(", ");
+        document.getElementById("p-venues").value = (b.preferred_venue_names || []).join(", ");
+        document.getElementById("p-retries").value = b.max_retries || 20;
+        document.getElementById("p-concurrent").value = b.concurrent_attempts || 5;
+        await refreshRuleList();
+      }
+
+      async function saveProductRule() {
+        const split = (s) =>
+          s
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean);
+        const rule = {
+          id: selectedRuleId || undefined,
+          name: document.getElementById("p-rule-name").value.trim() || "未命名规则",
+          target_date: document.getElementById("p-target-date").value || "auto",
+          preferred_hours: split(document.getElementById("p-hours").value),
+          preferred_venue_names: split(document.getElementById("p-venues").value),
+          max_retries: parseInt(document.getElementById("p-retries").value, 10) || 20,
+          concurrent_attempts: parseInt(document.getElementById("p-concurrent").value, 10) || 5,
+        };
+        const r = await window.api.upsertRule(rule);
+        if (r.ok && r.rule && r.rule.id) selectedRuleId = r.rule.id;
+        showMsg("p-rule-msg", r.ok, r.ok ? "规则已保存" : "规则保存失败");
+        if (r.ok) {
+          await refreshRuleList();
+        }
+      }
+
+      function newProductRule() {
+        selectedRuleId = "";
+        document.getElementById("p-rule-name").value = "";
+        document.getElementById("p-target-date").value = "auto";
+        document.getElementById("p-hours").value = "";
+        document.getElementById("p-venues").value = "";
+        document.getElementById("p-retries").value = 20;
+        document.getElementById("p-concurrent").value = 5;
+        showMsg("p-rule-msg", null, "已切换到新建模式");
+      }
+
+      async function deleteProductRule() {
+        if (!selectedRuleId) {
+          showMsg("p-rule-msg", false, "请先选择要删除的规则");
+          return;
+        }
+        const r = await window.api.deleteRule(selectedRuleId);
+        showMsg("p-rule-msg", r.ok, r.ok ? "规则已删除" : "删除失败");
+        if (r.ok) {
+          newProductRule();
+          await refreshRuleList();
+        }
+      }
+
+      async function activateProductRule() {
+        if (!selectedRuleId) {
+          showMsg("p-rule-msg", false, "请先保存或选择规则后再激活");
+          return;
+        }
+        const r = await window.api.activateRule(selectedRuleId);
+        showMsg("p-rule-msg", r.ok, r.ok ? "规则已激活并同步配置" : (r.msg || "激活失败"));
+        if (r.ok) {
+          await refreshRuleList();
+          await loadConfig();
+          await refreshStatus();
+        }
+      }
+
+      async function refreshRuleList() {
+        const el = document.getElementById("p-rule-list");
+        if (!el) return;
+        const rules = await window.api.listRules();
+        if (!rules.length) {
+          el.textContent = "暂无规则。请先填写并保存一条。";
+          return;
+        }
+
+        el.innerHTML = "";
+        rules.forEach((rule) => {
+          const row = document.createElement("div");
+          row.style.padding = "6px 0";
+          row.style.borderBottom = "1px solid rgba(255,255,255,0.12)";
+          row.style.cursor = "pointer";
+          row.textContent = `${rule.active ? "[ACTIVE] " : ""}${rule.name} | ${rule.target_date} | ${(rule.preferred_hours || []).join("/") || "-"}`;
+          row.onclick = () => {
+            selectedRuleId = rule.id;
+            document.getElementById("p-rule-name").value = rule.name || "";
+            document.getElementById("p-target-date").value = rule.target_date || "auto";
+            document.getElementById("p-hours").value = (rule.preferred_hours || []).join(", ");
+            document.getElementById("p-venues").value = (rule.preferred_venue_names || []).join(", ");
+            document.getElementById("p-retries").value = rule.max_retries || 20;
+            document.getElementById("p-concurrent").value = rule.concurrent_attempts || 5;
+            showMsg("p-rule-msg", null, `已选择规则：${rule.name}`);
+          };
+          el.appendChild(row);
+        });
+      }
+
       async function saveConfig() {
-        const split = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
+        const split = (s) =>
+          s
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean);
+
         const cfg = {
           user: {
             username: document.getElementById("c-username").value,
@@ -358,8 +1217,8 @@
             sport_code: document.getElementById("c-sport").value,
             preferred_hours: split(document.getElementById("c-hours").value),
             preferred_venue_names: split(document.getElementById("c-venues").value),
-            max_retries: parseInt(document.getElementById("c-retries").value) || 20,
-            concurrent_attempts: parseInt(document.getElementById("c-concurrent").value) || 5,
+            max_retries: parseInt(document.getElementById("c-retries").value, 10) || 20,
+            concurrent_attempts: parseInt(document.getElementById("c-concurrent").value, 10) || 5,
           },
           companions: {
             ids: split(document.getElementById("c-companions").value),
@@ -372,13 +1231,13 @@
             webhook_url: document.getElementById("c-webhook").value,
           },
         };
+
         const result = await window.api.saveConfig(cfg);
         showMsg("config-msg", result.ok, result.ok ? "配置已保存" : "保存失败");
+        if (result.ok) refreshStatus();
       }
 
-      // ─── 抢票 ─────────────────────────────────────
       const logEl = document.getElementById("log");
-
       function appendLog(text, cls) {
         const span = document.createElement("span");
         if (cls) span.className = cls;
@@ -398,17 +1257,21 @@
         const r = await window.api.runBooking(args);
         if (!r.ok) appendLog("❌ " + r.msg + "\n", "err");
       }
+
       async function stop() {
         const r = await window.api.stopBooking();
         if (r.ok) appendLog("\n── 已停止 ──\n", "err");
       }
-      function clearLog() { logEl.innerHTML = ""; }
 
-      // ─── 登录 ─────────────────────────────────────
+      function clearLog() {
+        logEl.innerHTML = "";
+      }
+
       function doLogin() {
-        showMsg("login-msg", null, "登录窗口已打开，请完成登录...");
+        showMsg("login-msg", null, "登录窗口已打开，请完成认证");
         window.api.openLogin();
       }
+
       window.api.onLoginResult((r) => {
         showMsg("login-msg", r.ok, r.ok ? "✅ " + r.msg : "❌ " + r.msg);
         refreshStatus();
@@ -417,30 +1280,67 @@
       async function doPush() {
         const url = document.getElementById("cloud-url").value.trim();
         const token = document.getElementById("cloud-token").value.trim();
-        if (!url) { showMsg("push-msg", false, "请输入云端地址"); return; }
-        showMsg("push-msg", null, "推送中...");
+        if (!url) {
+          showMsg("push-msg", false, "请输入云端地址");
+          return;
+        }
+        showMsg("push-msg", null, "正在推送...");
         const r = await window.api.pushCloud(url, token);
         showMsg("push-msg", r.ok, r.ok ? "✅ " + r.msg : "❌ " + r.msg);
       }
 
-      // ─── Agent ──────────────────────────────────────
+      async function doPushFromProduct() {
+        const url = document.getElementById("p-cloud-url").value.trim();
+        const token = document.getElementById("p-cloud-token").value.trim();
+        if (!url) {
+          showMsg("p-push-msg", false, "请输入云端地址");
+          return;
+        }
+        showMsg("p-push-msg", null, "正在推送...");
+        const r = await window.api.pushCloud(url, token);
+        showMsg("p-push-msg", r.ok, r.ok ? "✅ " + r.msg : "❌ " + r.msg);
+      }
+
+      async function refreshProductData() {
+        const taskEl = document.getElementById("p-record-list");
+        const eventEl = document.getElementById("p-event-list");
+        if (!taskEl || !eventEl) return;
+
+        const records = await window.api.getBookingRecords(20);
+        taskEl.textContent = records.length
+          ? records
+              .map((t) => {
+                const ts = t.finished_at || t.created_at || 0;
+                const when = ts ? new Date(ts * 1000).toLocaleString() : "-";
+                const result = t.result ? ` | ${t.result}` : "";
+                return `[${when}] ${t.date} | ${t.status}${result} | ${t.message}`;
+              })
+              .join("\n")
+          : "暂无预约记录";
+
+        const events = await window.api.getEvents(60);
+        eventEl.textContent = events.length
+          ? events
+              .map((e) => {
+                const iso = e.iso_ts || "-";
+                const rid = e.request_id ? ` req=${e.request_id}` : "";
+                const tid = e.task_id ? ` task=${e.task_id}` : "";
+                return `[${iso}] ${e.event || "unknown"}${rid}${tid}`;
+              })
+              .join("\n")
+          : "暂无事件日志";
+      }
+
       const agentLogEl = document.getElementById("agent-log");
       const phaseNames = {
-        idle: "⏸ 空闲", cookie_check: "🔑 检查 Cookie",
-        waiting: "⏳ 等待中", booking: "🔥 抢票中",
-        post_booking: "📋 后处理", failed: "❌ 失败", stopped: "⏹ 未启动",
+        idle: "空闲",
+        cookie_check: "检查 Cookie",
+        waiting: "等待放票",
+        booking: "抢票中",
+        post_booking: "后处理",
+        failed: "失败",
+        stopped: "未启动",
       };
-
-      async function agentStart() {
-        const r = await window.api.agentStart();
-        if (!r.ok) { alert(r.msg); return; }
-        agentLogEl.innerHTML = "";
-        appendAgentLog("Agent 已启动\n");
-      }
-      async function agentStop() {
-        const r = await window.api.agentStop();
-        if (r.ok) appendAgentLog("\n── Agent 已停止 ──\n");
-      }
 
       function appendAgentLog(text, cls) {
         const span = document.createElement("span");
@@ -450,25 +1350,43 @@
         agentLogEl.scrollTop = agentLogEl.scrollHeight;
       }
 
+      async function agentStart() {
+        const r = await window.api.agentStart();
+        if (!r.ok) {
+          alert(r.msg);
+          return;
+        }
+        agentLogEl.innerHTML = "";
+        appendAgentLog("Agent 已启动\n");
+      }
+
+      async function agentStop() {
+        const r = await window.api.agentStop();
+        if (r.ok) appendAgentLog("\n── Agent 已停止 ──\n");
+      }
+
       window.api.onAgentStdout((d) => appendAgentLog(d));
       window.api.onAgentStderr((d) => appendAgentLog(d, "err"));
       window.api.onAgentExit((code) => appendAgentLog(`\n── Agent 退出 (${code}) ──\n`));
 
       async function refreshAgent() {
         const s = await window.api.agentState();
-        document.getElementById("ag-running").textContent = s.running ? "🟢 运行中" : "⚪ 未运行";
+        document.getElementById("ag-running").textContent = s.running ? "运行中" : "未运行";
         document.getElementById("ag-phase").textContent = phaseNames[s.phase] || s.phase || "-";
         document.getElementById("ag-today").textContent = s.today_status || "-";
         document.getElementById("ag-last").textContent = s.last_booking_date
           ? `${s.last_booking_date} ${s.last_booking_result || ""}`
           : "无";
-        const errEl = document.getElementById("ag-errors");
-        errEl.textContent = (s.errors || []).slice(-3).join("\n");
+        document.getElementById("ag-errors").textContent = (s.errors || []).slice(-3).join("\n");
+        const mini = document.getElementById("p-agent-mini");
+        if (mini) {
+          mini.textContent = `Agent: ${s.running ? "运行中" : "未运行"} / ${phaseNames[s.phase] || s.phase || "-"}`;
+        }
       }
-      setInterval(refreshAgent, 3000);
       refreshAgent();
+      setInterval(refreshAgent, 3000);
+      setInterval(refreshProductData, 5000);
 
-      // ─── 工具 ─────────────────────────────────────
       function showMsg(id, ok, text) {
         const el = document.getElementById(id);
         el.textContent = text;

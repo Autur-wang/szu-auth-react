@@ -19,6 +19,9 @@ const CONFIG_FILE =
     : path.join(BOT_ROOT, "config.yaml"));
 const AGENT_STATE_FILE =
   process.env.GYM_AGENT_STATE_PATH || path.join(RUNTIME_DIR, "agent_state.json");
+const TASKS_FILE = process.env.GYM_TASKS_PATH || path.join(RUNTIME_DIR, "tasks.json");
+const LOG_DIR = process.env.GYM_LOG_DIR || path.join(RUNTIME_DIR, "logs");
+const RULES_FILE = process.env.GYM_RULES_PATH || path.join(RUNTIME_DIR, "booking_rules.json");
 
 const SERVICE_URL =
   "https://ehall.szu.edu.cn/qljfwapp/sys/lwSzuCgyy/index.do";
@@ -299,6 +302,132 @@ function getAgentState() {
   }
 }
 
+function getTasks(limit = 30) {
+  try {
+    if (!fs.existsSync(TASKS_FILE)) return [];
+    const data = JSON.parse(fs.readFileSync(TASKS_FILE, "utf-8"));
+    const tasks = Array.isArray(data) ? data : [];
+    return tasks.slice(-Math.max(1, Number(limit) || 30)).reverse();
+  } catch {
+    return [];
+  }
+}
+
+function getEvents(limit = 200) {
+  try {
+    if (!fs.existsSync(LOG_DIR)) return [];
+    const files = fs
+      .readdirSync(LOG_DIR)
+      .filter((name) => /^events-\d{8}\.jsonl$/.test(name))
+      .sort();
+    const lines = [];
+    for (const name of files) {
+      const pathName = path.join(LOG_DIR, name);
+      const content = fs.readFileSync(pathName, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          lines.push(JSON.parse(trimmed));
+        } catch {}
+      }
+    }
+    return lines.slice(-Math.max(1, Number(limit) || 200)).reverse();
+  } catch {
+    return [];
+  }
+}
+
+function listRules() {
+  try {
+    if (!fs.existsSync(RULES_FILE)) return [];
+    const data = JSON.parse(fs.readFileSync(RULES_FILE, "utf-8"));
+    const rules = Array.isArray(data) ? data : [];
+    return rules.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+  } catch {
+    return [];
+  }
+}
+
+function saveRules(rules) {
+  ensureRuntimeDir();
+  fs.writeFileSync(RULES_FILE, JSON.stringify(rules, null, 2));
+}
+
+function upsertRule(rule) {
+  const now = Math.floor(Date.now() / 1000);
+  const nextRule = {
+    id: rule.id || `rule_${Date.now()}`,
+    name: rule.name || "未命名规则",
+    target_date: rule.target_date || "auto",
+    preferred_hours: Array.isArray(rule.preferred_hours) ? rule.preferred_hours : [],
+    preferred_venue_names: Array.isArray(rule.preferred_venue_names) ? rule.preferred_venue_names : [],
+    max_retries: Number(rule.max_retries) || 20,
+    concurrent_attempts: Number(rule.concurrent_attempts) || 5,
+    active: !!rule.active,
+    updated_at: now,
+    created_at: Number(rule.created_at) || now,
+  };
+  const rules = listRules();
+  const idx = rules.findIndex((x) => x.id === nextRule.id);
+  if (idx >= 0) rules[idx] = { ...rules[idx], ...nextRule };
+  else rules.push(nextRule);
+  saveRules(rules);
+  return { ok: true, rule: nextRule };
+}
+
+function deleteRule(ruleId) {
+  const rules = listRules();
+  const next = rules.filter((r) => r.id !== ruleId);
+  saveRules(next);
+  return { ok: true };
+}
+
+function activateRule(ruleId) {
+  const rules = listRules();
+  const target = rules.find((r) => r.id === ruleId);
+  if (!target) return { ok: false, msg: "规则不存在" };
+  const cfg = loadConfig();
+  const nextCfg = {
+    ...cfg,
+    booking: {
+      ...(cfg.booking || {}),
+      target_date: target.target_date,
+      preferred_hours: target.preferred_hours || [],
+      preferred_venue_names: target.preferred_venue_names || [],
+      max_retries: Number(target.max_retries) || 20,
+      concurrent_attempts: Number(target.concurrent_attempts) || 5,
+    },
+  };
+  saveConfig(nextCfg);
+
+  const nextRules = rules.map((r) => ({
+    ...r,
+    active: r.id === ruleId,
+    updated_at: r.id === ruleId ? Math.floor(Date.now() / 1000) : r.updated_at,
+  }));
+  saveRules(nextRules);
+  return { ok: true, rule_id: ruleId };
+}
+
+function getBookingRecords(limit = 30) {
+  const tasks = getTasks(1000);
+  const records = tasks
+    .filter((t) => t.command === "booking.run")
+    .map((t) => ({
+      id: t.id,
+      status: t.status,
+      date: t.result?.date || t.payload?.date || "-",
+      message: t.result?.message || t.error || "-",
+      result: t.result?.result || "",
+      trigger_source: t.trigger_source || "",
+      created_at: t.created_at || 0,
+      finished_at: t.finished_at || 0,
+    }))
+    .slice(0, Math.max(1, Number(limit) || 30));
+  return records;
+}
+
 function startAgentWatcher() {
   stopAgentWatcher();
   agentWatcher = setInterval(() => {
@@ -343,6 +472,13 @@ ipcMain.handle("stop-booking", () => stopPython());
 ipcMain.handle("agent-start", () => startAgent());
 ipcMain.handle("agent-stop", () => stopAgent());
 ipcMain.handle("agent-state", () => getAgentState());
+ipcMain.handle("get-tasks", (_, limit) => getTasks(limit));
+ipcMain.handle("get-events", (_, limit) => getEvents(limit));
+ipcMain.handle("list-rules", () => listRules());
+ipcMain.handle("upsert-rule", (_, rule) => upsertRule(rule || {}));
+ipcMain.handle("delete-rule", (_, ruleId) => deleteRule(ruleId));
+ipcMain.handle("activate-rule", (_, ruleId) => activateRule(ruleId));
+ipcMain.handle("get-booking-records", (_, limit) => getBookingRecords(limit));
 
 // ─── 启动 ──────────────────────────────────────────────
 app.whenReady().then(createMainWindow);

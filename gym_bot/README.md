@@ -19,12 +19,13 @@
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 playwright install chromium
 ```
 
 ### 配置
 
-编辑 `config.yaml`，填入学号、密码、偏好时段等信息。也可通过环境变量设置敏感字段：
+优先编辑 `../runtime/config.yaml`（若不存在可先复制本目录 `config.yaml` 作为模板），也可通过环境变量设置敏感字段：
 
 ```bash
 export GYM_USERNAME="你的学号"
@@ -55,6 +56,12 @@ python main.py --agent
 cd app
 npm install
 npm start
+```
+
+### 测试
+
+```bash
+pytest tests -q
 ```
 
 ## 项目结构
@@ -91,6 +98,15 @@ npm start
 | `payment.auto_pay` | 自动支付开关 | `false` |
 | `agent.enabled` | Agent 模式开关 | `false` |
 | `agent.skip_days` | 跳过的星期 | `[]` |
+
+## 观测与排障
+
+- 结构化事件日志：`../runtime/logs/events-YYYYMMDD.jsonl`
+- 进程文本日志：`../runtime/logs/gym_bot.log` / `../runtime/logs/agent.log` / `../runtime/logs/gym_server.log`
+- 任务事件追踪：`GET /api/tasks`、`GET /api/tasks/{task_id}`
+- 最近埋点查询：`GET /api/observability/events?limit=200`
+
+事件日志默认包含 `request_id`、`task_id`、`trigger_source`，可以直接按这三个字段串联 API 请求、任务执行、Agent 自动流程与 webhook 通知失败点。
 
 ## License
 

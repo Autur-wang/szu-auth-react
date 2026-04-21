@@ -22,6 +22,11 @@ class _FakeResult:
     display = "羽毛球1号"
 
 
+class _FakeSession:
+    def __init__(self):
+        self.headers = {}
+
+
 class TestTaskService:
     def test_auth_login_task_success(self, tmp_path):
         service = TaskService(_cfg(), repository=TaskRepository(tmp_path / "tasks.json"))
@@ -52,7 +57,7 @@ class TestTaskService:
 
     def test_booking_query_task_success(self, tmp_path):
         service = TaskService(_cfg(), repository=TaskRepository(tmp_path / "tasks.json"))
-        with patch("task_service.AuthService.login_verified", return_value=object()), \
+        with patch("task_service.AuthService.login_verified", return_value=_FakeSession()), \
              patch("task_service.BookingService.resolve_target_date", return_value="2026-04-30"), \
              patch("task_service.BookingService.query_preferred_venues", return_value=[]):
             task = service.run("booking.query")
@@ -62,7 +67,7 @@ class TestTaskService:
 
     def test_booking_run_task_success(self, tmp_path):
         service = TaskService(_cfg(), repository=TaskRepository(tmp_path / "tasks.json"))
-        with patch("task_service.AuthService.login_verified", return_value=object()), \
+        with patch("task_service.AuthService.login_verified", return_value=_FakeSession()), \
              patch("task_service.BookingService.resolve_target_date", return_value="2026-04-30"), \
              patch("task_service.BookingService.run_for_date") as mock_run:
             mock_run.return_value = type(
@@ -83,7 +88,7 @@ class TestTaskService:
 
     def test_booking_run_task_failed_when_no_success_result(self, tmp_path):
         service = TaskService(_cfg(), repository=TaskRepository(tmp_path / "tasks.json"))
-        with patch("task_service.AuthService.login_verified", return_value=object()), \
+        with patch("task_service.AuthService.login_verified", return_value=_FakeSession()), \
              patch("task_service.BookingService.resolve_target_date", return_value="2026-04-30"), \
              patch("task_service.BookingService.run_for_date") as mock_run:
             mock_run.return_value = type(

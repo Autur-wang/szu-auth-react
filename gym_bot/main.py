@@ -20,22 +20,22 @@ from auth_service import AuthService
 from booking_service import BookingService
 from config import AppConfig
 import notify
+from observability import configure_logging, emit_event
 from post_booking_service import PostBookingService
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-)
+configure_logging("gym_bot")
 logger = logging.getLogger("gym_bot")
 
 
 def main():
+    emit_event("cli.started", argv=sys.argv[1:])
     # Agent 模式
     if "--agent" in sys.argv:
         cfg = AppConfig.load()
         from agent import AgentDaemon
         daemon = AgentDaemon(cfg)
         daemon.run(oneshot="--oneshot" in sys.argv)
+        emit_event("cli.finished", mode="agent")
         return
 
     debug_mode = "--debug" in sys.argv
@@ -57,6 +57,7 @@ def main():
         session = AuthService(cfg).login_verified()
     except AuthError as e:
         logger.error(f"登录失败: {e}")
+        emit_event("cli.login.failed", level="error", error=str(e))
         notify.send(cfg.notify.webhook_url, f"❌ 登录失败: {e}")
         sys.exit(1)
 
@@ -82,6 +83,7 @@ def main():
     if not venues:
         msg = f"❌ {date} 没有可用场地"
         logger.warning(msg)
+        emit_event("cli.booking.failed", level="error", reason="no_venues", date=date)
         notify.send(cfg.notify.webhook_url, msg)
         sys.exit(1)
     logger.info(f"找到 {len(venues)} 个可用场地")
@@ -95,6 +97,7 @@ def main():
     if not run_result.result:
         msg = run_result.message
         logger.warning(msg)
+        emit_event("cli.booking.failed", level="error", reason="booking_failed", date=date, message=msg)
         notify.send(cfg.notify.webhook_url, msg)
         sys.exit(1)
 
@@ -113,6 +116,7 @@ def main():
         msg += "\n⚠️ 请及时前往支付"
 
     notify.send(cfg.notify.webhook_url, msg)
+    emit_event("cli.finished", mode="manual", status="succeeded", date=date)
 
 
 if __name__ == "__main__":

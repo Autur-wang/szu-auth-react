@@ -32,15 +32,13 @@ from datetime import datetime, timedelta
 from auth_service import AuthService
 from config import AppConfig
 import notify
+from observability import configure_logging, emit_event
 from policy_engine import PolicyEngine
 from post_booking_service import PostBookingService
 from state_repository import AgentStateRepository
 from task_service import TaskService
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-)
+configure_logging("agent")
 logger = logging.getLogger("agent")
 
 
@@ -58,6 +56,7 @@ class AgentDaemon:
 
     def run(self, oneshot: bool = False):
         logger.info("Agent 启动")
+        emit_event("agent.started", oneshot=oneshot)
 
         # macOS 防休眠：caffeinate 绑定当前 PID，进程退出自动解除
         caffeinate = None
@@ -76,12 +75,14 @@ class AgentDaemon:
                     self._daily_cycle()
                 except Exception as e:
                     logger.error(f"Agent 异常: {e}")
+                    emit_event("agent.exception", level="error", error=str(e))
                     self.state.add_error(str(e))
                     self.state.consecutive_failures += 1
                     self._save_state()
 
                 if oneshot:
                     logger.info("单次模式，退出")
+                    emit_event("agent.stopped", reason="oneshot")
                     break
 
                 self._sleep_until_tomorrow()
@@ -89,6 +90,7 @@ class AgentDaemon:
             if caffeinate:
                 caffeinate.terminate()
                 logger.info("防休眠已释放")
+            emit_event("agent.stopped", reason="loop_exit")
 
     def _daily_cycle(self):
         today = datetime.now().strftime("%Y-%m-%d")
@@ -96,16 +98,19 @@ class AgentDaemon:
 
         if self.policy.should_skip_booking_date(self.cfg, booking_date):
             logger.info(f"命中跳过规则，跳过 {booking_date}")
+            emit_event("agent.booking.skipped", booking_date=booking_date, reason="policy_skip")
             return
 
         # 防止重复预约
         if self.policy.is_duplicate_booking(self.state, booking_date):
             logger.info(f"今天已预约过 {booking_date}，跳过")
+            emit_event("agent.booking.skipped", booking_date=booking_date, reason="duplicate")
             return
 
         self.state.reset_today(today)
         self.state.phase = "cookie_check"
         self._save_state()
+        emit_event("agent.phase.changed", phase="cookie_check", booking_date=booking_date)
         logger.info(f"开始今日周期: 预约 {booking_date}")
 
         # ── Phase 1: Cookie ──
@@ -119,6 +124,7 @@ class AgentDaemon:
         self.state.today_status = "cookie_ok"
         self.state.phase = "waiting"
         self._save_state()
+        emit_event("agent.phase.changed", phase="waiting", booking_date=booking_date)
 
         # ── Phase 2: 等到 12:15 再验证 ──
         self._wait_for_time(self.cfg.agent.cookie_check_time)
@@ -156,6 +162,7 @@ class AgentDaemon:
         # ── Phase 4: 抢票 ──
         self.state.phase = "booking"
         self._save_state()
+        emit_event("agent.phase.changed", phase="booking", booking_date=booking_date)
 
         run_task = self.task_service.run(
             "booking.run",
@@ -183,6 +190,7 @@ class AgentDaemon:
         # ── Phase 5: 后处理 ──
         self.state.phase = "post_booking"
         self._save_state()
+        emit_event("agent.phase.changed", phase="post_booking", booking_date=booking_date)
 
         post_booking_service = PostBookingService(self.cfg, self.session)
         if post_booking_service.is_enabled():
@@ -196,8 +204,10 @@ class AgentDaemon:
         # ── Phase 6: 通知 ──
         self.state.phase = "idle"
         self._save_state()
+        emit_event("agent.phase.changed", phase="idle", booking_date=booking_date)
         notify.send(self.cfg.notify.webhook_url, msg)
         logger.info("今日周期完成")
+        emit_event("agent.cycle.succeeded", booking_date=booking_date, result=self.state.last_booking_result)
 
     # ─── Cookie 管理（分层策略）────────────────────────
 
@@ -220,10 +230,15 @@ class AgentDaemon:
                 self.state.last_cookie_refresh = time.time()
                 self._save_state()
             logger.info((cookie_task.result or {}).get("message", "Cookie 就绪"))
+            emit_event(
+                "agent.cookie.ready",
+                source=(cookie_task.result or {}).get("source", "unknown"),
+            )
             return True
 
         # Tier 3: 请求人工介入
         logger.warning("需要人工登录（验证码）")
+        emit_event("agent.cookie.human_required", level="warning")
         self.state.needs_human_login = True
         self._save_state()
         notify.send(
@@ -238,11 +253,13 @@ class AgentDaemon:
             self._save_state()  # heartbeat
             if self._verify_cookie():
                 logger.info("收到有效 Cookie！")
+                emit_event("agent.cookie.received_after_human")
                 self.state.needs_human_login = False
                 self._save_state()
                 return True
 
         logger.error("等待超时，未收到有效 Cookie")
+        emit_event("agent.cookie.timeout", level="error")
         self.state.needs_human_login = False
         self._save_state()
         return False
@@ -261,6 +278,12 @@ class AgentDaemon:
             self.state.consecutive_failures += 1
         self._save_state()
         notify.send(self.cfg.notify.webhook_url, message)
+        emit_event(
+            "agent.cycle.failed",
+            level="error",
+            message=message,
+            consecutive_failures=self.state.consecutive_failures,
+        )
 
     def _save_state(self, heartbeat: bool = True):
         self.state_repo.save(self.state, heartbeat=heartbeat)

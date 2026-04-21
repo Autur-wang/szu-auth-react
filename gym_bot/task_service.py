@@ -5,6 +5,12 @@ import time
 from auth_service import AuthService
 from booking_service import BookingService
 from command_bus import CommandBus, CommandContext
+from observability import (
+    emit_event,
+    reset_context,
+    set_task_context,
+    set_trigger_source,
+)
 from policy_engine import PolicyEngine
 from task_repository import TaskRepository
 
@@ -38,16 +44,39 @@ class TaskService:
             payload=payload,
             metadata=metadata,
         )
+        emit_event(
+            "task.created",
+            task_id=task.id,
+            trigger_source=trigger_source,
+            command=command,
+            payload=payload,
+        )
         decision = self.policy.evaluate_task(self.repository, command)
         if not decision.allowed:
             task.status = "rejected"
             task.error = decision.reason
             task.finished_at = time.time()
+            emit_event(
+                "task.rejected",
+                level="warning",
+                task_id=task.id,
+                trigger_source=trigger_source,
+                command=command,
+                reason=decision.reason,
+            )
             return self.repository.save(task)
 
         task.status = "running"
         task.started_at = time.time()
         self.repository.save(task)
+        task_token = set_task_context(task.id)
+        src_token = set_trigger_source(trigger_source)
+        emit_event(
+            "task.started",
+            task_id=task.id,
+            trigger_source=trigger_source,
+            command=command,
+        )
         context = CommandContext(
             cfg=self.cfg,
             payload=payload,
@@ -59,12 +88,36 @@ class TaskService:
         try:
             task.result = self.bus.dispatch(command, context)
             task.status = "succeeded"
+            emit_event(
+                "task.succeeded",
+                task_id=task.id,
+                trigger_source=trigger_source,
+                command=command,
+            )
         except Exception as exc:
             task.status = "failed"
             task.error = str(exc)
+            emit_event(
+                "task.failed",
+                level="error",
+                task_id=task.id,
+                trigger_source=trigger_source,
+                command=command,
+                error=str(exc),
+            )
         finally:
             task.finished_at = time.time()
             self.repository.save(task)
+            emit_event(
+                "task.finished",
+                task_id=task.id,
+                trigger_source=trigger_source,
+                command=command,
+                status=task.status,
+                duration_ms=round((task.finished_at - task.started_at) * 1000, 2),
+            )
+            reset_context(task_token)
+            reset_context(src_token)
         return task
 
     def list_tasks(self, limit: int = 20) -> list[dict]:
