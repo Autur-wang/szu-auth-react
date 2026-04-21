@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>深大体育馆自动预约</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, "PingFang SC", sans-serif;
+        background: #f0f2f5; color: #333;
+      }
+
+      /* ─── Tab Bar ─── */
+      .tab-bar {
+        display: flex; background: #fff;
+        border-bottom: 1px solid #e8e8e8;
+        -webkit-app-region: drag;
+      }
+      .tab-bar button {
+        -webkit-app-region: no-drag;
+        flex: 1; padding: 14px 0; font-size: 14px; font-weight: 500;
+        border: none; background: none; cursor: pointer;
+        color: #666; border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      .tab-bar button.active { color: #1890ff; border-bottom-color: #1890ff; }
+      .tab-bar button:hover { color: #1890ff; }
+
+      /* ─── Content ─── */
+      .tab-content { display: none; padding: 20px; }
+      .tab-content.active { display: block; }
+
+      .card {
+        background: #fff; border-radius: 10px; padding: 18px;
+        margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      }
+      .card h3 { font-size: 14px; color: #999; margin-bottom: 12px; }
+
+      /* ─── Status Badge ─── */
+      .badge {
+        display: inline-block; padding: 5px 14px; border-radius: 20px;
+        font-size: 13px; font-weight: 500;
+      }
+      .badge-ok { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+      .badge-warn { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+      .badge-err { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+
+      /* ─── Form ─── */
+      .form-row { margin-bottom: 12px; }
+      .form-row label {
+        display: block; font-size: 12px; color: #999; margin-bottom: 3px;
+      }
+      .form-row input, .form-row select {
+        width: 100%; padding: 8px 10px; border: 1px solid #d9d9d9;
+        border-radius: 6px; font-size: 14px;
+      }
+      .form-row input:focus, .form-row select:focus {
+        border-color: #1890ff; outline: none;
+      }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .form-check {
+        display: flex; align-items: center; gap: 6px; margin-top: 4px;
+      }
+      .form-check input { width: auto; }
+
+      /* ─── Buttons ─── */
+      .btn {
+        padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px;
+        cursor: pointer; font-weight: 500; transition: all 0.15s;
+      }
+      .btn:active { transform: scale(0.97); }
+      .btn-block { width: 100%; }
+      .btn-blue { background: #1890ff; color: #fff; }
+      .btn-blue:hover { background: #096dd9; }
+      .btn-green { background: #52c41a; color: #fff; }
+      .btn-green:hover { background: #389e0d; }
+      .btn-orange { background: #fa8c16; color: #fff; }
+      .btn-orange:hover { background: #d46b08; }
+      .btn-red { background: #ff4d4f; color: #fff; }
+      .btn-red:hover { background: #cf1322; }
+      .btn-gray { background: #f0f0f0; color: #666; }
+      .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+      .btn-row .btn { flex: 1; }
+
+      /* ─── Log Panel ─── */
+      #log {
+        height: 380px; overflow-y: auto; background: #1a1a2e; color: #ccc;
+        font-family: "SF Mono", "Fira Code", monospace; font-size: 12px;
+        padding: 12px; border-radius: 8px; line-height: 1.5;
+        white-space: pre-wrap; word-break: break-all;
+      }
+      #log .err { color: #ff6b6b; }
+      #log .ok { color: #51cf66; }
+
+      /* ─── Msg ─── */
+      .msg {
+        padding: 8px 12px; border-radius: 6px; font-size: 13px;
+        margin-top: 10px; display: none;
+      }
+      .msg.show { display: block; }
+      .msg-ok { background: #f6ffed; color: #389e0d; }
+      .msg-err { background: #fff1f0; color: #cf1322; }
+      .msg-info { background: #e6f7ff; color: #0050b3; }
+
+      .hint { font-size: 12px; color: #bbb; margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="active" data-tab="status">状态</button>
+      <button data-tab="config">配置</button>
+      <button data-tab="booking">抢票</button>
+      <button data-tab="agent">Agent</button>
+      <button data-tab="login">登录</button>
+    </div>
+
+    <!-- ═══ 状态 ═══ -->
+    <div id="tab-status" class="tab-content active">
+      <div class="card">
+        <h3>Cookie 状态</h3>
+        <div id="s-badge" class="badge badge-err">检查中...</div>
+        <div id="s-detail" class="hint"></div>
+      </div>
+      <div class="card">
+        <h3>当前配置</h3>
+        <div id="s-config" style="font-size:13px; line-height:1.8; color:#666;">加载中...</div>
+      </div>
+    </div>
+
+    <!-- ═══ 配置 ═══ -->
+    <div id="tab-config" class="tab-content">
+      <div class="card">
+        <h3>账号信息</h3>
+        <div class="form-grid">
+          <div class="form-row"><label>学号</label><input id="c-username" /></div>
+          <div class="form-row"><label>密码</label><input id="c-password" type="password" /></div>
+          <div class="form-row"><label>姓名</label><input id="c-realname" /></div>
+          <div class="form-row"><label>手机号</label><input id="c-phone" /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>预约设置</h3>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>校区</label>
+            <select id="c-campus">
+              <option value="1">粤海校区</option>
+              <option value="2">丽湖校区</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>运动项目</label>
+            <select id="c-sport">
+              <option value="001">羽毛球</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>放票时间</label>
+            <input id="c-opentime" value="12:30:00" />
+          </div>
+          <div class="form-row">
+            <label>目标日期</label>
+            <input id="c-date" value="auto" placeholder="auto = 明天" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>偏好时段（逗号分隔，如 18-19, 19-20）</label>
+          <input id="c-hours" placeholder="18-19, 19-20, 20-21" />
+        </div>
+        <div class="form-row">
+          <label>偏好场馆（逗号分隔，空=不限）</label>
+          <input id="c-venues" placeholder="运动广场东馆羽毛球场" />
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>最大重试</label><input id="c-retries" type="number" value="20" /></div>
+          <div class="form-row"><label>并发线程</label><input id="c-concurrent" type="number" value="5" /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>可选功能</h3>
+        <div class="form-row">
+          <label>同行人学号（逗号分隔）</label>
+          <input id="c-companions" placeholder="2023150001, 2023150002" />
+        </div>
+        <div class="form-grid">
+          <div class="form-row"><label>支付密码</label><input id="c-paypwd" type="password" /></div>
+          <div class="form-row">
+            <label>自动支付</label>
+            <div class="form-check"><input type="checkbox" id="c-autopay" /><span>启用</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>通知 Webhook</label>
+          <input id="c-webhook" placeholder="飞书/企微 Webhook URL" />
+        </div>
+      </div>
+
+      <button class="btn btn-blue btn-block" onclick="saveConfig()">保存配置</button>
+      <div id="config-msg" class="msg"></div>
+    </div>
+
+    <!-- ═══ 抢票 ═══ -->
+    <div id="tab-booking" class="tab-content">
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="run([])">🕐 等 12:30 抢</button>
+        <button class="btn btn-green" onclick="run(['--now'])">⚡ 立即抢</button>
+        <button class="btn btn-orange" onclick="run(['--debug'])">🔍 查询</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-red" onclick="stop()">⏹ 停止</button>
+        <button class="btn btn-gray" onclick="clearLog()">清空日志</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <!-- ═══ Agent ═══ -->
+    <div id="tab-agent" class="tab-content">
+      <div class="card">
+        <h3>Agent 模式</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:12px;">
+          全自动每日预约：11:00 刷新 Cookie → 12:15 复查 → 12:30 抢票 → 通知结果
+        </p>
+        <div class="btn-row">
+          <button class="btn btn-green" id="agent-start-btn" onclick="agentStart()">▶ 启动 Agent</button>
+          <button class="btn btn-red" onclick="agentStop()">⏹ 停止</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Agent 状态</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
+          <div><span style="color:#999;">运行状态：</span><span id="ag-running">-</span></div>
+          <div><span style="color:#999;">当前阶段：</span><span id="ag-phase">-</span></div>
+          <div><span style="color:#999;">今日状态：</span><span id="ag-today">-</span></div>
+          <div><span style="color:#999;">上次预约：</span><span id="ag-last">-</span></div>
+        </div>
+        <div id="ag-errors" style="margin-top:10px; font-size:12px; color:#cf1322;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Agent 日志</h3>
+        <div id="agent-log" style="
+          height:280px; overflow-y:auto; background:#1a1a2e; color:#ccc;
+          font-family:'SF Mono',monospace; font-size:12px;
+          padding:10px; border-radius:8px; line-height:1.5;
+          white-space:pre-wrap; word-break:break-all;
+        "></div>
+      </div>
+    </div>
+
+    <!-- ═══ 登录 ═══ -->
+    <div id="tab-login" class="tab-content">
+      <div class="card">
+        <h3>浏览器登录</h3>
+        <button class="btn btn-blue btn-block" onclick="doLogin()">打开登录页面</button>
+        <div id="login-msg" class="msg"></div>
+        <p class="hint" style="margin-top:10px;">
+          会打开深大统一认证页面，正常登录即可<br>
+          验证码、二维码都可以处理，登录成功后 Cookie 自动保存
+        </p>
+      </div>
+      <div class="card">
+        <h3>推送到云端（可选）</h3>
+        <div class="form-row"><label>云端地址</label><input id="cloud-url" placeholder="http://your-server:9898" /></div>
+        <div class="form-row"><label>Token</label><input id="cloud-token" value="gym_bot_secret" /></div>
+        <button class="btn btn-green btn-block" onclick="doPush()">推送 Cookie</button>
+        <div id="push-msg" class="msg"></div>
+      </div>
+    </div>
+
+    <script>
+      // ─── Tab 切换 ─────────────────────────────────
+      document.querySelectorAll(".tab-bar button").forEach((btn) => {
+        btn.onclick = () => {
+          document.querySelectorAll(".tab-bar button").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+          if (btn.dataset.tab === "status") refreshStatus();
+          if (btn.dataset.tab === "config") loadConfig();
+        };
+      });
+
+      // ─── 状态 ─────────────────────────────────────
+      async function refreshStatus() {
+        const s = await window.api.getStatus();
+        const badge = document.getElementById("s-badge");
+        const detail = document.getElementById("s-detail");
+        if (s.has_cookie && !s.expired) {
+          badge.className = "badge badge-ok";
+          badge.textContent = `✅ 有效（${s.count} 个 Cookie）`;
+          detail.textContent = `${s.age_minutes} 分钟前保存`;
+        } else if (s.has_cookie) {
+          badge.className = "badge badge-warn";
+          badge.textContent = "⚠️ 已过期";
+          detail.textContent = `${s.age_minutes} 分钟前保存，请重新登录`;
+        } else {
+          badge.className = "badge badge-err";
+          badge.textContent = "❌ 无 Cookie";
+          detail.textContent = "请先到「登录」页登录";
+        }
+        // 配置摘要
+        const cfg = await window.api.loadConfig();
+        const u = cfg.user || {};
+        const b = cfg.booking || {};
+        document.getElementById("s-config").innerHTML =
+          `<b>用户:</b> ${u.username || "未设置"}<br>` +
+          `<b>校区:</b> ${b.campus_code === "2" ? "丽湖" : "粤海"}<br>` +
+          `<b>时段:</b> ${(b.preferred_hours || []).join(", ")}<br>` +
+          `<b>放票:</b> ${b.open_time || "12:30:00"}<br>` +
+          `<b>日期:</b> ${b.target_date || "auto"}`;
+      }
+      refreshStatus();
+      setInterval(refreshStatus, 5000);
+
+      // ─── 配置 ─────────────────────────────────────
+      async function loadConfig() {
+        const c = await window.api.loadConfig();
+        const u = c.user || {}, b = c.booking || {}, comp = c.companions || {};
+        const pay = c.payment || {}, n = c.notify || {};
+
+        document.getElementById("c-username").value = u.username || "";
+        document.getElementById("c-password").value = u.password || "";
+        document.getElementById("c-realname").value = u.real_name || "";
+        document.getElementById("c-phone").value = u.phone || "";
+        document.getElementById("c-campus").value = b.campus_code || "1";
+        document.getElementById("c-sport").value = b.sport_code || "001";
+        document.getElementById("c-opentime").value = b.open_time || "12:30:00";
+        document.getElementById("c-date").value = b.target_date || "auto";
+        document.getElementById("c-hours").value = (b.preferred_hours || []).join(", ");
+        document.getElementById("c-venues").value = (b.preferred_venue_names || []).join(", ");
+        document.getElementById("c-retries").value = b.max_retries || 20;
+        document.getElementById("c-concurrent").value = b.concurrent_attempts || 5;
+        document.getElementById("c-companions").value = (comp.ids || []).join(", ");
+        document.getElementById("c-paypwd").value = pay.password || "";
+        document.getElementById("c-autopay").checked = !!pay.auto_pay;
+        document.getElementById("c-webhook").value = n.webhook_url || "";
+      }
+      loadConfig();
+
+      async function saveConfig() {
+        const split = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
+        const cfg = {
+          user: {
+            username: document.getElementById("c-username").value,
+            password: document.getElementById("c-password").value,
+            real_name: document.getElementById("c-realname").value,
+            phone: document.getElementById("c-phone").value,
+          },
+          booking: {
+            service_url: "https://ehall.szu.edu.cn/qljfwapp/sys/lwSzuCgyy/index.do",
+            open_time: document.getElementById("c-opentime").value,
+            target_date: document.getElementById("c-date").value,
+            campus_code: document.getElementById("c-campus").value,
+            sport_code: document.getElementById("c-sport").value,
+            preferred_hours: split(document.getElementById("c-hours").value),
+            preferred_venue_names: split(document.getElementById("c-venues").value),
+            max_retries: parseInt(document.getElementById("c-retries").value) || 20,
+            concurrent_attempts: parseInt(document.getElementById("c-concurrent").value) || 5,
+          },
+          companions: {
+            ids: split(document.getElementById("c-companions").value),
+          },
+          payment: {
+            password: document.getElementById("c-paypwd").value,
+            auto_pay: document.getElementById("c-autopay").checked,
+          },
+          notify: {
+            webhook_url: document.getElementById("c-webhook").value,
+          },
+        };
+        const result = await window.api.saveConfig(cfg);
+        showMsg("config-msg", result.ok, result.ok ? "配置已保存" : "保存失败");
+      }
+
+      // ─── 抢票 ─────────────────────────────────────
+      const logEl = document.getElementById("log");
+
+      function appendLog(text, cls) {
+        const span = document.createElement("span");
+        if (cls) span.className = cls;
+        span.textContent = text;
+        logEl.appendChild(span);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      window.api.onStdout((d) => appendLog(d));
+      window.api.onStderr((d) => appendLog(d, "err"));
+      window.api.onExit((code) => {
+        appendLog(`\n── 进程结束 (code=${code}) ──\n`, code === 0 ? "ok" : "err");
+      });
+
+      async function run(args) {
+        logEl.innerHTML = "";
+        const r = await window.api.runBooking(args);
+        if (!r.ok) appendLog("❌ " + r.msg + "\n", "err");
+      }
+      async function stop() {
+        const r = await window.api.stopBooking();
+        if (r.ok) appendLog("\n── 已停止 ──\n", "err");
+      }
+      function clearLog() { logEl.innerHTML = ""; }
+
+      // ─── 登录 ─────────────────────────────────────
+      function doLogin() {
+        showMsg("login-msg", null, "登录窗口已打开，请完成登录...");
+        window.api.openLogin();
+      }
+      window.api.onLoginResult((r) => {
+        showMsg("login-msg", r.ok, r.ok ? "✅ " + r.msg : "❌ " + r.msg);
+        refreshStatus();
+      });
+
+      async function doPush() {
+        const url = document.getElementById("cloud-url").value.trim();
+        const token = document.getElementById("cloud-token").value.trim();
+        if (!url) { showMsg("push-msg", false, "请输入云端地址"); return; }
+        showMsg("push-msg", null, "推送中...");
+        const r = await window.api.pushCloud(url, token);
+        showMsg("push-msg", r.ok, r.ok ? "✅ " + r.msg : "❌ " + r.msg);
+      }
+
+      // ─── Agent ──────────────────────────────────────
+      const agentLogEl = document.getElementById("agent-log");
+      const phaseNames = {
+        idle: "⏸ 空闲", cookie_check: "🔑 检查 Cookie",
+        waiting: "⏳ 等待中", booking: "🔥 抢票中",
+        post_booking: "📋 后处理", failed: "❌ 失败", stopped: "⏹ 未启动",
+      };
+
+      async function agentStart() {
+        const r = await window.api.agentStart();
+        if (!r.ok) { alert(r.msg); return; }
+        agentLogEl.innerHTML = "";
+        appendAgentLog("Agent 已启动\n");
+      }
+      async function agentStop() {
+        const r = await window.api.agentStop();
+        if (r.ok) appendAgentLog("\n── Agent 已停止 ──\n");
+      }
+
+      function appendAgentLog(text, cls) {
+        const span = document.createElement("span");
+        if (cls) span.className = cls;
+        span.textContent = text;
+        agentLogEl.appendChild(span);
+        agentLogEl.scrollTop = agentLogEl.scrollHeight;
+      }
+
+      window.api.onAgentStdout((d) => appendAgentLog(d));
+      window.api.onAgentStderr((d) => appendAgentLog(d, "err"));
+      window.api.onAgentExit((code) => appendAgentLog(`\n── Agent 退出 (${code}) ──\n`));
+
+      async function refreshAgent() {
+        const s = await window.api.agentState();
+        document.getElementById("ag-running").textContent = s.running ? "🟢 运行中" : "⚪ 未运行";
+        document.getElementById("ag-phase").textContent = phaseNames[s.phase] || s.phase || "-";
+        document.getElementById("ag-today").textContent = s.today_status || "-";
+        document.getElementById("ag-last").textContent = s.last_booking_date
+          ? `${s.last_booking_date} ${s.last_booking_result || ""}`
+          : "无";
+        const errEl = document.getElementById("ag-errors");
+        errEl.textContent = (s.errors || []).slice(-3).join("\n");
+      }
+      setInterval(refreshAgent, 3000);
+      refreshAgent();
+
+      // ─── 工具 ─────────────────────────────────────
+      function showMsg(id, ok, text) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = "msg show " + (ok === null ? "msg-info" : ok ? "msg-ok" : "msg-err");
+      }
+    </script>
+  </body>
+</html>

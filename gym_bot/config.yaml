@@ -1,0 +1,56 @@
+user:
+  username: ""          # 学号，或设置环境变量 GYM_USERNAME
+  password: ""          # 密码，或设置环境变量 GYM_PASSWORD
+  real_name: ""         # 真实姓名，或设置环境变量 GYM_USER_REAL_NAME
+  phone: ""             # 手机号，或设置环境变量 GYM_PHONE
+
+booking:
+  service_url: "https://ehall.szu.edu.cn/qljfwapp/sys/lwSzuCgyy/index.do"
+
+  # ⚠️ 放票时间 12:30（已确认）
+  open_time: "12:30:00"
+
+  target_date: "auto"       # auto = 明天
+
+  # 校区：粤海校区=1, 丽湖校区=2
+  campus_code: "1"
+
+  # 运动项目代码：001=羽毛球
+  sport_code: "001"
+
+  # 偏好时段（按优先级排列，格式 HH-HH）
+  preferred_hours:
+    - "18-19"
+    - "19-20"
+    - "20-21"
+    - "17-18"
+
+  # 偏好场馆名称（空=不限）
+  # 粤海羽毛球: 运动广场东馆羽毛球场
+  # 丽湖羽毛球: 至畅体育馆、至快体育馆
+  preferred_venue_names: []
+
+  max_retries: 20
+  concurrent_attempts: 5
+
+# 同行人学号列表（可选）
+companions:
+  ids: []                   # 例: ["2023150001", "2023150002"]
+
+# 支付配置（可选）
+payment:
+  password: ""              # 体育经费支付密码，或环境变量 GYM_PAYMENT_PASSWORD
+  auto_pay: false           # 安全开关：必须设为 true 才会自动支付
+
+notify:
+  webhook_url: ""
+
+# Agent 模式（全自动每日预约）
+agent:
+  enabled: false
+  wake_time: "11:00:00"            # 每日唤醒，开始准备 Cookie
+  cookie_check_time: "12:15:00"    # 预约前复查 Cookie
+  retry_login_interval: 300        # 登录重试间隔（秒）
+  max_login_attempts: 3
+  skip_days: []                    # 跳过的星期，如 ["saturday", "sunday"]
+  skip_dates: []                   # 跳过的日期，如 ["2026-04-01"]

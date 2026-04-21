@@ -1,0 +1,14 @@
+{
+  "name": "szu-gym-bot",
+  "version": "1.0.0",
+  "description": "深大体育馆自动预约 - 登录助手",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "electron": "^33.0.0",
+    "js-yaml": "^4.1.1"
+  }
+}

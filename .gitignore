@@ -3,3 +3,12 @@ dist
 .DS_Store
 *.log
 .vite
+*.py[cod]
+.pytest_cache/
+htmlcov/
+gym_bot/.cookie_cache.json
+gym_bot/.agent_state.json
+gym_bot/app/node_modules/
+apps/web/dist
+runtime/*
+!runtime/.gitkeep

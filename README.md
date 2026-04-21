@@ -1,92 +1,81 @@
-# SZU Auth · 深圳大学体育馆预约登录/注册
+# SZU Sports Suite
 
-animal-crossing-ui 真实组件 + Apple 设计语言 + Liquid Glass 液态玻璃。
+This repository is being structured as an engineering-grade workspace for the SZU sports reservation product.
 
-![login](screenshot-01.png)
-![register](screenshot-02-register.png)
-![dialog](screenshot-03-dialog.png)
+It currently combines:
 
-## 技术栈
+- `apps/web` for the React control surface
+- `gym_bot/` for the Python automation core and Electron shell
+- `packages/` for future shared contracts, config, and UI layers
+- `specs/` and `harness/` for AI-native and harness-first development
+- `docs/szu-booking/` for static product prototype and reference material
+- `references/` for imported design and liquid-glass references
 
-- React 18 + Vite 5
-- [animal-crossing-ui](https://www.npmjs.com/package/animal-crossing-ui) `^0.1.1`（源自 `inkyMountain/gradience`）
-- SVG `feDisplacementMap` + `backdrop-filter` 液态玻璃
-- `crypto.subtle.digest` SHA-256 密码哈希
-- localStorage 会话持久化
+## Repository Shape
 
-## 运行
+```text
+.
+├── apps/
+│   └── web/                    # Vite + React frontend
+├── gym_bot/                    # Python booking core + Electron shell
+├── packages/                   # Shared workspace packages
+├── specs/                      # Feature specs
+├── harness/                    # Contracts, scenarios, fixtures
+├── runtime/                    # Mutable runtime state
+├── docs/szu-booking/           # Product prototype and docs
+├── references/                 # External design/code references
+├── AI_NATIVE_HARNESS.md        # Repository engineering contract
+├── DESIGN.md                   # Apple reference from getdesign
+├── 风格.md                      # Project-specific frontend style rules
+└── TODO.md                     # Execution backlog
+```
+
+## Run
+
+### Web
 
 ```bash
 npm install
 npm run dev
 ```
 
-打开 http://127.0.0.1:5174
+Default URL: `http://127.0.0.1:5174`
 
-## 功能
+### Python Core
 
-- **登录**：学号/邮箱 + 密码，错误次数锁定 5 分钟
-- **注册**：姓名、学号（`20\d{2}2\d{6}`）、校园邮箱（`@(mails\.)?szu\.edu\.cn`）、密码强度条、同意条款
-- **忘记密码**：`animal-crossing-ui` 的 `<Dialog>` 弹出邮箱重置
-- **背景**：深大运动场照片 + 深色渐变遮罩保可读性
-
-## 踩过的坑（给后续集成者）
-
-### 1. `Input` 没从主入口导出
-
-`animal-crossing-ui` 的 `index.d.ts` 只导出 `Icon, Button, Dialog, Layout`，但 `dist/lib/input` 确实存在：
-
-```jsx
-import { Button, Dialog, Layout } from 'animal-crossing-ui';
-import Input from 'animal-crossing-ui/dist/lib/input'; // 深导入
+```bash
+cd gym_bot
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+python main.py --now
 ```
 
-### 2. Button `colortype` 只认 6 个值
+### Electron Shell
 
-合法值：`red | orange | yellow | green | blue | khaki`。传 `"primary"` 会炸 `Cannot read properties of undefined (reading 'length')`——组件内部 `getRandomColor` 回退失败。
-
-```jsx
-<Button colortype="blue">登录</Button>
+```bash
+cd gym_bot/app
+npm install
+npm start
 ```
 
-### 3. Button 用内联 style 污染，CSS 必须 `!important`
+## Engineering Rules
 
-组件内部 `style={{backgroundImage, border}}` 直接注入元素，普通 class 压不过。Apple Skin 里全部 `!important`：
+Read these before substantial work:
 
-```css
-.gui-button {
-  background: var(--color-action) !important;
-  background-image: none !important;
-  border: 0 !important;
-  border-radius: var(--radius-pill) !important;
-}
-```
+- [AI_NATIVE_HARNESS.md](/Users/bytedance/Desktop/szu-auth-react/AI_NATIVE_HARNESS.md)
+- [CLAUDE.md](/Users/bytedance/Desktop/szu-auth-react/CLAUDE.md)
+- [.agent/README.md](/Users/bytedance/Desktop/szu-auth-react/.agent/README.md)
+- [DESIGN.md](/Users/bytedance/Desktop/szu-auth-react/DESIGN.md)
+- [风格.md](/Users/bytedance/Desktop/szu-auth-react/%E9%A3%8E%E6%A0%BC.md)
 
-### 4. Liquid Glass 仅 Chrome 支持 SVG filter in `backdrop-filter`
+## Current Notes
 
-`@supports` 做渐进增强，其他浏览器退化为纯 `blur + saturate`：
-
-```css
-.glass-card { backdrop-filter: blur(32px) saturate(200%); }
-@supports (backdrop-filter: url(#a)) {
-  .glass-card { backdrop-filter: blur(32px) saturate(200%) url(#liquid-glass); }
-}
-```
-
-SVG filter 定义在 `index.html` 的隐藏 `<svg>` 里，`feTurbulence` → `feGaussianBlur` → `feDisplacementMap`，模拟 Snell 折射。
-
-## 目录
-
-```
-src/
-├── App.jsx              # 登录/注册/找回密码三态
-├── main.jsx
-└── styles/
-    └── apple-skin.css   # 覆盖 .gui-* 为 Apple 视觉
-public/
-└── stadium-bg.jpg       # 运动场背景
-index.html               # 含 <filter id="liquid-glass">
-```
+- `apps/web` is now the main frontend home instead of the repository root.
+- `gym_bot` is still the current source of truth for booking, auth, cookie, and agent behavior.
+- `packages/` is scaffolded so shared layers can be extracted deliberately instead of staying scattered.
+- `references/` keeps imported third-party design/code material out of the root.
 
 ## License
 
